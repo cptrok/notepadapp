@@ -593,7 +593,7 @@ export default function Home() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v3</span>
+              <span className="sidebar-title">록근_v4</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -749,7 +749,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className={`editor ${editorOpen && currentTab === 'notes' ? 'open' : ''}`}>
+        <div className={`editor ${
+          (currentTab === 'notes' && editorOpen) ||
+          (currentTab === 'clickup' && cuDetail !== null) ||
+          (currentTab === 'license' && licSubTab === 'my' && licDetail !== null) ||
+          (currentTab === 'license' && licSubTab === 'trial' && trialPanel !== null)
+            ? 'open' : ''
+        }`}>
           {/* Quill 에디터 - 항상 DOM에 유지 */}
           <div style={{ display: currentTab === 'notes' && editorOpen ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
             <div className="editor-header">
@@ -785,6 +791,7 @@ export default function Home() {
           )}
           {currentTab === 'clickup' && cuDetail && (
             <div className="task-detail">
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => setCuDetail(null)}>←</button>
               {cuDetail.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : <>
@@ -818,6 +825,7 @@ export default function Home() {
           )}
           {currentTab === 'license' && licSubTab === 'my' && licDetail && (
             <div className="task-detail">
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => { setLicDetail(null); setCurrentLicTaskId(null); }}>←</button>
               {licDetail.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : <>
@@ -851,6 +859,7 @@ export default function Home() {
           )}
           {currentTab === 'license' && licSubTab === 'trial' && trialPanel && (
             <div className="task-detail">
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => { setTrialPanel(null); setTrialSelectedQuarter(null); }}>←</button>
               {trialPanel.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : <>
