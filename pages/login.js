@@ -21,7 +21,7 @@ export default function Login() {
 
   useEffect(() => {
     const saved = localStorage.getItem('memo_user');
-    if (saved) { router.replace('/'); return; }
+    if (saved) { router.replace('/app/note'); return; }
     const savedId = localStorage.getItem('memo_saved_id');
     const savedPw = localStorage.getItem('memo_saved_pw');
     if (savedId) { setUsername(savedId); setSaveId(true); }
@@ -44,7 +44,7 @@ export default function Login() {
     if (savePw) localStorage.setItem('memo_saved_pw', password);
     else localStorage.removeItem('memo_saved_pw');
     localStorage.setItem('memo_user', username.trim());
-    router.push('/');
+    router.push('/app/note');
   }
 
   function handleLogoClick() {
@@ -81,7 +81,7 @@ export default function Login() {
       <div className="auth-screen">
         <div className="auth-card">
           <div className="auth-logo" onClick={handleLogoClick}>
-            <h1>📝 록근_v6</h1>
+            <h1>📝 록근_v7</h1>
             <p>아이디와 비밀번호로 로그인하세요</p>
           </div>
           <div className="form-group">
