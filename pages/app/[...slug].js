@@ -792,6 +792,7 @@ export default function App() {
     setMmPosts([]);
     setMmPostsHasMore(false);
     setMmSummary('');
+    setMmDateSummary('');
     setMmPostsLoading(true);
     try {
       const posts = await mmFetchPosts(channel.id, 0);
@@ -998,7 +999,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v51</span>
+              <span className="sidebar-title">록근_v52</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
