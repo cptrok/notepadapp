@@ -95,6 +95,9 @@ export default function App() {
   const trialPagesCache = useRef({});
   const myApiPageRef = useRef(0);
   const myUserIdRef = useRef(null);
+  const myBufferRef = useRef([]);
+  const myApiExhaustedRef = useRef(false);
+  const myAllRef = useRef([]);
   const mmTokenRef = useRef(null);
   const mmUserIdRef = useRef(null);
   const mmUsersCacheRef = useRef({});
@@ -386,6 +389,26 @@ export default function App() {
     setCuLoadingMore(false);
   }
 
+  async function fetchMyApiPage() {
+    if (myApiExhaustedRef.current) return;
+    const res = await fetch(
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${myUserIdRef.current}&page=${myApiPageRef.current}`,
+      { headers: { Authorization: clickupTokenRef.current } }
+    );
+    const data = await res.json();
+    const tasks = data.tasks || [];
+    myBufferRef.current = [...myBufferRef.current, ...tasks];
+    myAllRef.current = [...myAllRef.current, ...tasks];
+    myApiPageRef.current += 1;
+    if (tasks.length < 100) myApiExhaustedRef.current = true;
+  }
+
+  async function fillMyBuffer() {
+    while (myBufferRef.current.length < CU_PAGE_SIZE && !myApiExhaustedRef.current) {
+      await fetchMyApiPage();
+    }
+  }
+
   async function fetchMyTasks(force) {
     if (myTasksLoaded && !force) return;
     setCuLoading(true);
@@ -395,43 +418,34 @@ export default function App() {
     if (!userId) { setCuLoading(false); return; }
     myUserIdRef.current = userId;
     myApiPageRef.current = 0;
-    const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${userId}&page=0`,
-      { headers: { Authorization: token } }
-    );
-    const data = await res.json();
-    const tasks = data.tasks || [];
-    myApiPageRef.current = 1;
-    setMyTasks(tasks);
-    setMyTasksFiltered(tasks);
-    setMyTasksHasMore(tasks.length === 100);
+    myBufferRef.current = [];
+    myAllRef.current = [];
+    myApiExhaustedRef.current = false;
+    try {
+      await fillMyBuffer();
+      const toShow = myBufferRef.current.splice(0, CU_PAGE_SIZE);
+      setMyTasks(toShow);
+      setMyTasksFiltered(toShow);
+      setMyTasksHasMore(myBufferRef.current.length > 0 || !myApiExhaustedRef.current);
+    } catch (e) { console.error(e); }
     setMyTasksLoaded(true);
     setCuLoading(false);
   }
 
   async function loadMoreMyTasks() {
     setMyTasksLoadingMore(true);
-    const token = clickupTokenRef.current;
-    const userId = myUserIdRef.current;
-    const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${userId}&page=${myApiPageRef.current}`,
-      { headers: { Authorization: token } }
-    );
-    const data = await res.json();
-    const tasks = data.tasks || [];
-    myApiPageRef.current += 1;
-    setMyTasks(prev => {
-      const merged = [...prev, ...tasks];
-      setMyTasksFiltered(mySearchInput ? merged.filter(t => (t.name || '').toLowerCase().includes(mySearchInput.toLowerCase())) : merged);
-      return merged;
-    });
-    setMyTasksHasMore(tasks.length === 100);
+    try {
+      await fillMyBuffer();
+      const toShow = myBufferRef.current.splice(0, CU_PAGE_SIZE);
+      setMyTasks(prev => [...prev, ...toShow]);
+      setMyTasksHasMore(myBufferRef.current.length > 0 || !myApiExhaustedRef.current);
+    } catch (e) { console.error(e); }
     setMyTasksLoadingMore(false);
   }
 
   function filterMyTasks(q) {
     if (!q) { setMyTasksFiltered(myTasks); return; }
-    setMyTasksFiltered(myTasks.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase())));
+    setMyTasksFiltered(myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase())));
   }
 
   async function openTask(id) {
@@ -790,7 +804,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v20</span>
+              <span className="sidebar-title">록근_v21</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
