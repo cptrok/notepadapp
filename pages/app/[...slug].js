@@ -913,7 +913,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v32</span>
+              <span className="sidebar-title">록근_v33</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1315,8 +1315,6 @@ export default function App() {
             <input type="text" value={settingsData.clickupToken} onChange={e => setSettingsData(p => ({ ...p, clickupToken: e.target.value }))} placeholder="pk_..." />
             <div className="input-hint">개인 API 토큰을 입력하면 내 태스크 기능이 활성화됩니다</div>
           </div>
-          <button className="btn-success" onClick={saveProfile}>저장</button>
-          <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
           <div className="settings-divider">Mattermost 연동</div>
           {mmToken ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1340,6 +1338,8 @@ export default function App() {
               </div>
             </>
           )}
+          <button className="btn-success" onClick={saveProfile}>저장</button>
+          <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
         </div>
       </div>
     </>
