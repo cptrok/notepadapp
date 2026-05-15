@@ -39,7 +39,11 @@ export default async function handler(req, res) {
 
       case 'posts': {
         const page = req.query.page || 0;
-        const r = await fetch(`${MM_BASE}/channels/${channelId}/posts?page=${page}&per_page=50`, {
+        const since = req.query.since || '';
+        const url = since
+          ? `${MM_BASE}/channels/${channelId}/posts?since=${since}&per_page=200`
+          : `${MM_BASE}/channels/${channelId}/posts?page=${page}&per_page=50`;
+        const r = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await r.json();

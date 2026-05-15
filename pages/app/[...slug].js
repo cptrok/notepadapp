@@ -81,6 +81,9 @@ export default function App() {
   const [mmLoadingMorePosts, setMmLoadingMorePosts] = useState(false);
   const [mmSummary, setMmSummary] = useState('');
   const [mmSummarizing, setMmSummarizing] = useState(false);
+  const [mmDateInput, setMmDateInput] = useState('');
+  const [mmDateSummary, setMmDateSummary] = useState('');
+  const [mmDateSummarizing, setMmDateSummarizing] = useState(false);
   const [noteSummary, setNoteSummary] = useState('');
   const [noteSummarizing, setNoteSummarizing] = useState(false);
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
@@ -831,6 +834,51 @@ export default function App() {
     finally { setNoteSummarizing(false); }
   }
 
+  async function mmSummarizeByDate() {
+    if (!mmDateInput || !mmSelectedChannel) return;
+    setMmDateSummarizing(true);
+    setMmDateSummary('');
+    try {
+      const [year, month, day] = mmDateInput.split('-').map(Number);
+      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+      const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+      const r = await fetch(`/api/mattermost?action=posts&channelId=${mmSelectedChannel.id}&since=${startOfDay.getTime()}`, {
+        headers: { 'x-mm-token': mmTokenRef.current },
+      });
+      const data = await r.json();
+      if (!r.ok) { setMmDateSummary('오류: ' + data.error); return; }
+      const order = data.order || [];
+      const posts = order
+        .map(id => data.posts[id])
+        .filter(p => p.create_at >= startOfDay.getTime() && p.create_at <= endOfDay.getTime() && p.message?.trim())
+        .sort((a, b) => a.create_at - b.create_at);
+      if (posts.length === 0) { setMmDateSummary('해당 날짜의 메시지가 없습니다.'); return; }
+      const unknownIds = [...new Set(posts.map(p => p.user_id).filter(id => !mmUsersCacheRef.current[id]))];
+      if (unknownIds.length > 0) {
+        const ur = await fetch('/api/mattermost?action=users', {
+          method: 'POST',
+          headers: { 'x-mm-token': mmTokenRef.current, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userIds: unknownIds }),
+        });
+        if (ur.ok) { const ud = await ur.json(); ud.forEach(u => { mmUsersCacheRef.current[u.id] = u.username; }); }
+      }
+      const messages = posts.map(p => ({
+        username: mmUsersCacheRef.current[p.user_id] || p.user_id?.slice(0, 8),
+        message: p.message,
+      }));
+      const dateLabel = `${year}년 ${month}월 ${day}일`;
+      const gr = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, channelName: mmChannelDisplayName(mmSelectedChannel), date: dateLabel, mode: 'date' }),
+      });
+      const gd = await gr.json();
+      if (!gr.ok) { setMmDateSummary('오류: ' + gd.error); return; }
+      setMmDateSummary(gd.summary);
+    } catch (e) { setMmDateSummary('오류: ' + e.message); }
+    finally { setMmDateSummarizing(false); }
+  }
+
   function mmChannelDisplayName(ch) {
     if (ch.type === 'D') {
       const parts = ch.name.split('__');
@@ -930,7 +978,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v43</span>
+              <span className="sidebar-title">록근_v44</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1287,6 +1335,26 @@ export default function App() {
                     <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setMmSummary('')}>✕</button>
                   </div>
                   <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmSummary}</div>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexShrink: 0 }}>
+                <input
+                  type="date"
+                  value={mmDateInput}
+                  onChange={e => setMmDateInput(e.target.value)}
+                  style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}
+                />
+                <button className="btn-search-clickup" onClick={mmSummarizeByDate} disabled={mmDateSummarizing || !mmDateInput}>
+                  {mmDateSummarizing ? '⏳' : '📅 날짜 요약'}
+                </button>
+              </div>
+              {mmDateSummary && (
+                <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '13px' }}>📅 {mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')} 요약</span>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setMmDateSummary('')}>✕</button>
+                  </div>
+                  <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmDateSummary}</div>
                 </div>
               )}
               {mmPostsLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
