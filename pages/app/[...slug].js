@@ -50,6 +50,8 @@ export default function App() {
   const [myTasks, setMyTasks] = useState([]);
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
   const [myTasksLoaded, setMyTasksLoaded] = useState(false);
+  const [myTasksHasMore, setMyTasksHasMore] = useState(false);
+  const [myTasksLoadingMore, setMyTasksLoadingMore] = useState(false);
   const [cuLoading, setCuLoading] = useState(false);
   const [cuLoadingMore, setCuLoadingMore] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
@@ -91,6 +93,8 @@ export default function App() {
   const saveTimerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const trialPagesCache = useRef({});
+  const myApiPageRef = useRef(0);
+  const myUserIdRef = useRef(null);
   const mmTokenRef = useRef(null);
   const mmUserIdRef = useRef(null);
   const mmUsersCacheRef = useRef({});
@@ -389,22 +393,40 @@ export default function App() {
     const parts = token.split('_');
     const userId = parts.length >= 2 ? parts[1] : null;
     if (!userId) { setCuLoading(false); return; }
-    let all = [], page = 0;
-    while (true) {
-      const res = await fetch(
-        `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=false&order_by=created&assignees[]=${userId}&page=${page}`,
-        { headers: { Authorization: token } }
-      );
-      const data = await res.json();
-      const tasks = data.tasks || [];
-      all = [...all, ...tasks];
-      if (tasks.length < 100) break;
-      page++;
-    }
-    setMyTasks(all);
-    setMyTasksFiltered(all);
+    myUserIdRef.current = userId;
+    myApiPageRef.current = 0;
+    const res = await fetch(
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=false&order_by=created&assignees[]=${userId}&page=0`,
+      { headers: { Authorization: token } }
+    );
+    const data = await res.json();
+    const tasks = data.tasks || [];
+    myApiPageRef.current = 1;
+    setMyTasks(tasks);
+    setMyTasksFiltered(tasks);
+    setMyTasksHasMore(tasks.length === 100);
     setMyTasksLoaded(true);
     setCuLoading(false);
+  }
+
+  async function loadMoreMyTasks() {
+    setMyTasksLoadingMore(true);
+    const token = clickupTokenRef.current;
+    const userId = myUserIdRef.current;
+    const res = await fetch(
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=false&order_by=created&assignees[]=${userId}&page=${myApiPageRef.current}`,
+      { headers: { Authorization: token } }
+    );
+    const data = await res.json();
+    const tasks = data.tasks || [];
+    myApiPageRef.current += 1;
+    setMyTasks(prev => {
+      const merged = [...prev, ...tasks];
+      setMyTasksFiltered(mySearchInput ? merged.filter(t => (t.name || '').toLowerCase().includes(mySearchInput.toLowerCase())) : merged);
+      return merged;
+    });
+    setMyTasksHasMore(tasks.length === 100);
+    setMyTasksLoadingMore(false);
   }
 
   function filterMyTasks(q) {
@@ -768,7 +790,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v18</span>
+              <span className="sidebar-title">록근_v19</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -881,6 +903,12 @@ export default function App() {
                       </div>
                     </div>
                   ))}
+                  {myTasksLoadingMore && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+                  {!cuLoading && !myTasksLoadingMore && myTasksHasMore && (
+                    <div style={{ padding: '8px 6px' }}>
+                      <button className="page-btn" style={{ width: '100%' }} onClick={loadMoreMyTasks}>더 보기</button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
