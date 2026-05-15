@@ -101,11 +101,14 @@ export default function App() {
   const [mmLoadingMorePosts, setMmLoadingMorePosts] = useState(false);
   const [mmSummary, setMmSummary] = useState('');
   const [mmSummarizing, setMmSummarizing] = useState(false);
+  const [mmSummaryCollapsed, setMmSummaryCollapsed] = useState(false);
   const [mmDateInput, setMmDateInput] = useState('');
   const [mmDateSummary, setMmDateSummary] = useState('');
   const [mmDateSummarizing, setMmDateSummarizing] = useState(false);
+  const [mmDateSummaryCollapsed, setMmDateSummaryCollapsed] = useState(false);
   const [noteSummary, setNoteSummary] = useState('');
   const [noteSummarizing, setNoteSummarizing] = useState(false);
+  const [noteSummaryCollapsed, setNoteSummaryCollapsed] = useState(false);
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
 
@@ -1011,7 +1014,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v59</span>
+              <span className="sidebar-title">록근_v60</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1228,14 +1231,14 @@ export default function App() {
             </div>
             {noteSummary && (
               <div style={{ margin: '0 12px 8px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: noteSummaryCollapsed ? 0 : '6px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '13px', cursor: 'pointer' }} onClick={() => setNoteSummaryCollapsed(v => !v)}>✨ AI 요약 {noteSummaryCollapsed ? '▼' : '▲'}</span>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent, #0066cc)' }} onClick={() => saveToNote((noteTitle || '메모') + ' - AI 요약', noteSummary)}>📋 메모 저장</button>
                     <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setNoteSummary('')}>✕</button>
                   </div>
                 </div>
-                <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{noteSummary}</div>
+                {!noteSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{noteSummary}</div>}
               </div>
             )}
             <div id="quill-wrapper">
@@ -1366,14 +1369,14 @@ export default function App() {
               </div>
               {mmSummary && (
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mmSummaryCollapsed ? 0 : '6px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '13px', cursor: 'pointer' }} onClick={() => setMmSummaryCollapsed(v => !v)}>✨ AI 요약 {mmSummaryCollapsed ? '▼' : '▲'}</span>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent, #0066cc)' }} onClick={() => saveToNote(mmChannelDisplayName(mmSelectedChannel) + ' - AI 요약', mmSummary)}>📋 메모 저장</button>
                       <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setMmSummary('')}>✕</button>
                     </div>
                   </div>
-                  <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmSummary}</div>
+                  {!mmSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmSummary}</div>}
                 </div>
               )}
               <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexShrink: 0 }}>
@@ -1390,14 +1393,14 @@ export default function App() {
               </div>
               {mmDateSummary && (
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '13px' }}>📅 {mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')} 요약</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mmDateSummaryCollapsed ? 0 : '6px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '13px', cursor: 'pointer' }} onClick={() => setMmDateSummaryCollapsed(v => !v)}>📅 {mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')} 요약 {mmDateSummaryCollapsed ? '▼' : '▲'}</span>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent, #0066cc)' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary)}>📋 메모 저장</button>
                       <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setMmDateSummary('')}>✕</button>
                     </div>
                   </div>
-                  <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmDateSummary}</div>
+                  {!mmDateSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmDateSummary}</div>}
                 </div>
               )}
               {mmPostsLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
