@@ -77,6 +77,8 @@ export default function App() {
   const [mmPosts, setMmPosts] = useState([]);
   const [mmLoading, setMmLoading] = useState(false);
   const [mmPostsLoading, setMmPostsLoading] = useState(false);
+  const [mmPostsHasMore, setMmPostsHasMore] = useState(false);
+  const [mmLoadingMorePosts, setMmLoadingMorePosts] = useState(false);
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
 
@@ -100,6 +102,7 @@ export default function App() {
   const myAllRef = useRef([]);
   const mmTokenRef = useRef(null);
   const mmUserIdRef = useRef(null);
+  const mmPostsPageRef = useRef(1);
   const mmUsersCacheRef = useRef({});
 
   useEffect(() => { currentNoteIdRef.current = currentNoteId; }, [currentNoteId]);
@@ -751,33 +754,50 @@ export default function App() {
     setMmLoading(false);
   }
 
+  async function mmFetchPosts(channelId, page) {
+    const r = await fetch(`/api/mattermost?action=posts&channelId=${channelId}&page=${page}`, {
+      headers: { 'x-mm-token': mmTokenRef.current },
+    });
+    const data = await r.json();
+    if (!data.order || !data.posts) return [];
+    const posts = data.order.map(id => data.posts[id]).filter(Boolean);
+    const uniqueUserIds = [...new Set(posts.map(p => p.user_id).filter(uid => uid && !mmUsersCacheRef.current[uid]))];
+    if (uniqueUserIds.length > 0) {
+      const usersRes = await fetch('/api/mattermost?action=users', {
+        method: 'POST',
+        headers: { 'x-mm-token': mmTokenRef.current, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: uniqueUserIds }),
+      });
+      const users = await usersRes.json();
+      if (Array.isArray(users)) users.forEach(u => { mmUsersCacheRef.current[u.id] = u.nickname || u.username; });
+    }
+    return posts;
+  }
+
   async function mmOpenChannel(channel) {
     setMmSelectedChannel(channel);
     setMmPosts([]);
+    setMmPostsHasMore(false);
     setMmPostsLoading(true);
     try {
-      const r = await fetch(`/api/mattermost?action=posts&channelId=${channel.id}`, {
-        headers: { 'x-mm-token': mmTokenRef.current },
-      });
-      const data = await r.json();
-      if (data.order && data.posts) {
-        const orderedPosts = data.order.map(id => data.posts[id]).filter(Boolean);
-        const uniqueUserIds = [...new Set(orderedPosts.map(p => p.user_id).filter(uid => uid && !mmUsersCacheRef.current[uid]))];
-        if (uniqueUserIds.length > 0) {
-          const usersRes = await fetch('/api/mattermost?action=users', {
-            method: 'POST',
-            headers: { 'x-mm-token': mmTokenRef.current, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userIds: uniqueUserIds }),
-          });
-          const users = await usersRes.json();
-          if (Array.isArray(users)) {
-            users.forEach(u => { mmUsersCacheRef.current[u.id] = u.nickname || u.username; });
-          }
-        }
-        setMmPosts(orderedPosts.reverse());
-      }
+      const posts = await mmFetchPosts(channel.id, 0);
+      mmPostsPageRef.current = 1;
+      setMmPosts(posts.reverse());
+      setMmPostsHasMore(posts.length === 100);
     } catch (e) { console.error(e); }
     setMmPostsLoading(false);
+  }
+
+  async function mmLoadMorePosts() {
+    if (!mmSelectedChannel) return;
+    setMmLoadingMorePosts(true);
+    try {
+      const posts = await mmFetchPosts(mmSelectedChannel.id, mmPostsPageRef.current);
+      mmPostsPageRef.current += 1;
+      setMmPosts(prev => [...posts.reverse(), ...prev]);
+      setMmPostsHasMore(posts.length === 100);
+    } catch (e) { console.error(e); }
+    setMmLoadingMorePosts(false);
   }
 
   function mmChannelDisplayName(ch) {
@@ -879,7 +899,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v28</span>
+              <span className="sidebar-title">록근_v29</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1220,6 +1240,14 @@ export default function App() {
               {!mmPostsLoading && mmPosts.length === 0 && <div className="empty-list">메시지가 없습니다.</div>}
               {!mmPostsLoading && (
                 <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {mmPostsHasMore && (
+                    <div style={{ padding: '4px 0 8px' }}>
+                      {mmLoadingMorePosts
+                        ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
+                        : <button className="page-btn" style={{ width: '100%' }} onClick={mmLoadMorePosts}>이전 대화 더 보기</button>
+                      }
+                    </div>
+                  )}
                   {mmPosts.map(post => (
                     <div key={post.id} style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #f5f5f5)' }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', marginBottom: '4px' }}>
