@@ -52,6 +52,7 @@ export default function App() {
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
   const [myTasksLoaded, setMyTasksLoaded] = useState(false);
   const [cuLoading, setCuLoading] = useState(false);
+  const [cuLoadingMore, setCuLoadingMore] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
   const [cuDetail, setCuDetail] = useState(null);
 
@@ -345,8 +346,10 @@ export default function App() {
     } catch (e) { console.error(e); }
   }
 
-  function loadMoreCuPage() {
-    doLoadCuPage(cuKeywordRef.current, cuPageRef.current, false);
+  async function loadMoreCuPage() {
+    setCuLoadingMore(true);
+    await doLoadCuPage(cuKeywordRef.current, cuPageRef.current, false);
+    setCuLoadingMore(false);
   }
 
   async function fetchMyTasks(force) {
@@ -630,7 +633,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v9</span>
+              <span className="sidebar-title">록근_v10</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -721,7 +724,8 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {!cuLoading && cuHasMore && (
+                  {cuLoadingMore && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+                  {!cuLoading && !cuLoadingMore && cuHasMore && (
                     <div style={{ padding: '8px 6px' }}>
                       <button className="page-btn" style={{ width: '100%' }} onClick={loadMoreCuPage}>더 보기</button>
                     </div>
