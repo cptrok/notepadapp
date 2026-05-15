@@ -106,9 +106,6 @@ export default function App() {
   const [mmDateSummary, setMmDateSummary] = useState('');
   const [mmDateSummarizing, setMmDateSummarizing] = useState(false);
   const [mmDateSummaryCollapsed, setMmDateSummaryCollapsed] = useState(false);
-  const [noteSummary, setNoteSummary] = useState('');
-  const [noteSummarizing, setNoteSummarizing] = useState(false);
-  const [noteSummaryCollapsed, setNoteSummaryCollapsed] = useState(false);
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
 
@@ -848,24 +845,6 @@ export default function App() {
     finally { setMmSummarizing(false); }
   }
 
-  async function noteSummarize() {
-    if (!quillRef.current) return;
-    const text = quillRef.current.getText().trim();
-    if (!text) return;
-    setNoteSummarizing(true);
-    setNoteSummary('');
-    try {
-      const r = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ username: '메모', message: text }], channelName: noteTitle || '메모' }),
-      });
-      const data = await r.json();
-      if (!r.ok) { setNoteSummary('오류: ' + data.error); return; }
-      setNoteSummary(data.summary);
-    } catch (e) { setNoteSummary('오류: ' + e.message); }
-    finally { setNoteSummarizing(false); }
-  }
 
   async function mmSummarizeByDate() {
     if (!mmDateInput || !mmSelectedChannel) return;
@@ -1023,7 +1002,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v77</span>
+              <span className="sidebar-title">록근_v78</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1233,25 +1212,10 @@ export default function App() {
                 onChange={e => { setNoteTitle(e.target.value); noteTitleRef.current = e.target.value; }} />
               <div className="editor-actions">
                 <span className={`save-indicator ${showSaved ? 'show' : ''}`}>저장됨 ✓</span>
-                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={noteSummarize} disabled={noteSummarizing}>{noteSummarizing ? '⏳' : '✨ 요약'}</button>
-                <button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
+<button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
                 {showDelete && <button className="btn-delete" onClick={deleteNote}>삭제</button>}
               </div>
             </div>
-            {noteSummary && (
-              <div style={{ margin: '0 12px 8px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: noteSummaryCollapsed ? 0 : '6px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote((noteTitle || '메모') + ' - AI 요약', noteSummary)}>📋 메모저장</button>
-                    <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={noteSummarize} disabled={noteSummarizing}>🔄 다시 요약하기</button>
-                    <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setNoteSummaryCollapsed(v => !v)}>{noteSummaryCollapsed ? '▼' : '▲'}</button>
-                    <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setNoteSummary('')}>✕</button>
-                  </div>
-                </div>
-                {!noteSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{noteSummary}</div>}
-              </div>
-            )}
             <div id="quill-wrapper">
               <div ref={quillEditorRef}></div>
             </div>
