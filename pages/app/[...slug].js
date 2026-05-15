@@ -1014,7 +1014,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v63</span>
+              <span className="sidebar-title">록근_v64</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1233,10 +1233,10 @@ export default function App() {
               <div style={{ margin: '0 12px 8px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: noteSummaryCollapsed ? 0 : '6px' }}>
                   <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent, #0066cc)' }} onClick={() => saveToNote((noteTitle || '메모') + ' - AI 요약', noteSummary)}>📋 메모 저장</button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#666' }} onClick={() => setNoteSummaryCollapsed(v => !v)}>{noteSummaryCollapsed ? '▼' : '▲'}</button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setNoteSummary('')}>✕</button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote((noteTitle || '메모') + ' - AI 요약', noteSummary)}>📋 저장</button>
+                    <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setNoteSummaryCollapsed(v => !v)}>{noteSummaryCollapsed ? '▼' : '▲'}</button>
+                    <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setNoteSummary('')}>✕</button>
                   </div>
                 </div>
                 {!noteSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{noteSummary}</div>}
@@ -1372,10 +1372,10 @@ export default function App() {
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mmSummaryCollapsed ? 0 : '6px' }}>
                     <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent, #0066cc)' }} onClick={() => saveToNote(mmChannelDisplayName(mmSelectedChannel) + ' - AI 요약', mmSummary)}>📋 메모 저장</button>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#666' }} onClick={() => setMmSummaryCollapsed(v => !v)}>{mmSummaryCollapsed ? '▼' : '▲'}</button>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setMmSummary('')}>✕</button>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(mmChannelDisplayName(mmSelectedChannel) + ' - AI 요약', mmSummary)}>📋 저장</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmSummaryCollapsed(v => !v)}>{mmSummaryCollapsed ? '▼' : '▲'}</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmSummary('')}>✕</button>
                     </div>
                   </div>
                   {!mmSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmSummary}</div>}
@@ -1397,10 +1397,10 @@ export default function App() {
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mmDateSummaryCollapsed ? 0 : '6px' }}>
                     <span style={{ fontWeight: 700, fontSize: '13px' }}>📅 {mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')} 요약</span>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent, #0066cc)' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary)}>📋 메모 저장</button>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#666' }} onClick={() => setMmDateSummaryCollapsed(v => !v)}>{mmDateSummaryCollapsed ? '▼' : '▲'}</button>
-                      <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setMmDateSummary('')}>✕</button>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary)}>📋 저장</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(v => !v)}>{mmDateSummaryCollapsed ? '▼' : '▲'}</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary('')}>✕</button>
                     </div>
                   </div>
                   {!mmDateSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmDateSummary}</div>}
