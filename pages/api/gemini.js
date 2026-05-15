@@ -44,7 +44,7 @@ export default async function handler(req, res) {
       } else if (msg.includes('context_length_exceeded') || msg.includes('maximum context')) {
         korean = '대화 내용이 너무 많아 요약할 수 없습니다. 범위를 줄여주세요.';
       }
-      return res.status(r.status).json({ error: korean });
+      return res.status(r.status).json({ error: `${msg}\n\n번역: ${korean}` });
     }
     const summary = data.choices?.[0]?.message?.content || '요약 결과가 없습니다.';
     return res.json({ summary });
