@@ -103,6 +103,7 @@ export default function App() {
   const mmTokenRef = useRef(null);
   const mmUserIdRef = useRef(null);
   const mmPostsPageRef = useRef(1);
+  const mmScrollRef = useRef(null);
   const mmUsersCacheRef = useRef({});
 
   useEffect(() => { currentNoteIdRef.current = currentNoteId; }, [currentNoteId]);
@@ -783,7 +784,8 @@ export default function App() {
       const posts = await mmFetchPosts(channel.id, 0);
       mmPostsPageRef.current = 1;
       setMmPosts(posts.reverse());
-      setMmPostsHasMore(posts.length === 100);
+      setMmPostsHasMore(posts.length === 50);
+      setTimeout(() => { if (mmScrollRef.current) mmScrollRef.current.scrollTop = mmScrollRef.current.scrollHeight; }, 50);
     } catch (e) { console.error(e); }
     setMmPostsLoading(false);
   }
@@ -795,7 +797,7 @@ export default function App() {
       const posts = await mmFetchPosts(mmSelectedChannel.id, mmPostsPageRef.current);
       mmPostsPageRef.current += 1;
       setMmPosts(prev => [...posts.reverse(), ...prev]);
-      setMmPostsHasMore(posts.length === 100);
+      setMmPostsHasMore(posts.length === 50);
     } catch (e) { console.error(e); }
     setMmLoadingMorePosts(false);
   }
@@ -899,14 +901,14 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v30</span>
+              <span className="sidebar-title">록근_v31</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${currentTab === 'notes' ? 'active' : ''}`} onClick={() => switchTab('notes')}>메모</button>
               <button className={`tab-btn ${currentTab === 'clickup' ? 'active' : ''}`} onClick={() => switchTab('clickup')}>ClickUp</button>
               <button className={`tab-btn ${currentTab === 'license' ? 'active' : ''}`} onClick={() => switchTab('license')}>라이선스</button>
-              <button className={`tab-btn ${currentTab === 'chat' ? 'active' : ''}`} onClick={() => switchTab('chat')}>채팅</button>
+              <button className={`tab-btn ${currentTab === 'chat' ? 'active' : ''}`} onClick={() => switchTab('chat')}>MM</button>
             </div>
 
             {currentTab === 'notes' && (
@@ -1239,7 +1241,7 @@ export default function App() {
               {mmPostsLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
               {!mmPostsLoading && mmPosts.length === 0 && <div className="empty-list">메시지가 없습니다.</div>}
               {!mmPostsLoading && (
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div ref={mmScrollRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {mmPostsHasMore && (
                     <div style={{ padding: '4px 0 8px' }}>
                       {mmLoadingMorePosts
