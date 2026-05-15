@@ -44,7 +44,6 @@ export default function App() {
 
   const [cuSubTab, setCuSubTab] = useState('search');
   const [cuTasks, setCuTasks] = useState([]);
-  const [cuPage, setCuPage] = useState(0);
   const [cuHasMore, setCuHasMore] = useState(false);
   const [cuKeyword, setCuKeyword] = useState('');
   const [cuSearchInput, setCuSearchInput] = useState('');
@@ -75,8 +74,10 @@ export default function App() {
   const currentNoteIdRef = useRef(null);
   const noteTitleRef = useRef('');
   const allNotesRef = useRef([]);
-  const cuPageRef = useRef(0);
   const cuKeywordRef = useRef('');
+  const cuBufferRef = useRef([]);
+  const cuApiPageRef = useRef(0);
+  const cuApiExhaustedRef = useRef(false);
   const saveTimerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const trialPagesCache = useRef({});
@@ -84,7 +85,6 @@ export default function App() {
   useEffect(() => { currentNoteIdRef.current = currentNoteId; }, [currentNoteId]);
   useEffect(() => { noteTitleRef.current = noteTitle; }, [noteTitle]);
   useEffect(() => { allNotesRef.current = allNotes; }, [allNotes]);
-  useEffect(() => { cuPageRef.current = cuPage; }, [cuPage]);
   useEffect(() => { cuKeywordRef.current = cuKeyword; }, [cuKeyword]);
 
   useEffect(() => {
@@ -304,43 +304,59 @@ export default function App() {
     router.push('/app/note', undefined, { shallow: true });
   }
 
+  const CU_PAGE_SIZE = 6;
+
+  async function fetchApiPage(keyword) {
+    if (cuApiExhaustedRef.current) return;
+    const res = await fetch(
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&page=${cuApiPageRef.current}`,
+      { headers: { Authorization: clickupTokenRef.current } }
+    );
+    const data = await res.json();
+    const tasks = data.tasks || [];
+    const filtered = keyword ? tasks.filter(t =>
+      (t.name || '').toLowerCase().includes(keyword.toLowerCase()) ||
+      (t.description || '').toLowerCase().includes(keyword.toLowerCase())
+    ) : tasks;
+    cuBufferRef.current = [...cuBufferRef.current, ...filtered];
+    cuApiPageRef.current += 1;
+    if (tasks.length < 100) cuApiExhaustedRef.current = true;
+  }
+
+  async function fillBuffer(keyword) {
+    while (cuBufferRef.current.length < CU_PAGE_SIZE && !cuApiExhaustedRef.current) {
+      await fetchApiPage(keyword);
+    }
+  }
+
   async function fetchTasksByKeyword(q) {
     if (!q.trim()) return;
     setCuKeyword(q);
     cuKeywordRef.current = q;
-    setCuPage(0);
-    cuPageRef.current = 0;
     setCuTasks([]);
     setCuHasMore(false);
     setCuDetail(null);
+    cuBufferRef.current = [];
+    cuApiPageRef.current = 0;
+    cuApiExhaustedRef.current = false;
     setCuLoading(true);
-    await doLoadCuPage(q, 0, true);
-    setCuLoading(false);
-  }
-
-  async function doLoadCuPage(keyword, page, isNew) {
     try {
-      const res = await fetch(
-        `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&page=${page}`,
-        { headers: { Authorization: clickupTokenRef.current } }
-      );
-      const data = await res.json();
-      const tasks = data.tasks || [];
-      const filtered = keyword ? tasks.filter(t =>
-        (t.name || '').toLowerCase().includes(keyword.toLowerCase()) ||
-        (t.description || '').toLowerCase().includes(keyword.toLowerCase())
-      ) : tasks;
-      if (isNew) setCuTasks(filtered);
-      else setCuTasks(prev => [...prev, ...filtered]);
-      setCuPage(page + 1);
-      cuPageRef.current = page + 1;
-      setCuHasMore(tasks.length === 100);
+      await fillBuffer(q);
+      const toShow = cuBufferRef.current.splice(0, CU_PAGE_SIZE);
+      setCuTasks(toShow);
+      setCuHasMore(cuBufferRef.current.length > 0 || !cuApiExhaustedRef.current);
     } catch (e) { console.error(e); }
+    setCuLoading(false);
   }
 
   async function loadMoreCuPage() {
     setCuLoadingMore(true);
-    await doLoadCuPage(cuKeywordRef.current, cuPageRef.current, false);
+    try {
+      await fillBuffer(cuKeywordRef.current);
+      const toShow = cuBufferRef.current.splice(0, CU_PAGE_SIZE);
+      setCuTasks(prev => [...prev, ...toShow]);
+      setCuHasMore(cuBufferRef.current.length > 0 || !cuApiExhaustedRef.current);
+    } catch (e) { console.error(e); }
     setCuLoadingMore(false);
   }
 
@@ -625,7 +641,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v13</span>
+              <span className="sidebar-title">록근_v14</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
