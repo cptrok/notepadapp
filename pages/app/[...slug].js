@@ -999,7 +999,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v52</span>
+              <span className="sidebar-title">록근_v53</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
