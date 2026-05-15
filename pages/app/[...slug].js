@@ -370,7 +370,7 @@ export default function App() {
     let all = [], page = 0;
     while (true) {
       const res = await fetch(
-        `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=false&assignees[]=${userId}&page=${page}`,
+        `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=false&order_by=created&reverse=true&assignees[]=${userId}&page=${page}`,
         { headers: { Authorization: token } }
       );
       const data = await res.json();
@@ -379,9 +379,8 @@ export default function App() {
       if (tasks.length < 100) break;
       page++;
     }
-    const sorted = sortByDateCreated(all);
-    setMyTasks(sorted);
-    setMyTasksFiltered(sorted);
+    setMyTasks(all);
+    setMyTasksFiltered(all);
     setMyTasksLoaded(true);
     setCuLoading(false);
   }
@@ -641,7 +640,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v15</span>
+              <span className="sidebar-title">록근_v16</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
