@@ -67,7 +67,7 @@ export default function App() {
   const [trialPanel, setTrialPanel] = useState(null);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '' });
+  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '' });
   const [settingsMsg, setSettingsMsg] = useState({ text: '', type: '' });
 
   const [mmToken, setMmToken] = useState(null);
@@ -235,6 +235,38 @@ export default function App() {
       const p = data[0];
       setDisplayName(p.display_name || currentUsername);
       if (p.clickup_token) clickupTokenRef.current = p.clickup_token;
+
+      // Mattermost 자동 로그인 (저장된 계정으로 매번 새 토큰 발급)
+      if (p.mm_username && p.mm_password) {
+        try {
+          const r = await fetch('/api/mattermost?action=login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: p.mm_username, password: p.mm_password }),
+          });
+          const mmData = await r.json();
+          if (r.ok && mmData.token) {
+            mmTokenRef.current = mmData.token;
+            mmUserIdRef.current = mmData.userId;
+            setMmToken(mmData.token);
+            setMmUserId(mmData.userId);
+            localStorage.setItem('mm_token', mmData.token);
+            localStorage.setItem('mm_user_id', mmData.userId);
+            await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: mmData.token });
+          }
+        } catch (e) {
+          // 자동 로그인 실패 시 DB 저장 토큰 사용
+          if (p.mm_token) {
+            mmTokenRef.current = p.mm_token;
+            setMmToken(p.mm_token);
+            localStorage.setItem('mm_token', p.mm_token);
+          }
+        }
+      } else if (p.mm_token) {
+        mmTokenRef.current = p.mm_token;
+        setMmToken(p.mm_token);
+        localStorage.setItem('mm_token', p.mm_token);
+      }
     }
   }
 
@@ -561,7 +593,7 @@ export default function App() {
     const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
     if (data && data[0]) {
       const p = data[0];
-      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '' });
+      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '' });
     }
     setSettingsMsg({ text: '', type: '' });
     setShowSettings(true);
@@ -573,12 +605,42 @@ export default function App() {
       p_new_id: settingsData.username,
       p_display_name: settingsData.displayName,
       p_new_password: settingsData.newPassword || null,
-      p_clickup_token: settingsData.clickupToken || null
+      p_clickup_token: settingsData.clickupToken || null,
+      p_mm_username: settingsData.mmUsername || null,
+      p_mm_password: settingsData.mmPassword || null,
     });
     if (error) { setSettingsMsg({ text: '저장 실패: ' + error.message, type: 'error' }); return; }
     if (settingsData.clickupToken) clickupTokenRef.current = settingsData.clickupToken;
     if (settingsData.displayName) setDisplayName(settingsData.displayName);
-    setSettingsMsg({ text: '저장되었습니다.', type: 'success' });
+
+    // MM 계정이 입력된 경우 즉시 토큰 갱신
+    if (settingsData.mmUsername && settingsData.mmPassword) {
+      try {
+        const r = await fetch('/api/mattermost?action=login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: settingsData.mmUsername, password: settingsData.mmPassword }),
+        });
+        const mmData = await r.json();
+        if (r.ok && mmData.token) {
+          mmTokenRef.current = mmData.token;
+          mmUserIdRef.current = mmData.userId;
+          setMmToken(mmData.token);
+          setMmUserId(mmData.userId);
+          localStorage.setItem('mm_token', mmData.token);
+          localStorage.setItem('mm_user_id', mmData.userId);
+          await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: mmData.token });
+          setMmLoginMsg('');
+          setSettingsMsg({ text: '저장되었습니다. Mattermost 연동 완료.', type: 'success' });
+        } else {
+          setSettingsMsg({ text: '저장됨. Mattermost 로그인 실패: ' + (mmData.error || ''), type: 'error' });
+        }
+      } catch (e) {
+        setSettingsMsg({ text: '저장됨. Mattermost 연결 오류: ' + e.message, type: 'error' });
+      }
+    } else {
+      setSettingsMsg({ text: '저장되었습니다.', type: 'success' });
+    }
   }
 
   function logout() {
@@ -817,7 +879,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v26</span>
+              <span className="sidebar-title">록근_v27</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1214,31 +1276,20 @@ export default function App() {
           <button className="btn-success" onClick={saveProfile}>저장</button>
           <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
           <div className="settings-divider">Mattermost 연동</div>
-          {mmToken ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary, #666)' }}>chat.exem.io 로그인됨</div>
-              <button className="btn-logout" style={{ width: '100%' }} onClick={mmLogout}>Mattermost 로그아웃</button>
-            </div>
-          ) : (
-            <>
-              <div className="form-group">
-                <label>Mattermost 아이디</label>
-                <input type="text" value={mmLoginForm.username}
-                  onChange={e => setMmLoginForm(p => ({ ...p, username: e.target.value }))}
-                  placeholder="아이디 입력"
-                  onKeyDown={e => e.key === 'Enter' && mmLogin()} />
-              </div>
-              <div className="form-group">
-                <label>비밀번호</label>
-                <input type="password" value={mmLoginForm.password}
-                  onChange={e => setMmLoginForm(p => ({ ...p, password: e.target.value }))}
-                  placeholder="비밀번호 입력"
-                  onKeyDown={e => e.key === 'Enter' && mmLogin()} />
-              </div>
-              <button className="btn-success" onClick={mmLogin}>Mattermost 로그인</button>
-            </>
-          )}
-          {mmLoginMsg && <div className={`settings-message ${mmLoginMsg.includes('성공') ? 'success' : 'error'}`}>{mmLoginMsg}</div>}
+          <div className="form-group">
+            <label>Mattermost 아이디</label>
+            <input type="text" value={settingsData.mmUsername}
+              onChange={e => setSettingsData(p => ({ ...p, mmUsername: e.target.value }))}
+              placeholder="Mattermost 아이디" />
+          </div>
+          <div className="form-group">
+            <label>Mattermost 비밀번호</label>
+            <input type="password" value={settingsData.mmPassword}
+              onChange={e => setSettingsData(p => ({ ...p, mmPassword: e.target.value }))}
+              placeholder="Mattermost 비밀번호" />
+            <div className="input-hint">저장 시 자동으로 로그인하여 토큰을 갱신합니다</div>
+          </div>
+          {mmToken && <div style={{ fontSize: '13px', color: '#4caf50' }}>✓ Mattermost 연동됨</div>}
         </div>
       </div>
     </>
