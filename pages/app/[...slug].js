@@ -998,7 +998,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v47</span>
+              <span className="sidebar-title">록근_v48</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1362,7 +1362,8 @@ export default function App() {
                   type="date"
                   value={mmDateInput}
                   onChange={e => setMmDateInput(e.target.value)}
-                  style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}
+                  onClick={e => { try { e.target.showPicker(); } catch {} }}
+                  style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', cursor: 'pointer' }}
                 />
                 <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing || !mmDateInput}>
                   {mmDateSummarizing ? '⏳' : '📅 날짜 요약'}
