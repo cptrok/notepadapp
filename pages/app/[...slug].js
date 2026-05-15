@@ -396,7 +396,7 @@ export default function App() {
     myUserIdRef.current = userId;
     myApiPageRef.current = 0;
     const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=false&order_by=created&assignees[]=${userId}&page=0`,
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${userId}&page=0`,
       { headers: { Authorization: token } }
     );
     const data = await res.json();
@@ -414,7 +414,7 @@ export default function App() {
     const token = clickupTokenRef.current;
     const userId = myUserIdRef.current;
     const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=false&order_by=created&assignees[]=${userId}&page=${myApiPageRef.current}`,
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${userId}&page=${myApiPageRef.current}`,
       { headers: { Authorization: token } }
     );
     const data = await res.json();
@@ -790,7 +790,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v19</span>
+              <span className="sidebar-title">록근_v20</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
