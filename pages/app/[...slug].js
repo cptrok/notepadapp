@@ -266,7 +266,7 @@ export default function App() {
     navFn('/app/note/new', undefined, { shallow: true });
   }
 
-  async function autoSaveNote() {
+  async function autoSaveNote(showIndicator = false) {
     const username = localStorage.getItem('memo_user');
     if (!username || !quillRef.current) return;
     const content = quillRef.current.root.innerHTML;
@@ -281,8 +281,10 @@ export default function App() {
         currentNoteIdRef.current = data;
         setShowDelete(true);
       }
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 2000);
+      if (showIndicator) {
+        setShowSaved(true);
+        setTimeout(() => setShowSaved(false), 2000);
+      }
       loadNotes();
     }
   }
@@ -623,7 +625,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v12</span>
+              <span className="sidebar-title">록근_v13</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -797,7 +799,7 @@ export default function App() {
                 onChange={e => { setNoteTitle(e.target.value); noteTitleRef.current = e.target.value; }} />
               <div className="editor-actions">
                 <span className={`save-indicator ${showSaved ? 'show' : ''}`}>저장됨 ✓</span>
-                <button className="btn-save" onClick={autoSaveNote}>저장</button>
+                <button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
                 {showDelete && <button className="btn-delete" onClick={deleteNote}>삭제</button>}
               </div>
             </div>
