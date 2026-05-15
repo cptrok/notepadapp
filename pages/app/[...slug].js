@@ -109,6 +109,28 @@ export default function App() {
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
 
+  const DEQ_LISTS = {
+    MFO: '900303022977', MFT: '900303031749', MFA: '900303116533',
+    MFD: '900303116531', MFS: '900303116541', MFM: '900303116526',
+    MFP: '900303164467', MFH: '900303116521', Dashboard: '901804149604',
+  };
+  const DEQ_CUSTOMERS = [{"id":"a5411657-ddb6-41ff-a0df-2c8b65bff602","name":"엑셈"},{"id":"5c0a5ede-05ee-4181-a8d1-91d8211b9da8","name":"고객사추가필요"},{"id":"ba22287b-9706-4dff-84a4-0d38b8787efd","name":"기타고객사"},{"id":"8c5c62ba-b382-43ee-b77d-9b13f540f0d0","name":"BGF네트웍스"},{"id":"2a952a32-4fa8-4849-8344-d2e73842854b","name":"BC카드"},{"id":"0c4c4847-05c7-4209-9665-0f3f215fe72d","name":"IBK기업은행"},{"id":"bf159895-fb85-4082-a07d-bc38303bb18c","name":"IBK투자증권"},{"id":"c8b57b5e-47cd-4a2b-a696-fc4580e4564e","name":"KLNET"},{"id":"df73659a-3a2a-4440-80ae-0c2da41be66d","name":"KT"},{"id":"d1d57bee-0368-4bc8-86b7-b602198388cb","name":"LG디스플레이"},{"id":"dc6817de-0957-4849-89f5-e26735fa73b5","name":"LG에너지솔루션"},{"id":"398e711f-0b70-4f84-973f-7569eef84135","name":"건강보험공단"},{"id":"ad13aa99-7a59-4ae0-9926-9a84d6cf96e2","name":"건강보험심사평가원"},{"id":"a221f483-21c3-46ca-b848-e02135c78e6e","name":"경기도청"},{"id":"f3703851-6eec-4708-b584-dd5d49eb97a2","name":"금융결제원"},{"id":"e0f7d99a-8ebe-44c3-ab8a-6fa8032f258a","name":"기획재정부"},{"id":"3be8f72b-3343-446a-b10b-f2d8574139ee","name":"카카오뱅크"},{"id":"3a8b9c2d-3e13-4624-893d-f3fb26e2ce44","name":"카카오페이"},{"id":"499912dc-fb62-476b-8626-42a3b6c8ecca","name":"카카오페이증권"},{"id":"930820ae-ce40-424e-a793-54bf835b0cc3","name":"한국거래소(KRX)"},{"id":"a8d71e89-d69a-4913-b05e-a27d7f083553","name":"신한은행"},{"id":"45231106-48f6-4e9f-9c4e-a3f7442c552b","name":"신한라이프"},{"id":"395640c6-3548-432b-9ff6-4172bb0003c6","name":"신한투자증권(구.신한금융투자)"},{"id":"d386d3f6-e858-4238-9989-4c21a29afd2f","name":"신한카드"},{"id":"e1fd8f33-87fd-4999-9d40-366a7678b4c5","name":"하나은행"},{"id":"c1c1cd22-4f38-4963-9fa6-3c93a0f20bd9","name":"하나카드"},{"id":"f3141d14-4007-42d5-a31f-9b1ec2a2ad9b","name":"SR(수서고속)"},{"id":"9a560cdf-3dad-4dba-a469-f2b447e9d719","name":"국민연금공단"},{"id":"c7768cce-7491-49d4-afd5-bf815473b694","name":"고려대학교의료원"},{"id":"86b3da06-c940-40df-a6de-9eeaf775f709","name":"현대카드"},{"id":"f34d3596-a2e2-4ada-b677-ce0be1415c2a","name":"현대캐피탈"},{"id":"b4bf089d-ae00-485c-9e9f-fd540102df4f","name":"SK하이닉스"},{"id":"66a44766-8378-4c2e-a02a-f3e712f78f4d","name":"엔카닷컴(구.SK엔카닷컴)"},{"id":"5f4bd043-473f-4c92-94ec-c1e2a0b2b23f","name":"미래에셋증권"},{"id":"99daacee-b306-4efa-9a42-db0a25209b04","name":"삼성생명"},{"id":"40e065c9-fc9f-405d-9ca8-7dd2b52faa6e","name":"삼성전자"},{"id":"1f99cb5c-b95d-4839-a162-cdcaf5d6182a","name":"삼성화재"},{"id":"db0ea50d-cca5-44a5-9dbc-673500edd8db","name":"삼성카드"},{"id":"4012be3b-ce39-4e33-b127-5e3f3e879040","name":"한화생명"},{"id":"ace7a982-5bc0-407b-9ad8-69f06e9cee8a","name":"한화시스템"},{"id":"2de07de8-6ee8-455e-b09b-fc77d497545f","name":"한국신용정보원"},{"id":"d62c25a8-3086-4ad9-9847-5db5e95dcdcc","name":"한국전력공사"},{"id":"c305a1d7-1bef-45ad-8321-97072135bcdc","name":"한국투자증권"},{"id":"07b07df0-0ba8-4a76-b60f-2d268725df99","name":"한국철도공사(구.코레일)"},{"id":"e47eabab-1024-4aa5-8c23-974e3a626473","name":"KB라이프생명"},{"id":"de380e7c-6566-4854-a28f-7c8b82831d4e","name":"KB증권"},{"id":"c6c90b2e-03e0-4024-ac79-441a38151388","name":"KB국민카드"},{"id":"c7a07f36-b51a-480b-9732-34215e51e80c","name":"단국대학교"},{"id":"2164a1ce-1163-4b16-95be-dc8989bee47a","name":"경기신용보증재단"},{"id":"95d883e5-fb0f-495b-881a-bec00626df4d","name":"NH투자증권"},{"id":"986b9473-020c-4a1e-bfae-e07b9090fd7d","name":"NH농협생명"},{"id":"a331c619-f8b1-4f70-9082-826b039d3478","name":"한국주택금융공사"},{"id":"935d4c8d-6d78-4b26-a409-4800cc036ca1","name":"한국도로공사"},{"id":"5a443175-0540-41ae-8e77-a86705c064aa","name":"토스뱅크"},{"id":"8267dd2a-00cd-4ec5-8bc5-07de919a8614","name":"토스증권"},{"id":"ed40e664-4aea-4e47-bfef-47d55f2fdf1f","name":"토스CX"},{"id":"9e6ea49b-5b4d-4b89-bcd8-6c583e1ec0dc","name":"KIDB"},{"id":"fb4d628f-b427-4342-81aa-fabfeeef1277","name":"푸디스트"},{"id":"cebd12b5-7b47-4dc8-9187-d7a80d09b08b","name":"웰컴저축은행"},{"id":"5e972528-c7f4-4eba-869e-908a7e3b100d","name":"웰컴페이먼츠"}];
+  const DEQ_ISSUE_TYPES = [
+    { id: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', name: 'Inquiry' },
+    { id: '94f7e5c5-3ef4-4680-a316-56403c99c3b7', name: 'Bug' },
+    { id: 'ee2478c8-3f15-4623-b1c6-bbc4277c5785', name: 'Improvement' },
+    { id: '32d3359f-433a-47c7-9e61-2e69bc5fb52a', name: 'Spec' },
+    { id: '3314ebb4-703e-4512-bf9f-c3ef7ed01708', name: 'Need Plan' },
+    { id: '1d5443b1-f195-4f58-acfe-710ad9b85795', name: 'Daemon Build' },
+    { id: '92388248-45dc-4c30-a76c-7d71149973ce', name: 'DSR' },
+    { id: '13a21f06-f598-4e14-a977-6de6ad2a1810', name: "Support" },
+  ];
+
+  const [cuRegModal, setCuRegModal] = useState(false);
+  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '' });
+  const [cuRegLoading, setCuRegLoading] = useState(false);
+  const [cuRegMsg, setCuRegMsg] = useState('');
+
   const clickupTokenRef = useRef(CLICKUP_TOKEN_DEFAULT);
   const quillRef = useRef(null);
   const quillEditorRef = useRef(null);
@@ -903,6 +925,43 @@ export default function App() {
     alert('메모에 저장되었습니다.');
   }
 
+  function openCuRegModal() {
+    const title = noteTitleRef.current || '';
+    const text = quillRef.current ? quillRef.current.getText().trim() : '';
+    setCuRegForm(f => ({ ...f, taskName: title, description: text, customerSearch: '', customer: '' }));
+    setCuRegMsg('');
+    setCuRegModal(true);
+  }
+
+  async function submitCuReg() {
+    if (!cuRegForm.taskName.trim()) return setCuRegMsg('태스크명을 입력해주세요.');
+    if (!cuRegForm.customer) return setCuRegMsg('고객사를 선택해주세요.');
+    setCuRegLoading(true);
+    setCuRegMsg('');
+    const listId = DEQ_LISTS[cuRegForm.product];
+    const today = new Date();
+    const todayTs = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    try {
+      const r = await fetch(`https://api.clickup.com/api/v2/list/${listId}/task`, {
+        method: 'POST',
+        headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: cuRegForm.taskName,
+          description: cuRegForm.description,
+          custom_fields: [
+            { id: 'cc55be6f-f4bf-42b7-9a33-b06e1b60f800', value: cuRegForm.customer },
+            { id: '6d0330f1-3102-4eea-9099-90875ec6700a', value: cuRegForm.issueType },
+            { id: 'ad3894ba-579d-4a6b-946b-9070d604652e', value: todayTs },
+          ],
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setCuRegMsg('오류: ' + (data.err || JSON.stringify(data))); return; }
+      setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id);
+    } catch (e) { setCuRegMsg('오류: ' + e.message); }
+    finally { setCuRegLoading(false); }
+  }
+
   function mmChannelDisplayName(ch) {
     if (ch.type === 'D') {
       const parts = ch.name.split('__');
@@ -996,13 +1055,71 @@ export default function App() {
 
   if (!currentUsername) return null;
 
+  const cuRegFilteredCustomers = DEQ_CUSTOMERS.filter(c =>
+    !cuRegForm.customerSearch || c.name.toLowerCase().includes(cuRegForm.customerSearch.toLowerCase())
+  );
+
   return (
     <>
+      {cuRegModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <span style={{ fontWeight: 700, fontSize: '16px' }}>📋 ClickUp [DEQ]협업시스템 등록</span>
+              <button onClick={() => setCuRegModal(false)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--text, #333)' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>제품 *</div>
+                <select value={cuRegForm.product} onChange={e => setCuRegForm(f => ({ ...f, product: e.target.value }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}>
+                  {Object.keys(DEQ_LISTS).map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>태스크명 *</div>
+                <input value={cuRegForm.taskName} onChange={e => setCuRegForm(f => ({ ...f, taskName: e.target.value }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', boxSizing: 'border-box' }} placeholder="태스크명 입력" />
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>고객사 *</div>
+                <input value={cuRegForm.customerSearch} onChange={e => setCuRegForm(f => ({ ...f, customerSearch: e.target.value, customer: '' }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', marginBottom: '4px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', boxSizing: 'border-box' }} placeholder="고객사 검색..." />
+                {cuRegForm.customerSearch && !cuRegForm.customer && (
+                  <div style={{ border: '1px solid var(--border, #ddd)', borderRadius: '6px', maxHeight: '160px', overflowY: 'auto', background: 'var(--bg, #fff)' }}>
+                    {cuRegFilteredCustomers.slice(0, 20).map(c => (
+                      <div key={c.id} onClick={() => setCuRegForm(f => ({ ...f, customer: c.id, customerSearch: c.name }))} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', borderBottom: '1px solid var(--border, #eee)' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--hover-bg, #f5f5f5)'}
+                        onMouseLeave={e => e.currentTarget.style.background = ''}>
+                        {c.name}
+                      </div>
+                    ))}
+                    {cuRegFilteredCustomers.length === 0 && <div style={{ padding: '8px 12px', fontSize: '13px', color: '#999' }}>검색 결과 없음</div>}
+                  </div>
+                )}
+                {cuRegForm.customer && <div style={{ fontSize: '12px', color: '#0066cc', marginTop: '2px' }}>✓ {cuRegForm.customerSearch}</div>}
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>Issue Type *</div>
+                <select value={cuRegForm.issueType} onChange={e => setCuRegForm(f => ({ ...f, issueType: e.target.value }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}>
+                  {DEQ_ISSUE_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>설명</div>
+                <textarea value={cuRegForm.description} onChange={e => setCuRegForm(f => ({ ...f, description: e.target.value }))} rows={5} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', resize: 'vertical', background: 'var(--bg, #fff)', color: 'var(--text, #333)', boxSizing: 'border-box' }} placeholder="설명 (선택)" />
+              </div>
+              {cuRegMsg && <div style={{ fontSize: '13px', color: cuRegMsg.startsWith('✅') ? '#2e7d32' : '#c00', padding: '8px', borderRadius: '6px', background: cuRegMsg.startsWith('✅') ? '#e8f5e9' : '#fff0f0' }}>{cuRegMsg}</div>}
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setCuRegModal(false)} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', background: 'var(--bg, #fff)', cursor: 'pointer', fontSize: '14px' }}>취소</button>
+                <button onClick={submitCuReg} disabled={cuRegLoading} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#0066cc', color: '#fff', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>{cuRegLoading ? '등록 중...' : '📋 등록하기'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="app-layout">
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v78</span>
+              <span className="sidebar-title">록근_v79</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1212,7 +1329,8 @@ export default function App() {
                 onChange={e => { setNoteTitle(e.target.value); noteTitleRef.current = e.target.value; }} />
               <div className="editor-actions">
                 <span className={`save-indicator ${showSaved ? 'show' : ''}`}>저장됨 ✓</span>
-<button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
+                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={openCuRegModal}>📋 ClickUp 등록</button>
+                <button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
                 {showDelete && <button className="btn-delete" onClick={deleteNote}>삭제</button>}
               </div>
             </div>
