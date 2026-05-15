@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { sb } from '../../lib/supabase';
 
@@ -134,7 +134,15 @@ export default function App() {
   const mmUserIdRef = useRef(null);
   const mmPostsPageRef = useRef(1);
   const mmScrollRef = useRef(null);
+  const mmPrevScrollHeightRef = useRef(null);
   const mmUsersCacheRef = useRef({});
+
+  useLayoutEffect(() => {
+    if (mmPrevScrollHeightRef.current !== null && mmScrollRef.current) {
+      mmScrollRef.current.scrollTop = mmScrollRef.current.scrollHeight - mmPrevScrollHeightRef.current;
+      mmPrevScrollHeightRef.current = null;
+    }
+  }, [mmPosts]);
 
   useEffect(() => { currentNoteIdRef.current = currentNoteId; }, [currentNoteId]);
   useEffect(() => { noteTitleRef.current = noteTitle; }, [noteTitle]);
@@ -810,16 +818,12 @@ export default function App() {
   async function mmLoadMorePosts() {
     if (!mmSelectedChannel) return;
     setMmLoadingMorePosts(true);
-    const el = mmScrollRef.current;
-    const prevScrollHeight = el ? el.scrollHeight : 0;
+    if (mmScrollRef.current) mmPrevScrollHeightRef.current = mmScrollRef.current.scrollHeight;
     try {
       const posts = await mmFetchPosts(mmSelectedChannel.id, mmPostsPageRef.current);
       mmPostsPageRef.current += 1;
       setMmPosts(prev => [...posts.reverse(), ...prev]);
       setMmPostsHasMore(posts.length === 50);
-      setTimeout(() => {
-        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
-      }, 0);
     } catch (e) { console.error(e); }
     setMmLoadingMorePosts(false);
   }
@@ -1019,7 +1023,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v71</span>
+              <span className="sidebar-title">록근_v72</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
