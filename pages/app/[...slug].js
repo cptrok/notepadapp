@@ -807,7 +807,7 @@ export default function App() {
       if (!r.ok) { setMmSummary('오류: ' + data.error); return; }
       setMmSummary(data.summary);
     } catch (e) { setMmSummary('오류: ' + e.message); }
-    setMmSummarizing(false);
+    finally { setMmSummarizing(false); }
   }
 
   function mmChannelDisplayName(ch) {
@@ -909,7 +909,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v39</span>
+              <span className="sidebar-title">록근_v41</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
