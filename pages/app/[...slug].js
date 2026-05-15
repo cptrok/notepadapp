@@ -737,7 +737,7 @@ export default function App() {
         const channels = await chRes.json();
         if (Array.isArray(channels)) {
           const MM_INCLUDE = ['[MF', '[exemONE'];
-          const MM_EXCLUDE = ['이슈접수', '공지사항', '잡담', '제품기획', '제품이슈방', '기획방', '전체공지방', '2그룹', '긴급공지', '신입OJT'];
+          const MM_EXCLUDE = ['이슈접수', '이슈 접수', '공지사항', '잡담', '제품기획', '제품이슈방', '기획방', '전체공지방', '2그룹', '긴급공지', '신입OJT'];
           const filtered = channels.filter(c => {
             if (c.type === 'D' || c.type === 'G') return false;
             const name = c.display_name || c.name;
@@ -899,7 +899,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v29</span>
+              <span className="sidebar-title">록근_v30</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
