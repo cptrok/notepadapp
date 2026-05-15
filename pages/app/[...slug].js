@@ -79,6 +79,8 @@ export default function App() {
   const [mmPostsLoading, setMmPostsLoading] = useState(false);
   const [mmPostsHasMore, setMmPostsHasMore] = useState(false);
   const [mmLoadingMorePosts, setMmLoadingMorePosts] = useState(false);
+  const [mmSummary, setMmSummary] = useState('');
+  const [mmSummarizing, setMmSummarizing] = useState(false);
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
 
@@ -764,6 +766,7 @@ export default function App() {
     setMmSelectedChannel(channel);
     setMmPosts([]);
     setMmPostsHasMore(false);
+    setMmSummary('');
     setMmPostsLoading(true);
     try {
       const posts = await mmFetchPosts(channel.id, 0);
@@ -785,6 +788,26 @@ export default function App() {
       setMmPostsHasMore(posts.length === 50);
     } catch (e) { console.error(e); }
     setMmLoadingMorePosts(false);
+  }
+
+  async function mmSummarize() {
+    if (!mmPosts.length || !mmSelectedChannel) return;
+    setMmSummarizing(true);
+    setMmSummary('');
+    try {
+      const messages = mmPosts
+        .filter(p => p.message?.trim())
+        .map(p => ({ username: mmUsersCacheRef.current[p.user_id] || p.user_id?.slice(0, 8), message: p.message }));
+      const r = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, channelName: mmChannelDisplayName(mmSelectedChannel) }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setMmSummary('오류: ' + data.error); return; }
+      setMmSummary(data.summary);
+    } catch (e) { setMmSummary('오류: ' + e.message); }
+    setMmSummarizing(false);
   }
 
   function mmChannelDisplayName(ch) {
@@ -886,7 +909,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v35</span>
+              <span className="sidebar-title">록근_v36</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1222,7 +1245,19 @@ export default function App() {
                 <button className="btn-back" style={{ display: 'flex' }} onClick={() => setMmSelectedChannel(null)}>←</button>
                 <span style={{ fontWeight: 700, fontSize: '15px' }}>{mmChannelDisplayName(mmSelectedChannel)}</span>
                 <button className="btn-search-clickup" style={{ marginLeft: 'auto' }} onClick={() => mmOpenChannel(mmSelectedChannel)}>🔄</button>
+                <button className="btn-search-clickup" onClick={mmSummarize} disabled={mmSummarizing || mmPosts.length === 0}>
+                  {mmSummarizing ? '⏳' : '✨ 요약'}
+                </button>
               </div>
+              {mmSummary && (
+                <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setMmSummary('')}>✕</button>
+                  </div>
+                  <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmSummary}</div>
+                </div>
+              )}
               {mmPostsLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
               {!mmPostsLoading && mmPosts.length === 0 && <div className="empty-list">메시지가 없습니다.</div>}
               {!mmPostsLoading && (
