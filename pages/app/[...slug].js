@@ -670,7 +670,18 @@ export default function App() {
           headers: { 'x-mm-token': mmTokenRef.current },
         });
         const channels = await chRes.json();
-        if (Array.isArray(channels)) allChannels = [...allChannels, ...channels.filter(c => c.type !== 'D' && c.type !== 'G').map(c => ({ ...c, teamName: team.display_name }))];
+        if (Array.isArray(channels)) {
+          const MM_INCLUDE = ['[MF', '[exemONE'];
+          const MM_EXCLUDE = ['이슈접수', '이슈', '공지사항', '공지', '잡담', '기획'];
+          const filtered = channels.filter(c => {
+            if (c.type === 'D' || c.type === 'G') return false;
+            const name = c.display_name || c.name;
+            if (!MM_INCLUDE.some(kw => name.includes(kw))) return false;
+            if (MM_EXCLUDE.some(kw => name.includes(kw))) return false;
+            return true;
+          });
+          allChannels = [...allChannels, ...filtered.map(c => ({ ...c, teamName: team.display_name }))];
+        }
       }
       setMmChannels(allChannels);
     } catch (e) { console.error(e); }
@@ -805,7 +816,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v24</span>
+              <span className="sidebar-title">록근_v25</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
