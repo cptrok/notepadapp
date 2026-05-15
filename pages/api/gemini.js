@@ -27,7 +27,25 @@ export default async function handler(req, res) {
       }),
     });
     const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data.error?.message || '요약 실패' });
+    if (!r.ok) {
+      const msg = data.error?.message || '';
+      let korean = '요약 중 오류가 발생했습니다.';
+      if (msg.includes('Rate limit') && msg.includes('tokens per day')) {
+        const wait = msg.match(/try again in (.+?)\./)?.[1];
+        korean = `일일 토큰 한도를 초과했습니다.${wait ? ` 약 ${wait} 후 다시 시도해주세요.` : ' 잠시 후 다시 시도해주세요.'}`;
+      } else if (msg.includes('Rate limit') && msg.includes('tokens per minute')) {
+        korean = '분당 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+      } else if (msg.includes('Rate limit') && msg.includes('requests per')) {
+        korean = '요청 횟수 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+      } else if (msg.includes('Invalid API Key') || msg.includes('invalid_api_key')) {
+        korean = 'API 키가 유효하지 않습니다.';
+      } else if (msg.includes('model') && msg.includes('not found')) {
+        korean = '요청한 AI 모델을 찾을 수 없습니다.';
+      } else if (msg.includes('context_length_exceeded') || msg.includes('maximum context')) {
+        korean = '대화 내용이 너무 많아 요약할 수 없습니다. 범위를 줄여주세요.';
+      }
+      return res.status(r.status).json({ error: korean });
+    }
     const summary = data.choices?.[0]?.message?.content || '요약 결과가 없습니다.';
     return res.json({ summary });
   } catch (e) {
