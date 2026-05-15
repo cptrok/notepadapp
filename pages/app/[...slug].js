@@ -81,6 +81,8 @@ export default function App() {
   const [mmLoadingMorePosts, setMmLoadingMorePosts] = useState(false);
   const [mmSummary, setMmSummary] = useState('');
   const [mmSummarizing, setMmSummarizing] = useState(false);
+  const [noteSummary, setNoteSummary] = useState('');
+  const [noteSummarizing, setNoteSummarizing] = useState(false);
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
 
@@ -810,6 +812,25 @@ export default function App() {
     finally { setMmSummarizing(false); }
   }
 
+  async function noteSummarize() {
+    if (!quillRef.current) return;
+    const text = quillRef.current.getText().trim();
+    if (!text) return;
+    setNoteSummarizing(true);
+    setNoteSummary('');
+    try {
+      const r = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ username: '메모', message: text }], channelName: noteTitle || '메모' }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setNoteSummary('오류: ' + data.error); return; }
+      setNoteSummary(data.summary);
+    } catch (e) { setNoteSummary('오류: ' + e.message); }
+    finally { setNoteSummarizing(false); }
+  }
+
   function mmChannelDisplayName(ch) {
     if (ch.type === 'D') {
       const parts = ch.name.split('__');
@@ -909,7 +930,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v41</span>
+              <span className="sidebar-title">록근_v42</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1119,10 +1140,20 @@ export default function App() {
                 onChange={e => { setNoteTitle(e.target.value); noteTitleRef.current = e.target.value; }} />
               <div className="editor-actions">
                 <span className={`save-indicator ${showSaved ? 'show' : ''}`}>저장됨 ✓</span>
+                <button className="btn-search-clickup" onClick={noteSummarize} disabled={noteSummarizing}>{noteSummarizing ? '⏳' : '✨ 요약'}</button>
                 <button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
                 {showDelete && <button className="btn-delete" onClick={deleteNote}>삭제</button>}
               </div>
             </div>
+            {noteSummary && (
+              <div style={{ margin: '0 12px 8px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
+                  <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#999' }} onClick={() => setNoteSummary('')}>✕</button>
+                </div>
+                <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{noteSummary}</div>
+              </div>
+            )}
             <div id="quill-wrapper">
               <div ref={quillEditorRef}></div>
             </div>
