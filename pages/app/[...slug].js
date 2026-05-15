@@ -51,6 +51,7 @@ export default function App() {
   const [myTasks, setMyTasks] = useState([]);
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
   const [myTasksLoaded, setMyTasksLoaded] = useState(false);
+  const [cuLoading, setCuLoading] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
   const [cuDetail, setCuDetail] = useState(null);
 
@@ -319,7 +320,9 @@ export default function App() {
     setCuTasks([]);
     setCuHasMore(false);
     setCuDetail(null);
+    setCuLoading(true);
     await doLoadCuPage(q, 0, true);
+    setCuLoading(false);
   }
 
   async function doLoadCuPage(keyword, page, isNew) {
@@ -348,10 +351,11 @@ export default function App() {
 
   async function fetchMyTasks(force) {
     if (myTasksLoaded && !force) return;
+    setCuLoading(true);
     const token = clickupTokenRef.current;
     const parts = token.split('_');
     const userId = parts.length >= 2 ? parts[1] : null;
-    if (!userId) return;
+    if (!userId) { setCuLoading(false); return; }
     let all = [], page = 0;
     while (true) {
       const res = await fetch(
@@ -368,6 +372,7 @@ export default function App() {
     setMyTasks(sorted);
     setMyTasksFiltered(sorted);
     setMyTasksLoaded(true);
+    setCuLoading(false);
   }
 
   function filterMyTasks(q) {
@@ -704,8 +709,9 @@ export default function App() {
             <div className="notes-list">
               {cuSubTab === 'search' && (
                 <>
-                  {cuTasks.length === 0 && <div className="empty-list">검색어를 입력하고<br />엔터 또는 🔍를 누르세요.</div>}
-                  {cuTasks.map(t => (
+                  {cuLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+                  {!cuLoading && cuTasks.length === 0 && <div className="empty-list">검색어를 입력하고<br />엔터 또는 🔍를 누르세요.</div>}
+                  {!cuLoading && cuTasks.map(t => (
                     <div key={t.id} className={`task-item ${cuDetail?.task?.id === t.id ? 'active' : ''}`} onClick={() => openTask(t.id)}>
                       <div className="task-item-title">{t.name}</div>
                       <div className="task-item-meta">
@@ -715,7 +721,7 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {cuHasMore && (
+                  {!cuLoading && cuHasMore && (
                     <div style={{ padding: '8px 6px' }}>
                       <button className="page-btn" style={{ width: '100%' }} onClick={loadMoreCuPage}>더 보기</button>
                     </div>
@@ -724,9 +730,9 @@ export default function App() {
               )}
               {cuSubTab === 'my' && (
                 <>
-                  {!myTasksLoaded && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
-                  {myTasksLoaded && myTasksFiltered.length === 0 && <div className="empty-list">담당 태스크가 없습니다.</div>}
-                  {myTasksFiltered.map(t => (
+                  {cuLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+                  {!cuLoading && myTasksLoaded && myTasksFiltered.length === 0 && <div className="empty-list">담당 태스크가 없습니다.</div>}
+                  {!cuLoading && myTasksFiltered.map(t => (
                     <div key={t.id} className={`task-item ${cuDetail?.task?.id === t.id ? 'active' : ''}`} onClick={() => openTask(t.id)}>
                       <div className="task-item-title">{t.name}</div>
                       <div className="task-item-meta">
