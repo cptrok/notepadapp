@@ -51,6 +51,19 @@ export default async function handler(req, res) {
         return res.json(data);
       }
 
+      case 'file': {
+        const { fileId } = req.query;
+        const r = await fetch(`${MM_BASE}/files/${fileId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!r.ok) return res.status(r.status).json({ error: '파일 로드 실패' });
+        const contentType = r.headers.get('content-type') || 'application/octet-stream';
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        const buffer = await r.arrayBuffer();
+        return res.send(Buffer.from(buffer));
+      }
+
       case 'users': {
         const { userIds } = req.body;
         const r = await fetch(`${MM_BASE}/users/ids`, {

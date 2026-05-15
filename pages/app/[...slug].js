@@ -2,6 +2,26 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { sb } from '../../lib/supabase';
 
+function MmImage({ fileId, token }) {
+  const [src, setSrc] = useState(null);
+  useEffect(() => {
+    let url;
+    fetch(`/api/mattermost?action=file&fileId=${fileId}`, { headers: { 'x-mm-token': token } })
+      .then(r => r.ok ? r.blob() : null)
+      .then(blob => { if (blob) { url = URL.createObjectURL(blob); setSrc(url); } })
+      .catch(() => {});
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [fileId, token]);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '6px', cursor: 'pointer', objectFit: 'contain' }}
+      onClick={() => window.open(src, '_blank')}
+    />
+  );
+}
+
 const CLICKUP_TOKEN_DEFAULT = 'pk_43586564_0YLCBJ33J3UIRLFWTJOEKO98AXN6IVZF';
 const CLICKUP_SPACE_ID = '90030550766';
 const LICENSE_SPACE_ID = '60975902';
@@ -978,7 +998,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v45</span>
+              <span className="sidebar-title">록근_v46</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1379,7 +1399,14 @@ export default function App() {
                           {timeAgo(post.create_at)}
                         </span>
                       </div>
-                      <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.message}</div>
+                      {post.message && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.message}</div>}
+                      {post.file_ids?.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                          {post.file_ids.map(fileId => (
+                            <MmImage key={fileId} fileId={fileId} token={mmTokenRef.current} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
