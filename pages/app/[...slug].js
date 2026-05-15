@@ -604,6 +604,31 @@ export default function App() {
   }
 
   async function saveProfile() {
+    // MM 계정이 입력된 경우 먼저 인증 검증
+    let mmToken_new = null;
+    let mmUserId_new = null;
+    if (settingsData.mmUsername && settingsData.mmPassword) {
+      setSettingsMsg({ text: 'Mattermost 인증 확인 중...', type: '' });
+      try {
+        const r = await fetch('/api/mattermost?action=login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: settingsData.mmUsername, password: settingsData.mmPassword }),
+        });
+        const mmData = await r.json();
+        if (!r.ok || !mmData.token) {
+          setSettingsMsg({ text: 'Mattermost 인증 실패: ' + (mmData.error || '아이디 또는 비밀번호를 확인하세요.'), type: 'error' });
+          return;
+        }
+        mmToken_new = mmData.token;
+        mmUserId_new = mmData.userId;
+      } catch (e) {
+        setSettingsMsg({ text: 'Mattermost 연결 오류: ' + e.message, type: 'error' });
+        return;
+      }
+    }
+
+    // MM 인증 통과 후 전체 저장
     const { error } = await sb.rpc('update_user_profile', {
       p_username: currentUsername,
       p_new_id: settingsData.username,
@@ -617,31 +642,15 @@ export default function App() {
     if (settingsData.clickupToken) clickupTokenRef.current = settingsData.clickupToken;
     if (settingsData.displayName) setDisplayName(settingsData.displayName);
 
-    // MM 계정이 입력된 경우 즉시 토큰 갱신
-    if (settingsData.mmUsername && settingsData.mmPassword) {
-      try {
-        const r = await fetch('/api/mattermost?action=login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: settingsData.mmUsername, password: settingsData.mmPassword }),
-        });
-        const mmData = await r.json();
-        if (r.ok && mmData.token) {
-          mmTokenRef.current = mmData.token;
-          mmUserIdRef.current = mmData.userId;
-          setMmToken(mmData.token);
-          setMmUserId(mmData.userId);
-          localStorage.setItem('mm_token', mmData.token);
-          localStorage.setItem('mm_user_id', mmData.userId);
-          await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: mmData.token });
-          setMmLoginMsg('');
-          setSettingsMsg({ text: '저장되었습니다. Mattermost 연동 완료.', type: 'success' });
-        } else {
-          setSettingsMsg({ text: '저장됨. Mattermost 로그인 실패: ' + (mmData.error || ''), type: 'error' });
-        }
-      } catch (e) {
-        setSettingsMsg({ text: '저장됨. Mattermost 연결 오류: ' + e.message, type: 'error' });
-      }
+    if (mmToken_new) {
+      mmTokenRef.current = mmToken_new;
+      mmUserIdRef.current = mmUserId_new;
+      setMmToken(mmToken_new);
+      setMmUserId(mmUserId_new);
+      localStorage.setItem('mm_token', mmToken_new);
+      localStorage.setItem('mm_user_id', mmUserId_new);
+      await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: mmToken_new });
+      setSettingsMsg({ text: '저장되었습니다. Mattermost 연동 완료.', type: 'success' });
     } else {
       setSettingsMsg({ text: '저장되었습니다.', type: 'success' });
     }
@@ -913,7 +922,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v33</span>
+              <span className="sidebar-title">록근_v34</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
