@@ -309,7 +309,7 @@ export default function App() {
   async function fetchApiPage(keyword) {
     if (cuApiExhaustedRef.current) return;
     const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&page=${cuApiPageRef.current}`,
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&reverse=true&page=${cuApiPageRef.current}`,
       { headers: { Authorization: clickupTokenRef.current } }
     );
     const data = await res.json();
@@ -641,7 +641,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v14</span>
+              <span className="sidebar-title">록근_v15</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
