@@ -240,33 +240,8 @@ export default function App() {
       setDisplayName(p.display_name || currentUsername);
       if (p.clickup_token) clickupTokenRef.current = p.clickup_token;
 
-      // Mattermost 자동 로그인 (저장된 계정으로 매번 새 토큰 발급)
-      if (p.mm_username && p.mm_password) {
-        try {
-          const r = await fetch('/api/mattermost?action=login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: p.mm_username, password: p.mm_password }),
-          });
-          const mmData = await r.json();
-          if (r.ok && mmData.token) {
-            mmTokenRef.current = mmData.token;
-            mmUserIdRef.current = mmData.userId;
-            setMmToken(mmData.token);
-            setMmUserId(mmData.userId);
-            localStorage.setItem('mm_token', mmData.token);
-            localStorage.setItem('mm_user_id', mmData.userId);
-            await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: mmData.token });
-          }
-        } catch (e) {
-          // 자동 로그인 실패 시 DB 저장 토큰 사용
-          if (p.mm_token) {
-            mmTokenRef.current = p.mm_token;
-            setMmToken(p.mm_token);
-            localStorage.setItem('mm_token', p.mm_token);
-          }
-        }
-      } else if (p.mm_token) {
+      // DB 저장 토큰 복원
+      if (p.mm_token) {
         mmTokenRef.current = p.mm_token;
         setMmToken(p.mm_token);
         localStorage.setItem('mm_token', p.mm_token);
@@ -635,8 +610,6 @@ export default function App() {
       p_display_name: settingsData.displayName,
       p_new_password: settingsData.newPassword || null,
       p_clickup_token: settingsData.clickupToken || null,
-      p_mm_username: settingsData.mmUsername || null,
-      p_mm_password: settingsData.mmPassword || null,
     });
     if (error) { setSettingsMsg({ text: '저장 실패: ' + error.message, type: 'error' }); return; }
     if (settingsData.clickupToken) clickupTokenRef.current = settingsData.clickupToken;
@@ -728,17 +701,8 @@ export default function App() {
     setMmPosts([]);
     mmUsersCacheRef.current = {};
     setMmLoginMsg('');
-    // DB에서 MM 계정 정보 삭제
-    await sb.rpc('update_user_profile', {
-      p_username: currentUsername,
-      p_new_id: currentUsername,
-      p_display_name: null,
-      p_new_password: null,
-      p_clickup_token: null,
-      p_mm_username: '',
-      p_mm_password: '',
-      p_mm_token: '',
-    });
+    // DB에서 토큰 삭제
+    await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: '' });
     setSettingsData(p => ({ ...p, mmUsername: '', mmPassword: '' }));
   }
 
@@ -922,7 +886,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v34</span>
+              <span className="sidebar-title">록근_v35</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
