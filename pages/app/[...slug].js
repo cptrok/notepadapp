@@ -998,7 +998,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v46</span>
+              <span className="sidebar-title">록근_v47</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1208,7 +1208,7 @@ export default function App() {
                 onChange={e => { setNoteTitle(e.target.value); noteTitleRef.current = e.target.value; }} />
               <div className="editor-actions">
                 <span className={`save-indicator ${showSaved ? 'show' : ''}`}>저장됨 ✓</span>
-                <button className="btn-search-clickup" onClick={noteSummarize} disabled={noteSummarizing}>{noteSummarizing ? '⏳' : '✨ 요약'}</button>
+                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={noteSummarize} disabled={noteSummarizing}>{noteSummarizing ? '⏳' : '✨ 요약'}</button>
                 <button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
                 {showDelete && <button className="btn-delete" onClick={deleteNote}>삭제</button>}
               </div>
@@ -1344,7 +1344,7 @@ export default function App() {
                 <button className="btn-back" style={{ display: 'flex' }} onClick={() => setMmSelectedChannel(null)}>←</button>
                 <span style={{ fontWeight: 700, fontSize: '15px' }}>{mmChannelDisplayName(mmSelectedChannel)}</span>
                 <button className="btn-search-clickup" style={{ marginLeft: 'auto' }} onClick={() => mmOpenChannel(mmSelectedChannel)}>🔄</button>
-                <button className="btn-search-clickup" onClick={mmSummarize} disabled={mmSummarizing || mmPosts.length === 0}>
+                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={mmSummarize} disabled={mmSummarizing || mmPosts.length === 0}>
                   {mmSummarizing ? '⏳' : '✨ 요약'}
                 </button>
               </div>
@@ -1364,7 +1364,7 @@ export default function App() {
                   onChange={e => setMmDateInput(e.target.value)}
                   style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}
                 />
-                <button className="btn-search-clickup" onClick={mmSummarizeByDate} disabled={mmDateSummarizing || !mmDateInput}>
+                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing || !mmDateInput}>
                   {mmDateSummarizing ? '⏳' : '📅 날짜 요약'}
                 </button>
               </div>
