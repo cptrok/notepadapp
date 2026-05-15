@@ -672,6 +672,25 @@ export default function App() {
         const channels = await chRes.json();
         if (Array.isArray(channels)) allChannels = [...allChannels, ...channels.map(c => ({ ...c, teamName: team.display_name }))];
       }
+      // DM 채널의 상대방 userId 일괄 조회
+      const dmUserIds = [];
+      allChannels.forEach(ch => {
+        if (ch.type === 'D') {
+          const parts = ch.name.split('__');
+          parts.forEach(uid => { if (uid && uid !== mmUserIdRef.current && !mmUsersCacheRef.current[uid]) dmUserIds.push(uid); });
+        }
+      });
+      if (dmUserIds.length > 0) {
+        const usersRes = await fetch('/api/mattermost?action=users', {
+          method: 'POST',
+          headers: { 'x-mm-token': mmTokenRef.current, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userIds: [...new Set(dmUserIds)] }),
+        });
+        const users = await usersRes.json();
+        if (Array.isArray(users)) {
+          users.forEach(u => { mmUsersCacheRef.current[u.id] = u.nickname || u.username; });
+        }
+      }
       setMmChannels(allChannels);
     } catch (e) { console.error(e); }
     setMmLoading(false);
@@ -708,9 +727,9 @@ export default function App() {
 
   function mmChannelDisplayName(ch) {
     if (ch.type === 'D') {
-      const parts = (ch.display_name || '').split(', ');
-      const myName = mmUsersCacheRef.current[mmUserIdRef.current];
-      return parts.find(p => p !== myName) || ch.display_name || ch.name;
+      const parts = ch.name.split('__');
+      const otherId = parts.find(uid => uid !== mmUserIdRef.current);
+      return mmUsersCacheRef.current[otherId] || otherId || ch.name;
     }
     return ch.display_name || ch.name;
   }
@@ -805,7 +824,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v22</span>
+              <span className="sidebar-title">록근_v23</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
