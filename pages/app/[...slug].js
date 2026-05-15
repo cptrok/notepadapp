@@ -218,16 +218,6 @@ export default function App() {
     setAllNotes(notes);
     setFilteredNotes(notes);
     allNotesRef.current = notes;
-    if (currentNoteIdRef.current) {
-      const note = notes.find(n => n.id === currentNoteIdRef.current);
-      if (note && quillRef.current) {
-        setNoteTitle(note.title || '');
-        noteTitleRef.current = note.title || '';
-        const sel = quillRef.current.getSelection();
-        quillRef.current.clipboard.dangerouslyPasteHTML(note.content || '');
-        if (sel) quillRef.current.setSelection(sel);
-      }
-    }
   }
 
   function searchNotes(q) {
@@ -633,7 +623,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v10</span>
+              <span className="sidebar-title">록근_v11</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
