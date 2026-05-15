@@ -810,11 +810,16 @@ export default function App() {
   async function mmLoadMorePosts() {
     if (!mmSelectedChannel) return;
     setMmLoadingMorePosts(true);
+    const el = mmScrollRef.current;
+    const prevScrollHeight = el ? el.scrollHeight : 0;
     try {
       const posts = await mmFetchPosts(mmSelectedChannel.id, mmPostsPageRef.current);
       mmPostsPageRef.current += 1;
       setMmPosts(prev => [...posts.reverse(), ...prev]);
       setMmPostsHasMore(posts.length === 50);
+      setTimeout(() => {
+        if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
+      }, 0);
     } catch (e) { console.error(e); }
     setMmLoadingMorePosts(false);
   }
@@ -1014,7 +1019,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v70</span>
+              <span className="sidebar-title">록근_v71</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
