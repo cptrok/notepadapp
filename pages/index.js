@@ -78,20 +78,11 @@ export default function Home() {
   const saveTimerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const trialPagesCache = useRef({});
-  const editorOpenRef = useRef(false);
-  const cuDetailRef = useRef(null);
-  const licDetailRef = useRef(null);
-  const trialPanelRef = useRef(null);
-
   useEffect(() => { currentNoteIdRef.current = currentNoteId; }, [currentNoteId]);
   useEffect(() => { noteTitleRef.current = noteTitle; }, [noteTitle]);
   useEffect(() => { allNotesRef.current = allNotes; }, [allNotes]);
   useEffect(() => { cuPageRef.current = cuPage; }, [cuPage]);
   useEffect(() => { cuKeywordRef.current = cuKeyword; }, [cuKeyword]);
-  useEffect(() => { editorOpenRef.current = editorOpen; }, [editorOpen]);
-  useEffect(() => { cuDetailRef.current = cuDetail; }, [cuDetail]);
-  useEffect(() => { licDetailRef.current = licDetail; }, [licDetail]);
-  useEffect(() => { trialPanelRef.current = trialPanel; }, [trialPanel]);
 
   useEffect(() => {
     const saved = localStorage.getItem('memo_user');
@@ -105,33 +96,21 @@ export default function Home() {
     loadNotes();
     const onVisibility = () => { if (!document.hidden) loadNotes(); };
     document.addEventListener('visibilitychange', onVisibility);
-
-    // 뒤로가기 가로채기: 상세 화면이 열려있으면 닫기만 하고 페이지 이동 막음
-    const onPopState = () => {
-      if (editorOpenRef.current) {
-        setEditorOpen(false);
-        history.pushState(null, '');
-      } else if (cuDetailRef.current) {
-        setCuDetail(null);
-        history.pushState(null, '');
-      } else if (licDetailRef.current) {
-        setLicDetail(null);
-        setCurrentLicTaskId(null);
-        history.pushState(null, '');
-      } else if (trialPanelRef.current) {
-        setTrialPanel(null);
-        setTrialSelectedQuarter(null);
-        history.pushState(null, '');
-      }
-    };
-    history.pushState(null, '');
-    window.addEventListener('popstate', onPopState);
-
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('popstate', onPopState);
     };
   }, [currentUsername]);
+
+  // URL 파라미터 변화 감지 → 뒤로가기 시 상세 화면 닫기
+  useEffect(() => {
+    if (!router.isReady || !currentUsername) return;
+    const { tab, noteId, taskId, licTaskId, trialPageId } = router.query;
+    if (!noteId) setEditorOpen(false);
+    if (!taskId) setCuDetail(null);
+    if (!licTaskId) { setLicDetail(null); setCurrentLicTaskId(null); }
+    if (!trialPageId) { setTrialPanel(null); setTrialSelectedQuarter(null); }
+    if (tab) setCurrentTab(tab);
+  }, [router.isReady, router.query.tab, router.query.noteId, router.query.taskId, router.query.licTaskId, router.query.trialPageId]);
 
   useEffect(() => {
     if (!currentUsername || quillRef.current || !quillEditorRef.current) return;
@@ -261,6 +240,8 @@ export default function Home() {
     setShowDelete(true);
     setEditorOpen(true);
     if (quillRef.current) quillRef.current.clipboard.dangerouslyPasteHTML(note.content || '');
+    const navFn = editorOpen ? router.replace : router.push;
+    navFn({ pathname: '/', query: { tab: 'notes', noteId: id } }, undefined, { shallow: true });
     sb.rpc('get_user_notes', { p_username: localStorage.getItem('memo_user') }).then(({ data }) => {
       if (!data) return;
       const fresh = data.find(n => n.id === id);
@@ -282,6 +263,8 @@ export default function Home() {
     setShowDelete(false);
     setEditorOpen(true);
     if (quillRef.current) quillRef.current.setText('');
+    const navFn = editorOpen ? router.replace : router.push;
+    navFn({ pathname: '/', query: { tab: 'notes', noteId: 'new' } }, undefined, { shallow: true });
   }
 
   async function autoSaveNote() {
@@ -317,6 +300,7 @@ export default function Home() {
     if (quillRef.current) quillRef.current.setText('');
     loadNotes();
     showToastMsg('메모가 삭제되었습니다.');
+    router.push({ pathname: '/', query: { tab: 'notes' } }, undefined, { shallow: true });
   }
 
   async function fetchTasksByKeyword(q) {
@@ -385,6 +369,8 @@ export default function Home() {
   }
 
   async function openTask(id) {
+    const navFn = cuDetail ? router.replace : router.push;
+    navFn({ pathname: '/', query: { tab: 'clickup', taskId: id } }, undefined, { shallow: true });
     setCuDetail({ loading: true, id });
     const res = await fetch(`https://api.clickup.com/api/v2/task/${id}`, { headers: { Authorization: clickupTokenRef.current } });
     const data = await res.json();
@@ -404,6 +390,8 @@ export default function Home() {
   }
 
   async function openLicenseTask(id) {
+    const navFn = licDetail ? router.replace : router.push;
+    navFn({ pathname: '/', query: { tab: 'license', licTaskId: id } }, undefined, { shallow: true });
     setCurrentLicTaskId(id);
     setLicDetail({ loading: true });
     const res = await fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
@@ -442,6 +430,8 @@ export default function Home() {
   }
 
   async function loadTrialPage(docId, pageId, pageName) {
+    const navFn = trialPanel ? router.replace : router.push;
+    navFn({ pathname: '/', query: { tab: 'license', trialPageId: pageId, trialPageName: pageName } }, undefined, { shallow: true });
     setTrialSelectedQuarter(pageId);
     setTrialPanel({ loading: true, pageName });
     try {
@@ -528,6 +518,7 @@ export default function Home() {
     setTrialPanel(null);
     if (tab === 'license') loadLicenseTasks();
     if (tab === 'clickup' && cuSubTab === 'my' && !myTasksLoaded) fetchMyTasks(false);
+    router.push({ pathname: '/', query: { tab } }, undefined, { shallow: true });
   }
 
   function switchCuTab(tab) {
@@ -626,7 +617,7 @@ export default function Home() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v5</span>
+              <span className="sidebar-title">록근_v6</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -792,7 +783,7 @@ export default function Home() {
           {/* Quill 에디터 - 항상 DOM에 유지 */}
           <div style={{ display: currentTab === 'notes' && editorOpen ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
             <div className="editor-header">
-              <button className="btn-back" style={{ display: 'flex' }} onClick={() => setEditorOpen(false)}>←</button>
+              <button className="btn-back" style={{ display: 'flex' }} onClick={() => router.back()}>←</button>
               <input className="title-input" type="text" placeholder="제목 (선택사항)"
                 value={noteTitle}
                 onChange={e => { setNoteTitle(e.target.value); noteTitleRef.current = e.target.value; }} />
@@ -824,7 +815,7 @@ export default function Home() {
           )}
           {currentTab === 'clickup' && cuDetail && (
             <div className="task-detail">
-              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => setCuDetail(null)}>←</button>
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => router.back()}>←</button>
               {cuDetail.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : <>
@@ -858,7 +849,7 @@ export default function Home() {
           )}
           {currentTab === 'license' && licSubTab === 'my' && licDetail && (
             <div className="task-detail">
-              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => { setLicDetail(null); setCurrentLicTaskId(null); }}>←</button>
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => router.back()}>←</button>
               {licDetail.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : <>
@@ -892,7 +883,7 @@ export default function Home() {
           )}
           {currentTab === 'license' && licSubTab === 'trial' && trialPanel && (
             <div className="task-detail">
-              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => { setTrialPanel(null); setTrialSelectedQuarter(null); }}>←</button>
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => router.back()}>←</button>
               {trialPanel.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : <>
