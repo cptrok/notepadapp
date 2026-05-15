@@ -81,7 +81,7 @@ export default function Login() {
       <div className="auth-screen">
         <div className="auth-card">
           <div className="auth-logo" onClick={handleLogoClick}>
-            <h1>📝 록근_v31</h1>
+            <h1>📝 록근_v32</h1>
             <p>아이디와 비밀번호로 로그인하세요</p>
           </div>
           <div className="form-group">

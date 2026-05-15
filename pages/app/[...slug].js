@@ -707,7 +707,7 @@ export default function App() {
     }
   }
 
-  function mmLogout() {
+  async function mmLogout() {
     localStorage.removeItem('mm_token');
     localStorage.removeItem('mm_user_id');
     mmTokenRef.current = null;
@@ -719,6 +719,18 @@ export default function App() {
     setMmPosts([]);
     mmUsersCacheRef.current = {};
     setMmLoginMsg('');
+    // DB에서 MM 계정 정보 삭제
+    await sb.rpc('update_user_profile', {
+      p_username: currentUsername,
+      p_new_id: currentUsername,
+      p_display_name: null,
+      p_new_password: null,
+      p_clickup_token: null,
+      p_mm_username: '',
+      p_mm_password: '',
+      p_mm_token: '',
+    });
+    setSettingsData(p => ({ ...p, mmUsername: '', mmPassword: '' }));
   }
 
   async function mmLoadChannels() {
@@ -901,7 +913,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v31</span>
+              <span className="sidebar-title">록근_v32</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1306,20 +1318,28 @@ export default function App() {
           <button className="btn-success" onClick={saveProfile}>저장</button>
           <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
           <div className="settings-divider">Mattermost 연동</div>
-          <div className="form-group">
-            <label>Mattermost 아이디</label>
-            <input type="text" value={settingsData.mmUsername}
-              onChange={e => setSettingsData(p => ({ ...p, mmUsername: e.target.value }))}
-              placeholder="Mattermost 아이디" />
-          </div>
-          <div className="form-group">
-            <label>Mattermost 비밀번호</label>
-            <input type="password" value={settingsData.mmPassword}
-              onChange={e => setSettingsData(p => ({ ...p, mmPassword: e.target.value }))}
-              placeholder="Mattermost 비밀번호" />
-            <div className="input-hint">저장 시 자동으로 로그인하여 토큰을 갱신합니다</div>
-          </div>
-          {mmToken && <div style={{ fontSize: '13px', color: '#4caf50' }}>✓ Mattermost 연동됨</div>}
+          {mmToken ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '13px', color: '#4caf50' }}>✓ {settingsData.mmUsername || 'Mattermost'} 연동됨</div>
+              <button className="btn-logout" style={{ width: '100%' }} onClick={mmLogout}>Mattermost 연동 해제</button>
+            </div>
+          ) : (
+            <>
+              <div className="form-group">
+                <label>Mattermost 아이디</label>
+                <input type="text" value={settingsData.mmUsername}
+                  onChange={e => setSettingsData(p => ({ ...p, mmUsername: e.target.value }))}
+                  placeholder="Mattermost 아이디" />
+              </div>
+              <div className="form-group">
+                <label>Mattermost 비밀번호</label>
+                <input type="password" value={settingsData.mmPassword}
+                  onChange={e => setSettingsData(p => ({ ...p, mmPassword: e.target.value }))}
+                  placeholder="Mattermost 비밀번호" />
+                <div className="input-hint">저장 시 자동으로 로그인하여 토큰을 갱신합니다</div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>
