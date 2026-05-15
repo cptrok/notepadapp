@@ -78,12 +78,20 @@ export default function Home() {
   const saveTimerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const trialPagesCache = useRef({});
+  const editorOpenRef = useRef(false);
+  const cuDetailRef = useRef(null);
+  const licDetailRef = useRef(null);
+  const trialPanelRef = useRef(null);
 
   useEffect(() => { currentNoteIdRef.current = currentNoteId; }, [currentNoteId]);
   useEffect(() => { noteTitleRef.current = noteTitle; }, [noteTitle]);
   useEffect(() => { allNotesRef.current = allNotes; }, [allNotes]);
   useEffect(() => { cuPageRef.current = cuPage; }, [cuPage]);
   useEffect(() => { cuKeywordRef.current = cuKeyword; }, [cuKeyword]);
+  useEffect(() => { editorOpenRef.current = editorOpen; }, [editorOpen]);
+  useEffect(() => { cuDetailRef.current = cuDetail; }, [cuDetail]);
+  useEffect(() => { licDetailRef.current = licDetail; }, [licDetail]);
+  useEffect(() => { trialPanelRef.current = trialPanel; }, [trialPanel]);
 
   useEffect(() => {
     const saved = localStorage.getItem('memo_user');
@@ -97,7 +105,32 @@ export default function Home() {
     loadNotes();
     const onVisibility = () => { if (!document.hidden) loadNotes(); };
     document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
+
+    // 뒤로가기 가로채기: 상세 화면이 열려있으면 닫기만 하고 페이지 이동 막음
+    const onPopState = () => {
+      if (editorOpenRef.current) {
+        setEditorOpen(false);
+        history.pushState(null, '');
+      } else if (cuDetailRef.current) {
+        setCuDetail(null);
+        history.pushState(null, '');
+      } else if (licDetailRef.current) {
+        setLicDetail(null);
+        setCurrentLicTaskId(null);
+        history.pushState(null, '');
+      } else if (trialPanelRef.current) {
+        setTrialPanel(null);
+        setTrialSelectedQuarter(null);
+        history.pushState(null, '');
+      }
+    };
+    history.pushState(null, '');
+    window.addEventListener('popstate', onPopState);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('popstate', onPopState);
+    };
   }, [currentUsername]);
 
   useEffect(() => {
@@ -593,7 +626,7 @@ export default function Home() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v4</span>
+              <span className="sidebar-title">록근_v5</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
