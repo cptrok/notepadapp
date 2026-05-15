@@ -23,6 +23,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
       }),
     });
     const data = await r.json();
