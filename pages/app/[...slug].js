@@ -1014,7 +1014,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v67</span>
+              <span className="sidebar-title">록근_v68</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1364,25 +1364,7 @@ export default function App() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexShrink: 0 }}>
                 <button className="btn-back" style={{ display: 'flex' }} onClick={() => setMmSelectedChannel(null)}>←</button>
                 <span style={{ fontWeight: 700, fontSize: '15px' }}>{mmChannelDisplayName(mmSelectedChannel)}</span>
-                <button className="btn-search-clickup" style={{ marginLeft: 'auto' }} onClick={() => mmOpenChannel(mmSelectedChannel)}>🔄</button>
-                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={mmSummarize} disabled={mmSummarizing || mmPosts.length === 0}>
-                  {mmSummarizing ? '⏳' : '✨ 요약'}
-                </button>
               </div>
-              {mmSummary && (
-                <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mmSummaryCollapsed ? 0 : '6px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '13px' }}>✨ AI 요약</span>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(mmChannelDisplayName(mmSelectedChannel) + ' - AI 요약', mmSummary)}>📋 저장</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarize} disabled={mmSummarizing}>🔄</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmSummaryCollapsed(v => !v)}>{mmSummaryCollapsed ? '▼' : '▲'}</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmSummary('')}>✕</button>
-                    </div>
-                  </div>
-                  {!mmSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmSummary}</div>}
-                </div>
-              )}
               <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexShrink: 0 }}>
                 <input
                   type="date"
@@ -1392,8 +1374,9 @@ export default function App() {
                   style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', cursor: 'pointer' }}
                 />
                 <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing || !mmDateInput}>
-                  {mmDateSummarizing ? '⏳' : '📅 날짜 요약'}
+                  {mmDateSummarizing ? '⏳' : '요약하기'}
                 </button>
+                <button className="btn-search-clickup" onClick={() => mmOpenChannel(mmSelectedChannel)}>🔄</button>
               </div>
               {mmDateSummary && (
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
