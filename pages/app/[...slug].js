@@ -110,7 +110,7 @@ export default function App() {
     const slug = router.query.slug || [];
     const [section, id] = slug;
 
-    if (section !== 'note') setEditorOpen(false);
+    if (section !== 'note' || !id) { clearTimeout(saveTimerRef.current); setEditorOpen(false); }
     if (section !== 'clickup' || !id) setCuDetail(null);
     if (section !== 'license' || !id) { setLicDetail(null); setCurrentLicTaskId(null); }
     if (section !== 'trial') { setTrialPanel(null); setTrialSelectedQuarter(null); }
@@ -623,7 +623,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v11</span>
+              <span className="sidebar-title">록근_v12</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
