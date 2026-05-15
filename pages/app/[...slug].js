@@ -68,6 +68,16 @@ export default function App() {
   const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '' });
   const [settingsMsg, setSettingsMsg] = useState({ text: '', type: '' });
 
+  const [mmToken, setMmToken] = useState(null);
+  const [mmUserId, setMmUserId] = useState(null);
+  const [mmChannels, setMmChannels] = useState([]);
+  const [mmSelectedChannel, setMmSelectedChannel] = useState(null);
+  const [mmPosts, setMmPosts] = useState([]);
+  const [mmLoading, setMmLoading] = useState(false);
+  const [mmPostsLoading, setMmPostsLoading] = useState(false);
+  const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
+  const [mmLoginMsg, setMmLoginMsg] = useState('');
+
   const clickupTokenRef = useRef(CLICKUP_TOKEN_DEFAULT);
   const quillRef = useRef(null);
   const quillEditorRef = useRef(null);
@@ -81,6 +91,9 @@ export default function App() {
   const saveTimerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const trialPagesCache = useRef({});
+  const mmTokenRef = useRef(null);
+  const mmUserIdRef = useRef(null);
+  const mmUsersCacheRef = useRef({});
 
   useEffect(() => { currentNoteIdRef.current = currentNoteId; }, [currentNoteId]);
   useEffect(() => { noteTitleRef.current = noteTitle; }, [noteTitle]);
@@ -91,6 +104,14 @@ export default function App() {
     const saved = localStorage.getItem('memo_user');
     if (!saved) { router.replace('/login'); return; }
     setCurrentUsername(saved);
+    const savedMmToken = localStorage.getItem('mm_token');
+    const savedMmUserId = localStorage.getItem('mm_user_id');
+    if (savedMmToken && savedMmUserId) {
+      mmTokenRef.current = savedMmToken;
+      mmUserIdRef.current = savedMmUserId;
+      setMmToken(savedMmToken);
+      setMmUserId(savedMmUserId);
+    }
   }, []);
 
   useEffect(() => {
@@ -119,6 +140,7 @@ export default function App() {
     else if (section === 'clickup') setCurrentTab('clickup');
     else if (section === 'license') setCurrentTab('license');
     else if (section === 'trial') { setCurrentTab('license'); setLicSubTab('trial'); }
+    else if (section === 'chat') setCurrentTab('chat');
   }, [router.isReady, router.asPath]);
 
   useEffect(() => {
@@ -540,6 +562,7 @@ export default function App() {
     setTrialPanel(null);
     if (tab === 'license') loadLicenseTasks();
     if (tab === 'clickup' && cuSubTab === 'my' && !myTasksLoaded) fetchMyTasks(false);
+    if (tab === 'chat' && mmTokenRef.current && mmChannels.length === 0) mmLoadChannels();
     const path = tab === 'notes' ? 'note' : tab;
     router.push(`/app/${path}`, undefined, { shallow: true });
   }
@@ -548,6 +571,111 @@ export default function App() {
     setCuSubTab(tab);
     setCuDetail(null);
     if (tab === 'my' && !myTasksLoaded) fetchMyTasks(false);
+  }
+
+  useEffect(() => {
+    if (mmToken && mmChannels.length === 0) mmLoadChannels();
+  }, [mmToken]);
+
+  async function mmLogin() {
+    if (!mmLoginForm.username || !mmLoginForm.password) {
+      setMmLoginMsg('아이디와 비밀번호를 입력하세요.');
+      return;
+    }
+    setMmLoginMsg('로그인 중...');
+    try {
+      const r = await fetch('/api/mattermost?action=login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: mmLoginForm.username, password: mmLoginForm.password }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setMmLoginMsg(data.error || '로그인 실패'); return; }
+      localStorage.setItem('mm_token', data.token);
+      localStorage.setItem('mm_user_id', data.userId);
+      mmTokenRef.current = data.token;
+      mmUserIdRef.current = data.userId;
+      setMmToken(data.token);
+      setMmUserId(data.userId);
+      setMmLoginMsg('로그인 성공!');
+      setMmLoginForm({ username: '', password: '' });
+    } catch (e) {
+      setMmLoginMsg('오류: ' + e.message);
+    }
+  }
+
+  function mmLogout() {
+    localStorage.removeItem('mm_token');
+    localStorage.removeItem('mm_user_id');
+    mmTokenRef.current = null;
+    mmUserIdRef.current = null;
+    setMmToken(null);
+    setMmUserId(null);
+    setMmChannels([]);
+    setMmSelectedChannel(null);
+    setMmPosts([]);
+    mmUsersCacheRef.current = {};
+    setMmLoginMsg('');
+  }
+
+  async function mmLoadChannels() {
+    if (!mmTokenRef.current) return;
+    setMmLoading(true);
+    try {
+      const teamsRes = await fetch('/api/mattermost?action=teams', {
+        headers: { 'x-mm-token': mmTokenRef.current },
+      });
+      const teams = await teamsRes.json();
+      if (!Array.isArray(teams) || teams.length === 0) { setMmLoading(false); return; }
+      let allChannels = [];
+      for (const team of teams) {
+        const chRes = await fetch(`/api/mattermost?action=channels&teamId=${team.id}&userId=${mmUserIdRef.current}`, {
+          headers: { 'x-mm-token': mmTokenRef.current },
+        });
+        const channels = await chRes.json();
+        if (Array.isArray(channels)) allChannels = [...allChannels, ...channels.map(c => ({ ...c, teamName: team.display_name }))];
+      }
+      setMmChannels(allChannels);
+    } catch (e) { console.error(e); }
+    setMmLoading(false);
+  }
+
+  async function mmOpenChannel(channel) {
+    setMmSelectedChannel(channel);
+    setMmPosts([]);
+    setMmPostsLoading(true);
+    try {
+      const r = await fetch(`/api/mattermost?action=posts&channelId=${channel.id}`, {
+        headers: { 'x-mm-token': mmTokenRef.current },
+      });
+      const data = await r.json();
+      if (data.order && data.posts) {
+        const orderedPosts = data.order.map(id => data.posts[id]).filter(Boolean);
+        const uniqueUserIds = [...new Set(orderedPosts.map(p => p.user_id).filter(uid => uid && !mmUsersCacheRef.current[uid]))];
+        if (uniqueUserIds.length > 0) {
+          const usersRes = await fetch('/api/mattermost?action=users', {
+            method: 'POST',
+            headers: { 'x-mm-token': mmTokenRef.current, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userIds: uniqueUserIds }),
+          });
+          const users = await usersRes.json();
+          if (Array.isArray(users)) {
+            users.forEach(u => { mmUsersCacheRef.current[u.id] = u.nickname || u.username; });
+          }
+        }
+        setMmPosts(orderedPosts.reverse());
+      }
+    } catch (e) { console.error(e); }
+    setMmPostsLoading(false);
+  }
+
+  function mmChannelDisplayName(ch) {
+    if (ch.type === 'D') {
+      const parts = (ch.display_name || '').split(', ');
+      const myName = mmUsersCacheRef.current[mmUserIdRef.current];
+      return parts.find(p => p !== myName) || ch.display_name || ch.name;
+    }
+    return ch.display_name || ch.name;
   }
 
   function switchLicTab(tab) {
@@ -640,13 +768,14 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v16</span>
+              <span className="sidebar-title">록근_v17</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${currentTab === 'notes' ? 'active' : ''}`} onClick={() => switchTab('notes')}>메모</button>
               <button className={`tab-btn ${currentTab === 'clickup' ? 'active' : ''}`} onClick={() => switchTab('clickup')}>ClickUp</button>
               <button className={`tab-btn ${currentTab === 'license' ? 'active' : ''}`} onClick={() => switchTab('license')}>라이선스</button>
+              <button className={`tab-btn ${currentTab === 'chat' ? 'active' : ''}`} onClick={() => switchTab('chat')}>채팅</button>
             </div>
 
             {currentTab === 'notes' && (
@@ -789,6 +918,34 @@ export default function App() {
             </div>
           )}
 
+          {currentTab === 'chat' && (
+            <div className="notes-list">
+              {!mmToken && (
+                <div className="empty-list">설정에서 Mattermost<br />로그인을 먼저 해주세요.</div>
+              )}
+              {mmToken && mmLoading && (
+                <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
+              )}
+              {mmToken && !mmLoading && mmChannels.length === 0 && (
+                <div className="empty-list">
+                  채널이 없습니다.<br />
+                  <button className="btn-search-clickup" style={{ marginTop: '8px' }} onClick={mmLoadChannels}>새로고침</button>
+                </div>
+              )}
+              {mmToken && !mmLoading && mmChannels.map(ch => (
+                <div key={ch.id}
+                  className={`note-item ${mmSelectedChannel?.id === ch.id ? 'active' : ''}`}
+                  onClick={() => mmOpenChannel(ch)}>
+                  <div className="note-item-title">
+                    {ch.type === 'D' ? '💬 ' : ch.type === 'P' ? '🔒 ' : '# '}
+                    {mmChannelDisplayName(ch)}
+                  </div>
+                  {ch.teamName && <div className="note-item-date">{ch.teamName}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="sidebar-footer">
             <div className="user-info">
               <span className="user-name">{displayName || currentUsername}</span>
@@ -802,7 +959,8 @@ export default function App() {
           (currentTab === 'notes' && editorOpen) ||
           (currentTab === 'clickup' && cuDetail !== null) ||
           (currentTab === 'license' && licSubTab === 'my' && licDetail !== null) ||
-          (currentTab === 'license' && licSubTab === 'trial' && trialPanel !== null)
+          (currentTab === 'license' && licSubTab === 'trial' && trialPanel !== null) ||
+          (currentTab === 'chat' && mmSelectedChannel !== null)
             ? 'open' : ''
         }`}>
           {/* Quill 에디터 - 항상 DOM에 유지 */}
@@ -927,6 +1085,41 @@ export default function App() {
               }
             </div>
           )}
+          {currentTab === 'chat' && !mmSelectedChannel && (
+            <div className="editor-empty">
+              <div className="editor-empty-icon">💬</div>
+              <h3>채널을 선택하세요</h3>
+              <p>왼쪽에서 채널을 선택하면<br />대화 내용이 표시됩니다</p>
+            </div>
+          )}
+          {currentTab === 'chat' && mmSelectedChannel && (
+            <div className="task-detail" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexShrink: 0 }}>
+                <button className="btn-back" style={{ display: 'flex' }} onClick={() => setMmSelectedChannel(null)}>←</button>
+                <span style={{ fontWeight: 700, fontSize: '15px' }}>{mmChannelDisplayName(mmSelectedChannel)}</span>
+                <button className="btn-search-clickup" style={{ marginLeft: 'auto' }} onClick={() => mmOpenChannel(mmSelectedChannel)}>🔄</button>
+              </div>
+              {mmPostsLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+              {!mmPostsLoading && mmPosts.length === 0 && <div className="empty-list">메시지가 없습니다.</div>}
+              {!mmPostsLoading && (
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {mmPosts.map(post => (
+                    <div key={post.id} style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-secondary, #f5f5f5)' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--accent, #0066cc)' }}>
+                          {mmUsersCacheRef.current[post.user_id] || post.user_id?.slice(0, 8)}
+                        </span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted, #999)' }}>
+                          {timeAgo(post.create_at)}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.message}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -965,6 +1158,32 @@ export default function App() {
           </div>
           <button className="btn-success" onClick={saveProfile}>저장</button>
           <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
+          <div className="settings-divider">Mattermost 연동</div>
+          {mmToken ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary, #666)' }}>chat.exem.io 로그인됨</div>
+              <button className="btn-logout" style={{ width: '100%' }} onClick={mmLogout}>Mattermost 로그아웃</button>
+            </div>
+          ) : (
+            <>
+              <div className="form-group">
+                <label>Mattermost 아이디</label>
+                <input type="text" value={mmLoginForm.username}
+                  onChange={e => setMmLoginForm(p => ({ ...p, username: e.target.value }))}
+                  placeholder="아이디 입력"
+                  onKeyDown={e => e.key === 'Enter' && mmLogin()} />
+              </div>
+              <div className="form-group">
+                <label>비밀번호</label>
+                <input type="password" value={mmLoginForm.password}
+                  onChange={e => setMmLoginForm(p => ({ ...p, password: e.target.value }))}
+                  placeholder="비밀번호 입력"
+                  onKeyDown={e => e.key === 'Enter' && mmLogin()} />
+              </div>
+              <button className="btn-success" onClick={mmLogin}>Mattermost 로그인</button>
+            </>
+          )}
+          {mmLoginMsg && <div className={`settings-message ${mmLoginMsg.includes('성공') ? 'success' : 'error'}`}>{mmLoginMsg}</div>}
         </div>
       </div>
     </>
