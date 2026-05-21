@@ -917,12 +917,14 @@ export default function App() {
     const username = localStorage.getItem('memo_user');
     if (!username) return alert('로그인이 필요합니다.');
     const content = '<p>' + text.replace(/\n/g, '</p><p>') + '</p>';
-    const { error } = await sb.rpc('save_user_note', {
+    const { data, error } = await sb.rpc('save_user_note', {
       p_username: username, p_id: null, p_title: title, p_content: content,
     });
     if (error) { alert('저장 실패: ' + error.message); return; }
     loadNotes();
-    alert('메모에 저장되었습니다.');
+    if (window.confirm('메모에 저장되었습니다.\n메모장으로 이동하시겠습니까?')) {
+      router.push(`/app/note/${data}`);
+    }
   }
 
   function openCuRegModal() {
@@ -1126,7 +1128,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v82</span>
+              <span className="sidebar-title">록근_v83</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
