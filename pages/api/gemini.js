@@ -10,8 +10,15 @@ export default async function handler(req, res) {
   const style = '명사형 종결 어미를 사용해 간결하게 작성할 것. (예: "~함", "~됨", "~할 것", "~한 상태" 등. "~했습니다", "~보입니다" 같은 경어체 금지)';
   const text = messages.map(m => `[${m.username}] ${m.message}`).join('\n');
   const customerBracket = (() => {
+    // 1순위: 브래킷 안에 한글이 있는 경우 ([신한라이프] 형태)
     const brackets = channelName.match(/\[([^\]]+)\]/g) || [];
-    return brackets.find(b => /[가-힣]/.test(b)) || null;
+    const koreanBracket = brackets.find(b => /[가-힣]/.test(b));
+    if (koreanBracket) return koreanBracket;
+    // 2순위: 제품코드 브래킷([MF...], [exemONE], [Dashboard]) 제거 후 첫 번째 단어 추출
+    const withoutProduct = channelName.replace(/\[(?:MF\w*|exemONE|Dashboard)\]/gi, '').trim();
+    const firstWord = withoutProduct.split(/[\s_-]+/).find(w => w.length > 0);
+    if (firstWord && /[가-힣]/.test(firstWord)) return `[${firstWord}]`;
+    return null;
   })();
   const titleInstruction = customerBracket
     ? `- 반드시 "${customerBracket} " 로 시작하는 한 줄 작성. 이후 내용: 대화 중 "고객명 / 문의내용 / 번호 / 상태" 형식의 메시지가 있으면 두 번째 항목(문의내용)을 사용, 없으면 대화에서 다룬 핵심 이슈/문의를 명사 위주로 작성`
