@@ -103,9 +103,9 @@ export default function App() {
   const [mmSummarizing, setMmSummarizing] = useState(false);
   const [mmSummaryCollapsed, setMmSummaryCollapsed] = useState(false);
   const [mmDateInput, setMmDateInput] = useState('');
-  const [mmDateSummary, setMmDateSummary] = useState('');
+  const [mmDateSummary, setMmDateSummary] = useState({});
   const [mmDateSummarizing, setMmDateSummarizing] = useState(false);
-  const [mmDateSummaryCollapsed, setMmDateSummaryCollapsed] = useState(false);
+  const [mmDateSummaryCollapsed, setMmDateSummaryCollapsed] = useState({});
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
 
@@ -822,7 +822,6 @@ export default function App() {
     setMmPosts([]);
     setMmPostsHasMore(false);
     setMmSummary('');
-    setMmDateSummary('');
     setMmPostsLoading(true);
     try {
       const posts = await mmFetchPosts(channel.id, 0);
@@ -870,8 +869,9 @@ export default function App() {
 
   async function mmSummarizeByDate() {
     if (!mmDateInput || !mmSelectedChannel) return;
+    const chId = mmSelectedChannel.id;
     setMmDateSummarizing(true);
-    setMmDateSummary('');
+    setMmDateSummary(prev => ({ ...prev, [chId]: '' }));
     try {
       const [year, month, day] = mmDateInput.split('-').map(Number);
       const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
@@ -886,7 +886,7 @@ export default function App() {
         .map(id => data.posts[id])
         .filter(p => p.create_at >= startOfDay.getTime() && p.create_at <= endOfDay.getTime() && p.message?.trim())
         .sort((a, b) => a.create_at - b.create_at);
-      if (posts.length === 0) { setMmDateSummary('해당 날짜의 메시지가 없습니다.'); return; }
+      if (posts.length === 0) { setMmDateSummary(prev => ({ ...prev, [chId]: '해당 날짜의 메시지가 없습니다.' })); return; }
       const unknownIds = [...new Set(posts.map(p => p.user_id).filter(id => !mmUsersCacheRef.current[id]))];
       if (unknownIds.length > 0) {
         const ur = await fetch('/api/mattermost?action=users', {
@@ -907,9 +907,9 @@ export default function App() {
         body: JSON.stringify({ messages, channelName: mmChannelDisplayName(mmSelectedChannel), date: dateLabel, mode: 'date' }),
       });
       const gd = await gr.json();
-      if (!gr.ok) { setMmDateSummary('오류: ' + gd.error); return; }
-      setMmDateSummary(gd.summary);
-    } catch (e) { setMmDateSummary('오류: ' + e.message); }
+      if (!gr.ok) { setMmDateSummary(prev => ({ ...prev, [chId]: '오류: ' + gd.error })); return; }
+      setMmDateSummary(prev => ({ ...prev, [chId]: gd.summary }));
+    } catch (e) { setMmDateSummary(prev => ({ ...prev, [chId]: '오류: ' + e.message })); }
     finally { setMmDateSummarizing(false); }
   }
 
@@ -1126,7 +1126,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v81</span>
+              <span className="sidebar-title">록근_v82</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1476,18 +1476,18 @@ export default function App() {
                 </button>
                 <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={() => mmOpenChannel(mmSelectedChannel)}>🔃 다시 불러오기</button>
               </div>
-              {mmDateSummary && (
+              {mmDateSummary[mmSelectedChannel?.id] && (
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
-                  <div style={{ marginBottom: mmDateSummaryCollapsed ? 0 : '6px' }}>
+                  <div style={{ marginBottom: mmDateSummaryCollapsed[mmSelectedChannel?.id] ? 0 : '6px' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', marginBottom: '6px' }}>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary)}>📋 메모저장</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id])}>📋 메모저장</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing}>🔄 다시 요약하기</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(v => !v)}>{mmDateSummaryCollapsed ? '▼' : '▲'}</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary('')}>✕</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(prev => ({ ...prev, [mmSelectedChannel.id]: !prev[mmSelectedChannel.id] }))}>{mmDateSummaryCollapsed[mmSelectedChannel?.id] ? '▼' : '▲'}</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary(prev => ({ ...prev, [mmSelectedChannel.id]: '' }))}>✕</button>
                     </div>
                     <div style={{ fontWeight: 700, fontSize: '13px' }}>📅 {mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')} 요약</div>
                   </div>
-                  {!mmDateSummaryCollapsed && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmDateSummary}</div>}
+                  {!mmDateSummaryCollapsed[mmSelectedChannel?.id] && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmDateSummary[mmSelectedChannel.id]}</div>}
                 </div>
               )}
               {mmPostsLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
