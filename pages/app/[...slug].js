@@ -836,7 +836,7 @@ export default function App() {
         body: JSON.stringify({ userIds: uniqueUserIds }),
       });
       const users = await usersRes.json();
-      if (Array.isArray(users)) users.forEach(u => { mmUsersCacheRef.current[u.id] = u.nickname || u.username; });
+      if (Array.isArray(users)) users.forEach(u => { mmUsersCacheRef.current[u.id] = u.nickname || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username; });
     }
     return posts;
   }
@@ -924,7 +924,7 @@ export default function App() {
           headers: { 'x-mm-token': mmTokenRef.current, 'Content-Type': 'application/json' },
           body: JSON.stringify({ userIds: unknownIds }),
         });
-        if (ur.ok) { const ud = await ur.json(); ud.forEach(u => { mmUsersCacheRef.current[u.id] = u.username; }); }
+        if (ur.ok) { const ud = await ur.json(); ud.forEach(u => { mmUsersCacheRef.current[u.id] = u.nickname || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username; }); }
       }
       const messages = posts.map(p => ({
         username: mmUsersCacheRef.current[p.user_id] || p.user_id?.slice(0, 8),
@@ -1320,7 +1320,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v121</span>
+              <span className="sidebar-title">록근_v122</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
