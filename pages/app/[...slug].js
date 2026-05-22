@@ -1400,7 +1400,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v131</span>
+              <span className="sidebar-title">Clickpad_v132</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1658,30 +1658,6 @@ export default function App() {
                       </div>
                     </div>
                   )}
-                  <div className="task-edit-section">
-                    <div className="task-edit-label">댓글 추가</div>
-                    <textarea
-                      className="task-edit-textarea"
-                      placeholder="댓글 내용을 입력하세요. @me 입력 시 본인 멘션으로 자동 변환됩니다."
-                      value={cuAppendDesc}
-                      onChange={e => setCuAppendDesc(e.target.value)}
-                    />
-                    <button className="btn-task-save" onClick={appendCuDescription} disabled={cuDescSaving || !cuAppendDesc.trim()}>
-                      {cuDescSaving ? '저장 중...' : '댓글 저장'}
-                    </button>
-                  </div>
-                  <div className="task-edit-section">
-                    <div className="task-edit-label">파일 첨부</div>
-                    <input
-                      ref={cuAttachInputRef}
-                      type="file"
-                      style={{ display: 'none' }}
-                      onChange={e => attachFileToCuTask(e.target.files?.[0])}
-                    />
-                    <button className="btn-task-attach" onClick={() => cuAttachInputRef.current?.click()} disabled={cuAttachSaving}>
-                      {cuAttachSaving ? '업로드 중...' : '📎 파일 선택'}
-                    </button>
-                  </div>
                 </>
               }
             </div>
