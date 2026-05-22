@@ -76,6 +76,10 @@ export default function App() {
   const [cuLoadingMore, setCuLoadingMore] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
   const [cuDetail, setCuDetail] = useState(null);
+  const [cuAppendDesc, setCuAppendDesc] = useState('');
+  const [cuDescSaving, setCuDescSaving] = useState(false);
+  const [cuAttachSaving, setCuAttachSaving] = useState(false);
+  const cuAttachInputRef = useRef(null);
 
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
@@ -545,9 +549,57 @@ export default function App() {
     const navFn = cuDetail ? router.replace : router.push;
     navFn(`/app/clickup/${id}`, undefined, { shallow: true });
     setCuDetail({ loading: true, id });
+    setCuAppendDesc('');
     const res = await fetch(`https://api.clickup.com/api/v2/task/${id}`, { headers: { Authorization: clickupTokenRef.current } });
     const data = await res.json();
     setCuDetail({ task: data });
+  }
+
+  async function appendCuDescription() {
+    if (!cuAppendDesc.trim() || !cuDetail?.task) return;
+    setCuDescSaving(true);
+    const existing = cuDetail.task.description || '';
+    const newDesc = existing ? existing + '\n\n' + cuAppendDesc.trim() : cuAppendDesc.trim();
+    const res = await fetch(`https://api.clickup.com/api/v2/task/${cuDetail.task.id}`, {
+      method: 'PUT',
+      headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: newDesc }),
+    });
+    if (res.ok) {
+      setCuDetail(prev => ({ ...prev, task: { ...prev.task, description: newDesc } }));
+      setCuAppendDesc('');
+      showToastMsg('설명이 추가되었습니다.');
+    } else {
+      showToastMsg('저장 실패. 다시 시도해주세요.');
+    }
+    setCuDescSaving(false);
+  }
+
+  async function attachFileToCuTask(file) {
+    if (!file || !cuDetail?.task) return;
+    setCuAttachSaving(true);
+    const form = new FormData();
+    form.append('attachment', file);
+    const res = await fetch(`https://api.clickup.com/api/v2/task/${cuDetail.task.id}/attachment`, {
+      method: 'POST',
+      headers: { Authorization: clickupTokenRef.current },
+      body: form,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setCuDetail(prev => ({
+        ...prev,
+        task: {
+          ...prev.task,
+          attachments: [...(prev.task.attachments || []), { url: data.url, title: data.title || file.name }],
+        },
+      }));
+      showToastMsg('파일이 첨부되었습니다.');
+    } else {
+      showToastMsg('첨부 실패. 다시 시도해주세요.');
+    }
+    setCuAttachSaving(false);
+    if (cuAttachInputRef.current) cuAttachInputRef.current.value = '';
   }
 
   async function loadLicenseTasks() {
@@ -1320,7 +1372,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v124</span>
+              <span className="sidebar-title">Clickpad_v125</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1578,6 +1630,30 @@ export default function App() {
                       </div>
                     </div>
                   )}
+                  <div className="task-edit-section">
+                    <div className="task-edit-label">설명 추가</div>
+                    <textarea
+                      className="task-edit-textarea"
+                      placeholder="기존 설명 아래에 내용을 추가합니다..."
+                      value={cuAppendDesc}
+                      onChange={e => setCuAppendDesc(e.target.value)}
+                    />
+                    <button className="btn-task-save" onClick={appendCuDescription} disabled={cuDescSaving || !cuAppendDesc.trim()}>
+                      {cuDescSaving ? '저장 중...' : '설명 저장'}
+                    </button>
+                  </div>
+                  <div className="task-edit-section">
+                    <div className="task-edit-label">파일 첨부</div>
+                    <input
+                      ref={cuAttachInputRef}
+                      type="file"
+                      style={{ display: 'none' }}
+                      onChange={e => attachFileToCuTask(e.target.files?.[0])}
+                    />
+                    <button className="btn-task-attach" onClick={() => cuAttachInputRef.current?.click()} disabled={cuAttachSaving}>
+                      {cuAttachSaving ? '업로드 중...' : '📎 파일 선택'}
+                    </button>
+                  </div>
                 </>
               }
             </div>

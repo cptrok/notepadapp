@@ -114,6 +114,16 @@ body {
 .task-attachments-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .attachment-dl-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 7px; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.18s; }
 .attachment-dl-btn:hover { background: var(--primary); color: white; }
+.task-edit-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.task-edit-label { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.task-edit-textarea { width: 100%; min-height: 90px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text); background: var(--bg); resize: vertical; font-family: inherit; box-sizing: border-box; transition: border 0.15s; }
+.task-edit-textarea:focus { outline: none; border-color: var(--primary); }
+.btn-task-save { margin-top: 8px; padding: 7px 18px; background: var(--primary); color: white; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.btn-task-save:hover:not(:disabled) { background: var(--primary-dark, #1a5276); }
+.btn-task-save:disabled { opacity: 0.5; cursor: default; }
+.btn-task-attach { padding: 7px 16px; background: var(--bg-secondary, #f1f5f9); border: 1.5px solid var(--border); border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; transition: all 0.15s; }
+.btn-task-attach:hover:not(:disabled) { background: var(--border); }
+.btn-task-attach:disabled { opacity: 0.5; cursor: default; }
 
 .trial-quarter-item { padding: 10px 16px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text); transition: background 0.15s; }
 .trial-quarter-item:hover { background: var(--primary-light); }
