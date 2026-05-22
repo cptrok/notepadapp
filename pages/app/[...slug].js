@@ -955,7 +955,7 @@ export default function App() {
       return sectionLines.join('\n').trim();
     };
     const issuePart = extractSection(text, '## 이슈사항');
-    const progressPart = extractSection(text, '## 진행사항');
+    const progressPart = extractSection(text, '## 진행내역');
     const bodyParts = [issuePart, progressPart].filter(Boolean).join('\n\n');
     const body = bodyParts || text;
     const description = dateStr ? `${dateStr}\n${body}` : body;
@@ -1157,7 +1157,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v95</span>
+              <span className="sidebar-title">록근_v96</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
