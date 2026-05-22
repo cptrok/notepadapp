@@ -946,7 +946,19 @@ export default function App() {
     }
     const dateMatch = title.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
     const dateStr = dateMatch ? `${dateMatch[1]}.${String(dateMatch[2]).padStart(2,'0')}.${String(dateMatch[3]).padStart(2,'0')}` : null;
-    const description = dateStr ? `${dateStr}\n${text}` : text;
+    const extractSection = (src, heading) => {
+      const lines = src.split('\n');
+      const idx = lines.findIndex(l => l.trim() === heading);
+      if (idx === -1) return '';
+      const nextH2 = lines.findIndex((l, i) => i > idx && l.startsWith('## '));
+      const sectionLines = nextH2 === -1 ? lines.slice(idx) : lines.slice(idx, nextH2);
+      return sectionLines.join('\n').trim();
+    };
+    const issuePart = extractSection(text, '## 이슈사항');
+    const progressPart = extractSection(text, '## 진행사항');
+    const bodyParts = [issuePart, progressPart].filter(Boolean).join('\n\n');
+    const body = bodyParts || text;
+    const description = dateStr ? `${dateStr}\n${body}` : body;
     setCuRegForm(f => ({ ...f, taskName, description, customerSearch: '', customer: '' }));
     setCuRegMsg('');
     setCuRegModal(true);
@@ -1145,7 +1157,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v94</span>
+              <span className="sidebar-title">록근_v95</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
