@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   if (!apiKey) return res.status(500).json({ error: 'API 키가 설정되지 않았습니다.' });
 
   const style = '명사형 종결 어미를 사용해 간결하게 작성할 것. (예: "~함", "~됨", "~할 것", "~한 상태" 등. "~했습니다", "~보입니다" 같은 경어체 금지)';
-  const text = messages.map(m => `[${m.username}] ${m.message}`).join('\n');
+  const text = messages.map(m => m.message).join('\n');
   const customerBracket = (() => {
     // 1순위: 브래킷 안에 한글이 있는 경우 ([신한라이프] 형태)
     const brackets = channelName.match(/\[([^\]]+)\]/g) || [];
