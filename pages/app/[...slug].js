@@ -331,7 +331,7 @@ export default function App() {
   function resolveCuMentions(text) {
     if (!cuMyUserRef.current) return text;
     const u = cuMyUserRef.current;
-    const mention = `@${u.username}`;
+    const mention = `@[${u.id}]`;
     return text.replace(/@me\b/gi, mention);
   }
 
@@ -1401,7 +1401,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v129</span>
+              <span className="sidebar-title">Clickpad_v130</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
