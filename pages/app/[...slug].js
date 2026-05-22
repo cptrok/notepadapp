@@ -1010,8 +1010,13 @@ export default function App() {
             headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
             body: JSON.stringify({ value: labelIds }),
           });
-          const fd = await fr.json();
-          productMsg = ' | Product응답: ' + JSON.stringify(fd);
+          await fr.json();
+          const tr = await fetch(`https://api.clickup.com/api/v2/task/${data.id}`, {
+            headers: { Authorization: clickupTokenRef.current },
+          });
+          const td = await tr.json();
+          const pf = td.custom_fields?.find(f => f.id === '1294915f-d95c-4f52-8cdb-ce03f94be7f6');
+          productMsg = ' | field: ' + JSON.stringify(pf);
         }
       }
       setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id + productMsg);
@@ -1198,7 +1203,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v101</span>
+              <span className="sidebar-title">록근_v102</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
