@@ -874,7 +874,18 @@ export default function App() {
         headers: { 'x-mm-token': mmTokenRef.current },
       });
       const teams = await teamsRes.json();
-      if (!Array.isArray(teams) || teams.length === 0) { setMmLoading(false); return; }
+      if (!teamsRes.ok || !Array.isArray(teams)) {
+        setMmLoading(false);
+        if (teamsRes.status === 401) {
+          setMmToken(null); mmTokenRef.current = null;
+          localStorage.removeItem('mm_token');
+          showToastMsg('MM 세션이 만료됐습니다. 다시 로그인해주세요.');
+        } else {
+          showToastMsg('MM 채널 불러오기 실패: ' + (teams?.error || teamsRes.status));
+        }
+        return;
+      }
+      if (teams.length === 0) { setMmLoading(false); return; }
       let allChannels = [];
       for (const team of teams) {
         const chRes = await fetch(`/api/mattermost?action=channels&teamId=${team.id}&userId=${mmUserIdRef.current}`, {
@@ -1400,7 +1411,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v132</span>
+              <span className="sidebar-title">Clickpad_v133</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
