@@ -116,8 +116,8 @@ export default function App() {
     MFP: '900303164467', MFH: '900303116521', Dashboard: '901804149604',
   };
   const TEAM_IN_CHARGE = {
-    MFO: 8, MFM: 8, MFD: 8, MFT: 8, MFA: 8,
-    MFH: 7, MFP: 7, MFS: 7,
+    MFO: 8, MFD: 8, MFT: 8, MFA: 8,
+    MFM: 7, MFH: 7, MFP: 7, MFS: 7,
   };
   const DEQ_PRODUCT_LABELS = {
     MFO: '37380433-ed62-488a-85a7-75de8ff1dd65',
@@ -1243,7 +1243,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v115</span>
+              <span className="sidebar-title">록근_v116</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
