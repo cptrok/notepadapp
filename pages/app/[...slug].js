@@ -606,8 +606,8 @@ export default function App() {
     setCuDescSaving(false);
   }
 
-  async function openCuCommentModal(text) {
-    setCuCommentModal({ text });
+  async function openCuCommentModal(text, imageIds = []) {
+    setCuCommentModal({ text, imageIds });
     setCuCommentSearch('');
     if (!myTasksLoaded) {
       setCuCommentSearching(true);
@@ -620,6 +620,8 @@ export default function App() {
     if (!cuCommentModal?.text) return;
     setCuCommentPosting(true);
     await ensureCuMyUser();
+
+    // 댓글 추가
     const resolved = resolveCuMentions(cuCommentModal.text);
     const body = { comment_text: resolved, notify_all: false };
     if (cuMyUserRef.current) body.assignee = cuMyUserRef.current.id;
@@ -628,15 +630,44 @@ export default function App() {
       headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    setCuCommentPosting(false);
-    if (res.ok) {
-      setCuCommentModal(null);
-      setCuCommentSearch('');
-      setCuCommentTasks([]);
-      showToastMsg('댓글이 추가되었습니다.');
-    } else {
+
+    if (!res.ok) {
+      setCuCommentPosting(false);
       showToastMsg('댓글 추가 실패. 다시 시도해주세요.');
+      return;
     }
+
+    // 이미지 첨부
+    const imageIds = cuCommentModal.imageIds || [];
+    let uploadedCount = 0;
+    for (const fileId of imageIds) {
+      try {
+        const fileRes = await fetch(`/api/mattermost?action=file&fileId=${fileId}`, {
+          headers: { 'x-mm-token': mmTokenRef.current },
+        });
+        if (!fileRes.ok) continue;
+        const blob = await fileRes.blob();
+        const contentDisposition = fileRes.headers.get('content-disposition') || '';
+        const nameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        const fileName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : `image_${fileId}.png`;
+        const form = new FormData();
+        form.append('attachment', blob, fileName);
+        const attachRes = await fetch(`https://api.clickup.com/api/v2/task/${taskId}/attachment`, {
+          method: 'POST',
+          headers: { Authorization: clickupTokenRef.current },
+          body: form,
+        });
+        if (attachRes.ok) uploadedCount++;
+      } catch (e) { console.error(e); }
+    }
+
+    setCuCommentPosting(false);
+    setCuCommentModal(null);
+    setCuCommentSearch('');
+    const msg = imageIds.length > 0
+      ? `댓글이 추가되었습니다. (이미지 ${uploadedCount}/${imageIds.length}개 첨부)`
+      : '댓글이 추가되었습니다.';
+    showToastMsg(msg);
   }
 
   async function attachFileToCuTask(file) {
@@ -1448,7 +1479,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v136</span>
+              <span className="sidebar-title">Clickpad_v137</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1804,7 +1835,7 @@ export default function App() {
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', marginBottom: '6px' }}>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id], mmDateImageIds[mmSelectedChannel?.id] || [], mmTokenRef.current)}>📋 메모저장</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#0066cc', padding: '2px 7px', fontWeight: 600 }} onClick={() => { const dateLabel = (mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일'); openCuRegModal(`${mmChannelDisplayName(mmSelectedChannel)} - ${dateLabel}`, mmDateSummary[mmSelectedChannel.id], []); }}>📋 ClickUp 등록</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#7c3aed', padding: '2px 7px', fontWeight: 600 }} onClick={() => openCuCommentModal(mmDateSummary[mmSelectedChannel.id])}>💬 태스크에 댓글</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#7c3aed', padding: '2px 7px', fontWeight: 600 }} onClick={() => openCuCommentModal(mmDateSummary[mmSelectedChannel.id], mmDateImageIds[mmSelectedChannel?.id] || [])}>💬 태스크에 댓글</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing}>🔄 다시 요약하기</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(prev => ({ ...prev, [mmSelectedChannel.id]: !prev[mmSelectedChannel.id] }))}>{mmDateSummaryCollapsed[mmSelectedChannel?.id] ? '▼' : '▲'}</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary(prev => ({ ...prev, [mmSelectedChannel.id]: '' }))}>✕</button>
@@ -1921,7 +1952,10 @@ export default function App() {
               <h2>💬 태스크에 댓글 추가</h2>
               <button className="admin-close" onClick={() => setCuCommentModal(null)}>✕</button>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>내 태스크에서 선택하면 요약 내용이 댓글로 추가됩니다.</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+              내 태스크에서 선택하면 요약 내용이 댓글로 추가됩니다.
+              {cuCommentModal?.imageIds?.length > 0 && <span style={{ marginLeft: '6px', color: '#7c3aed', fontWeight: 600 }}>🖼 이미지 {cuCommentModal.imageIds.length}개 첨부 예정</span>}
+            </div>
             <input
               type="text"
               value={cuCommentSearch}
