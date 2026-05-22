@@ -1025,9 +1025,23 @@ export default function App() {
     const detectedProduct = detectProduct(title) || detectProduct(taskName) || detectProduct(text);
     const nextProduct = detectedProduct || null;
     const resolvedProduct = nextProduct || 'MFO';
+    // ## 타이틀 라인에서 [고객명] 추출 후 DEQ_CUSTOMERS 매칭
+    const titleLine = (() => {
+      const lines = text.split('\n');
+      const idx = lines.findIndex(l => l.trim() === '## 타이틀');
+      if (idx !== -1) return lines.slice(idx + 1).find(l => l.trim()) || '';
+      return taskName;
+    })();
+    const bracketMatch = titleLine.match(/\[([^\]]+)\]/);
+    const customerKeyword = bracketMatch ? bracketMatch[1] : titleLine.split(/\s/)[0];
+    const detectedCustomer = customerKeyword
+      ? DEQ_CUSTOMERS.find(c => c.name.includes(customerKeyword) || customerKeyword.includes(c.name))
+      : null;
     setCuRegForm(f => ({
       ...f,
-      taskName, description, customerSearch: '', customer: '', imageUrls, attachImages: imageUrls.length > 0, extraAssignees: [],
+      taskName, description, imageUrls, attachImages: imageUrls.length > 0, extraAssignees: [],
+      customerSearch: detectedCustomer ? detectedCustomer.name : '',
+      customer: detectedCustomer ? detectedCustomer.id : '',
       ...(nextProduct ? { product: nextProduct, productLabels: [nextProduct] } : {}),
     }));
     setCuMemberSearch('');
@@ -1306,7 +1320,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v120</span>
+              <span className="sidebar-title">록근_v121</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
