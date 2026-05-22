@@ -80,6 +80,7 @@ export default function App() {
   const [cuDescSaving, setCuDescSaving] = useState(false);
   const [cuAttachSaving, setCuAttachSaving] = useState(false);
   const cuAttachInputRef = useRef(null);
+  const cuMyUserRef = useRef(null);
 
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
@@ -318,6 +319,13 @@ export default function App() {
     });
   }, [currentUsername]);
 
+  function resolveCuMentions(text) {
+    if (!cuMyUserRef.current) return text;
+    const u = cuMyUserRef.current;
+    const mention = `@${u.username}`;
+    return text.replace(/@me\b/gi, mention);
+  }
+
   async function loadUserProfile() {
     const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
     if (data && data[0]) {
@@ -330,6 +338,15 @@ export default function App() {
         mmTokenRef.current = p.mm_token;
         setMmToken(p.mm_token);
         localStorage.setItem('mm_token', p.mm_token);
+      }
+
+      // ClickUp 본인 유저 정보 캐시
+      const token = p.clickup_token || clickupTokenRef.current;
+      if (token && !cuMyUserRef.current) {
+        fetch('https://api.clickup.com/api/v2/user', { headers: { Authorization: token } })
+          .then(r => r.json())
+          .then(d => { if (d.user) cuMyUserRef.current = d.user; })
+          .catch(() => {});
       }
     }
   }
@@ -559,7 +576,8 @@ export default function App() {
     if (!cuAppendDesc.trim() || !cuDetail?.task) return;
     setCuDescSaving(true);
     const existing = cuDetail.task.description || '';
-    const newDesc = existing ? cuAppendDesc.trim() + '\n\n' + existing : cuAppendDesc.trim();
+    const resolved = resolveCuMentions(cuAppendDesc.trim());
+    const newDesc = existing ? resolved + '\n\n' + existing : resolved;
     const res = await fetch(`https://api.clickup.com/api/v2/task/${cuDetail.task.id}`, {
       method: 'PUT',
       headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
@@ -1116,7 +1134,7 @@ export default function App() {
         headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: cuRegForm.taskName,
-          description: cuRegForm.description,
+          description: resolveCuMentions(cuRegForm.description),
           assignees: [...(myUserIdRef.current ? [Number(myUserIdRef.current)] : []), ...cuRegForm.extraAssignees.map(u => u.id)],
           custom_fields: [
             { id: 'cc55be6f-f4bf-42b7-9a33-b06e1b60f800', value: cuRegForm.customer },
@@ -1372,7 +1390,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v127</span>
+              <span className="sidebar-title">Clickpad_v128</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
