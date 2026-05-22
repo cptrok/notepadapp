@@ -102,7 +102,7 @@ export default function App() {
   const [mmSummary, setMmSummary] = useState('');
   const [mmSummarizing, setMmSummarizing] = useState(false);
   const [mmSummaryCollapsed, setMmSummaryCollapsed] = useState(false);
-  const [mmDateInput, setMmDateInput] = useState('');
+  const [mmDateInputs, setMmDateInputs] = useState({});
   const [mmDateSummary, setMmDateSummary] = useState({});
   const [mmDateSummarizing, setMmDateSummarizing] = useState(false);
   const [mmDateSummaryCollapsed, setMmDateSummaryCollapsed] = useState({});
@@ -883,6 +883,7 @@ export default function App() {
 
 
   async function mmSummarizeByDate() {
+    const mmDateInput = mmDateInputs[mmSelectedChannel?.id] || '';
     if (!mmDateInput || !mmSelectedChannel) return;
     const chId = mmSelectedChannel.id;
     setMmDateSummarizing(true);
@@ -1200,7 +1201,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v109</span>
+              <span className="sidebar-title">록근_v110</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1540,12 +1541,12 @@ export default function App() {
               <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexShrink: 0 }}>
                 <input
                   type="date"
-                  value={mmDateInput}
-                  onChange={e => setMmDateInput(e.target.value)}
+                  value={mmDateInputs[mmSelectedChannel?.id] || ''}
+                  onChange={e => setMmDateInputs(prev => ({ ...prev, [mmSelectedChannel.id]: e.target.value }))}
                   onClick={e => { try { e.target.showPicker(); } catch {} }}
                   style={{ flex: 1, padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', cursor: 'pointer' }}
                 />
-                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing || !mmDateInput}>
+                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing || !mmDateInputs[mmSelectedChannel?.id]}>
                   {mmDateSummarizing ? '⏳' : '✨ 요약하기'}
                 </button>
                 <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={() => mmOpenChannel(mmSelectedChannel)}>🔃 다시 불러오기</button>
@@ -1554,12 +1555,12 @@ export default function App() {
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
                   <div style={{ marginBottom: mmDateSummaryCollapsed[mmSelectedChannel?.id] ? 0 : '6px' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', marginBottom: '6px' }}>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id])}>📋 메모저장</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id])}>📋 메모저장</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing}>🔄 다시 요약하기</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(prev => ({ ...prev, [mmSelectedChannel.id]: !prev[mmSelectedChannel.id] }))}>{mmDateSummaryCollapsed[mmSelectedChannel?.id] ? '▼' : '▲'}</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary(prev => ({ ...prev, [mmSelectedChannel.id]: '' }))}>✕</button>
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: '13px' }}>📅 {mmDateInput.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')} 요약</div>
+                    <div style={{ fontWeight: 700, fontSize: '13px' }}>📅 {(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')} 요약</div>
                   </div>
                   {!mmDateSummaryCollapsed[mmSelectedChannel?.id] && <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{mmDateSummary[mmSelectedChannel.id]}</div>}
                 </div>
