@@ -114,9 +114,8 @@ export default function App() {
   const [mmDateSummaryCollapsed, setMmDateSummaryCollapsed] = useState({});
   const [mmLoginForm, setMmLoginForm] = useState({ username: '', password: '' });
   const [mmLoginMsg, setMmLoginMsg] = useState('');
-  const [cuCommentModal, setCuCommentModal] = useState(null); // { text, pendingText }
+  const [cuCommentModal, setCuCommentModal] = useState(null);
   const [cuCommentSearch, setCuCommentSearch] = useState('');
-  const [cuCommentTasks, setCuCommentTasks] = useState([]);
   const [cuCommentSearching, setCuCommentSearching] = useState(false);
   const [cuCommentPosting, setCuCommentPosting] = useState(false);
 
@@ -607,18 +606,14 @@ export default function App() {
     setCuDescSaving(false);
   }
 
-  async function searchTasksForComment(q) {
-    if (!q.trim()) return;
-    setCuCommentSearching(true);
-    setCuCommentTasks([]);
-    try {
-      const res = await fetch(`https://api.clickup.com/api/v2/team/${TEAM_ID}/task?query=${encodeURIComponent(q)}&subtasks=true&include_closed=true`, {
-        headers: { Authorization: clickupTokenRef.current },
-      });
-      const data = await res.json();
-      setCuCommentTasks((data.tasks || []).slice(0, 20));
-    } catch (e) { console.error(e); }
-    setCuCommentSearching(false);
+  async function openCuCommentModal(text) {
+    setCuCommentModal({ text });
+    setCuCommentSearch('');
+    if (!myTasksLoaded) {
+      setCuCommentSearching(true);
+      await fetchMyTasks(false);
+      setCuCommentSearching(false);
+    }
   }
 
   async function postCommentToTask(taskId) {
@@ -1453,7 +1448,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v135</span>
+              <span className="sidebar-title">Clickpad_v136</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1809,7 +1804,7 @@ export default function App() {
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', marginBottom: '6px' }}>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id], mmDateImageIds[mmSelectedChannel?.id] || [], mmTokenRef.current)}>📋 메모저장</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#0066cc', padding: '2px 7px', fontWeight: 600 }} onClick={() => { const dateLabel = (mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일'); openCuRegModal(`${mmChannelDisplayName(mmSelectedChannel)} - ${dateLabel}`, mmDateSummary[mmSelectedChannel.id], []); }}>📋 ClickUp 등록</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#7c3aed', padding: '2px 7px', fontWeight: 600 }} onClick={() => { setCuCommentModal({ text: mmDateSummary[mmSelectedChannel.id] }); setCuCommentSearch(''); setCuCommentTasks([]); }}>💬 태스크에 댓글</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#7c3aed', padding: '2px 7px', fontWeight: 600 }} onClick={() => openCuCommentModal(mmDateSummary[mmSelectedChannel.id])}>💬 태스크에 댓글</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing}>🔄 다시 요약하기</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(prev => ({ ...prev, [mmSelectedChannel.id]: !prev[mmSelectedChannel.id] }))}>{mmDateSummaryCollapsed[mmSelectedChannel?.id] ? '▼' : '▲'}</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary(prev => ({ ...prev, [mmSelectedChannel.id]: '' }))}>✕</button>
@@ -1926,33 +1921,29 @@ export default function App() {
               <h2>💬 태스크에 댓글 추가</h2>
               <button className="admin-close" onClick={() => setCuCommentModal(null)}>✕</button>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>태스크를 검색하고 선택하면 요약 내용이 댓글로 추가됩니다.</div>
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
-              <input
-                type="text"
-                value={cuCommentSearch}
-                onChange={e => setCuCommentSearch(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && searchTasksForComment(cuCommentSearch)}
-                placeholder="태스크명 검색..."
-                style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--border, #ddd)', borderRadius: '6px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)' }}
-                autoFocus
-              />
-              <button className="btn-search-clickup" onClick={() => searchTasksForComment(cuCommentSearch)} disabled={cuCommentSearching}>
-                {cuCommentSearching ? '...' : '🔍'}
-              </button>
-            </div>
-            <div style={{ maxHeight: '280px', overflowY: 'auto', border: '1px solid var(--border, #ddd)', borderRadius: '6px' }}>
-              {cuCommentTasks.length === 0 && !cuCommentSearching && (
-                <div style={{ padding: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>검색어를 입력하고 엔터를 누르세요.</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>내 태스크에서 선택하면 요약 내용이 댓글로 추가됩니다.</div>
+            <input
+              type="text"
+              value={cuCommentSearch}
+              onChange={e => setCuCommentSearch(e.target.value)}
+              placeholder="태스크명 필터..."
+              style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border, #ddd)', borderRadius: '6px', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', boxSizing: 'border-box', marginBottom: '8px' }}
+              autoFocus
+            />
+            <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border, #ddd)', borderRadius: '6px' }}>
+              {cuCommentSearching && <div style={{ padding: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>불러오는 중...</div>}
+              {!cuCommentSearching && myTasks.length === 0 && (
+                <div style={{ padding: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>내 태스크가 없습니다.</div>
               )}
-              {cuCommentTasks.map(t => (
+              {!cuCommentSearching && myTasks
+                .filter(t => !cuCommentSearch.trim() || t.name.toLowerCase().includes(cuCommentSearch.toLowerCase()))
+                .map(t => (
                 <div key={t.id}
-                  style={{ padding: '10px 14px', borderBottom: '1px solid var(--border, #eee)', cursor: 'pointer', fontSize: '13px' }}
+                  style={{ padding: '10px 14px', borderBottom: '1px solid var(--border, #eee)', cursor: cuCommentPosting ? 'default' : 'pointer', fontSize: '13px', opacity: cuCommentPosting ? 0.6 : 1 }}
                   onClick={() => !cuCommentPosting && postCommentToTask(t.id)}
                 >
                   <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{t.name}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{t.list?.name} · {t.status?.status}</div>
-                  {cuCommentPosting && <div style={{ fontSize: '11px', color: '#7c3aed' }}>추가 중...</div>}
                 </div>
               ))}
             </div>
