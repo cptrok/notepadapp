@@ -115,6 +115,10 @@ export default function App() {
     MFD: '900303116531', MFS: '900303116541', MFM: '900303116526',
     MFP: '900303164467', MFH: '900303116521', Dashboard: '901804149604',
   };
+  const TEAM_IN_CHARGE = {
+    MFO: 8, MFM: 8, MFD: 8, MFT: 8, MFA: 8,
+    MFH: 7, MFP: 7, MFS: 7,
+  };
   const DEQ_PRODUCT_LABELS = {
     MFO: '37380433-ed62-488a-85a7-75de8ff1dd65',
     MFM: 'fe56b30c-60d5-4af4-b604-0442c85e1e4e',
@@ -1024,6 +1028,7 @@ export default function App() {
             { id: 'cc55be6f-f4bf-42b7-9a33-b06e1b60f800', value: cuRegForm.customer },
             { id: '6d0330f1-3102-4eea-9099-90875ec6700a', value: cuRegForm.issueType },
             { id: 'ad3894ba-579d-4a6b-946b-9070d604652e', value: todayTs },
+            ...(TEAM_IN_CHARGE[cuRegForm.product] !== undefined ? [{ id: '98e3cb87-f426-48b7-a8ee-6ad9cd1a79c0', value: TEAM_IN_CHARGE[cuRegForm.product] }] : []),
           ],
         }),
       });
@@ -1238,7 +1243,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v114</span>
+              <span className="sidebar-title">록근_v115</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
