@@ -998,7 +998,6 @@ export default function App() {
             { id: 'cc55be6f-f4bf-42b7-9a33-b06e1b60f800', value: cuRegForm.customer },
             { id: '6d0330f1-3102-4eea-9099-90875ec6700a', value: cuRegForm.issueType },
             { id: 'ad3894ba-579d-4a6b-946b-9070d604652e', value: todayTs },
-            ...(DEQ_PRODUCT_LABELS[cuRegForm.product] ? [{ id: '1294915f-d95c-4f52-8cdb-ce03f94be7f6', value: [DEQ_PRODUCT_LABELS[cuRegForm.product]] }] : []),
           ],
         }),
       });
@@ -1201,7 +1200,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v106</span>
+              <span className="sidebar-title">록근_v107</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
