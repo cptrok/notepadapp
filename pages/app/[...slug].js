@@ -1003,7 +1003,15 @@ export default function App() {
     const description = dateStr ? `${dateStr}\n${body}` : body;
     const html = quillRef.current?.root.innerHTML || '';
     const imageUrls = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(m => m[1]).filter(u => u.startsWith('http'));
-    setCuRegForm(f => ({ ...f, taskName, description, customerSearch: '', customer: '', imageUrls, attachImages: imageUrls.length > 0 }));
+    const productKeys = Object.keys(DEQ_LISTS);
+    const detectProduct = (str) => productKeys.find(k => new RegExp(`\\[${k}\\]`, 'i').test(str));
+    const detectedProduct = detectProduct(title) || detectProduct(taskName) || detectProduct(text);
+    const nextProduct = detectedProduct || null;
+    setCuRegForm(f => ({
+      ...f,
+      taskName, description, customerSearch: '', customer: '', imageUrls, attachImages: imageUrls.length > 0,
+      ...(nextProduct ? { product: nextProduct, productLabels: [nextProduct] } : {}),
+    }));
     setCuRegMsg('');
     setCuRegModal(true);
   }
@@ -1243,7 +1251,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v116</span>
+              <span className="sidebar-title">록근_v117</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
