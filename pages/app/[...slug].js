@@ -930,7 +930,15 @@ export default function App() {
   function openCuRegModal() {
     const title = noteTitleRef.current || '';
     const text = quillRef.current ? quillRef.current.getText().trim() : '';
-    setCuRegForm(f => ({ ...f, taskName: title, description: text, customerSearch: '', customer: '' }));
+    let taskName = title;
+    if (quillRef.current) {
+      const html = quillRef.current.root.innerHTML;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const h2 = doc.querySelector('h2');
+      if (h2 && h2.textContent.trim()) taskName = h2.textContent.trim();
+    }
+    setCuRegForm(f => ({ ...f, taskName, description: text, customerSearch: '', customer: '' }));
     setCuRegMsg('');
     setCuRegModal(true);
   }
@@ -1128,7 +1136,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v85</span>
+              <span className="sidebar-title">록근_v87</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
