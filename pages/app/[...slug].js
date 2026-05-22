@@ -142,7 +142,7 @@ export default function App() {
   ];
 
   const [cuRegModal, setCuRegModal] = useState(false);
-  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '' });
+  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '', imageUrls: [], attachImages: false });
   const [cuRegLoading, setCuRegLoading] = useState(false);
   const [cuRegMsg, setCuRegMsg] = useState('');
   const [cuSearchFocused, setCuSearchFocused] = useState(false);
@@ -997,7 +997,9 @@ export default function App() {
     const bodyParts = [issuePart, progressPart].filter(Boolean).join('\n\n');
     const body = bodyParts || text;
     const description = dateStr ? `${dateStr}\n${body}` : body;
-    setCuRegForm(f => ({ ...f, taskName, description, customerSearch: '', customer: '' }));
+    const html = quillRef.current?.root.innerHTML || '';
+    const imageUrls = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(m => m[1]).filter(u => u.startsWith('http'));
+    setCuRegForm(f => ({ ...f, taskName, description, customerSearch: '', customer: '', imageUrls, attachImages: imageUrls.length > 0 }));
     setCuRegMsg('');
     setCuRegModal(true);
   }
@@ -1040,7 +1042,29 @@ export default function App() {
           productMsg = fr.ok ? ' | Product ✅' : ' | Product 오류: ' + JSON.stringify(fd);
         }
       }
-      setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id + productMsg);
+      let imageMsg = '';
+      if (data.id && cuRegForm.attachImages && cuRegForm.imageUrls.length > 0) {
+        let ok = 0, fail = 0;
+        for (const url of cuRegForm.imageUrls) {
+          try {
+            const ir = await fetch(url);
+            if (ir.ok) {
+              const blob = await ir.blob();
+              const filename = decodeURIComponent(url.split('/').pop().split('?')[0]) || 'image.jpg';
+              const fd = new FormData();
+              fd.append('attachment', blob, filename);
+              const ar = await fetch(`https://api.clickup.com/api/v2/task/${data.id}/attachment`, {
+                method: 'POST',
+                headers: { Authorization: clickupTokenRef.current },
+                body: fd,
+              });
+              ar.ok ? ok++ : fail++;
+            }
+          } catch { fail++; }
+        }
+        imageMsg = ` | 이미지 ${ok}개 첨부${fail > 0 ? ` (${fail}개 실패)` : ''}`;
+      }
+      setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id + productMsg + imageMsg);
     } catch (e) { setCuRegMsg('오류: ' + e.message); }
     finally { setCuRegLoading(false); }
   }
@@ -1195,6 +1219,12 @@ export default function App() {
                 <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>설명</div>
                 <textarea value={cuRegForm.description} onChange={e => setCuRegForm(f => ({ ...f, description: e.target.value }))} rows={5} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', resize: 'vertical', background: 'var(--bg, #fff)', color: 'var(--text, #333)', boxSizing: 'border-box' }} placeholder="설명 (선택)" />
               </div>
+              {cuRegForm.imageUrls.length > 0 && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={cuRegForm.attachImages} onChange={e => setCuRegForm(f => ({ ...f, attachImages: e.target.checked }))} />
+                  <span>이미지 첨부 ({cuRegForm.imageUrls.length}개)</span>
+                </label>
+              )}
               {cuRegMsg && <div style={{ fontSize: '13px', color: cuRegMsg.startsWith('✅') ? '#2e7d32' : '#c00', padding: '8px', borderRadius: '6px', background: cuRegMsg.startsWith('✅') ? '#e8f5e9' : '#fff0f0' }}>{cuRegMsg}</div>}
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={() => setCuRegModal(false)} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', background: 'var(--bg, #fff)', cursor: 'pointer', fontSize: '14px' }}>취소</button>
@@ -1208,7 +1238,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v113</span>
+              <span className="sidebar-title">록근_v114</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
