@@ -996,7 +996,7 @@ export default function App() {
       if (!r.ok) { setCuRegMsg('오류: ' + (data.err || JSON.stringify(data))); return; }
       let productMsg = '';
       if (data.id && cuRegForm.productLabels.length > 0) {
-        const labelIds = cuRegForm.productLabels.map(p => DEQ_PRODUCT_LABELS[p]).filter(Boolean);
+        const labelIds = cuRegForm.productLabels.map(p => DEQ_PRODUCT_LABELS[p]).filter(v => v !== undefined);
         if (labelIds.length > 0) {
           const fr = await fetch(`https://api.clickup.com/api/v2/task/${data.id}/field/7ff58f07-8cd6-43ba-98f3-045f8b35f765`, {
             method: 'POST',
@@ -1191,7 +1191,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v104</span>
+              <span className="sidebar-title">록근_v105</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
