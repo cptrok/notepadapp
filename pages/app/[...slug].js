@@ -130,6 +130,7 @@ export default function App() {
   const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '' });
   const [cuRegLoading, setCuRegLoading] = useState(false);
   const [cuRegMsg, setCuRegMsg] = useState('');
+  const [cuSearchFocused, setCuSearchFocused] = useState(false);
 
   const clickupTokenRef = useRef(CLICKUP_TOKEN_DEFAULT);
   const quillRef = useRef(null);
@@ -1093,11 +1094,11 @@ export default function App() {
               </div>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>고객사 *</div>
-                <input value={cuRegForm.customerSearch} onChange={e => setCuRegForm(f => ({ ...f, customerSearch: e.target.value, customer: '' }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', marginBottom: '4px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', boxSizing: 'border-box' }} placeholder="고객사 검색..." />
-                {cuRegForm.customerSearch && !cuRegForm.customer && (
+                <input value={cuRegForm.customerSearch} onChange={e => setCuRegForm(f => ({ ...f, customerSearch: e.target.value, customer: '' }))} onFocus={() => setCuSearchFocused(true)} onBlur={() => setTimeout(() => setCuSearchFocused(false), 200)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', marginBottom: '4px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', boxSizing: 'border-box' }} placeholder="고객사 검색..." />
+                {cuSearchFocused && cuRegForm.customerSearch && (
                   <div style={{ border: '1px solid var(--border, #ddd)', borderRadius: '6px', maxHeight: '160px', overflowY: 'auto', background: 'var(--bg, #fff)' }}>
                     {cuRegFilteredCustomers.slice(0, 20).map(c => (
-                      <div key={c.id} onClick={() => setCuRegForm(f => ({ ...f, customer: c.id, customerSearch: c.name }))} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', borderBottom: '1px solid var(--border, #eee)' }}
+                      <div key={c.id} onClick={() => { setCuRegForm(f => ({ ...f, customer: c.id, customerSearch: c.name })); setCuSearchFocused(false); }} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', borderBottom: '1px solid var(--border, #eee)' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--hover-bg, #f5f5f5)'}
                         onMouseLeave={e => e.currentTarget.style.background = ''}>
                         {c.name}
@@ -1137,7 +1138,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v90</span>
+              <span className="sidebar-title">록근_v91</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
