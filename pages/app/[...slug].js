@@ -319,6 +319,15 @@ export default function App() {
     });
   }, [currentUsername]);
 
+  async function ensureCuMyUser() {
+    if (cuMyUserRef.current) return;
+    try {
+      const r = await fetch('https://api.clickup.com/api/v2/user', { headers: { Authorization: clickupTokenRef.current } });
+      const d = await r.json();
+      if (d.user) cuMyUserRef.current = d.user;
+    } catch (e) {}
+  }
+
   function resolveCuMentions(text) {
     if (!cuMyUserRef.current) return text;
     const u = cuMyUserRef.current;
@@ -575,6 +584,7 @@ export default function App() {
   async function appendCuDescription() {
     if (!cuAppendDesc.trim() || !cuDetail?.task) return;
     setCuDescSaving(true);
+    await ensureCuMyUser();
     const existing = cuDetail.task.description || '';
     const resolved = resolveCuMentions(cuAppendDesc.trim());
     const newDesc = existing ? resolved + '\n\n' + existing : resolved;
@@ -1125,6 +1135,7 @@ export default function App() {
     if (!cuRegForm.customer) return setCuRegMsg('고객사를 선택해주세요.');
     setCuRegLoading(true);
     setCuRegMsg('');
+    await ensureCuMyUser();
     const listId = DEQ_LISTS[cuRegForm.product];
     const today = new Date();
     const todayTs = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
@@ -1390,7 +1401,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v128</span>
+              <span className="sidebar-title">Clickpad_v129</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
