@@ -146,10 +146,14 @@ export default function App() {
   ];
 
   const [cuRegModal, setCuRegModal] = useState(false);
-  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '', imageUrls: [], attachImages: false });
+  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '', imageUrls: [], attachImages: false, extraAssignees: [] });
   const [cuRegLoading, setCuRegLoading] = useState(false);
   const [cuRegMsg, setCuRegMsg] = useState('');
   const [cuSearchFocused, setCuSearchFocused] = useState(false);
+  const [cuMembers, setCuMembers] = useState([]);
+  const [cuMemberSearch, setCuMemberSearch] = useState('');
+  const [cuMemberFocused, setCuMemberFocused] = useState(false);
+  const cuMembersCacheRef = useRef({});
 
   const clickupTokenRef = useRef(CLICKUP_TOKEN_DEFAULT);
   const quillRef = useRef(null);
@@ -970,6 +974,18 @@ export default function App() {
     }
   }
 
+  async function fetchCuMembers(listId) {
+    if (cuMembersCacheRef.current[listId]) { setCuMembers(cuMembersCacheRef.current[listId]); return; }
+    try {
+      const r = await fetch(`https://api.clickup.com/api/v2/list/${listId}/member`, { headers: { Authorization: clickupTokenRef.current } });
+      if (r.ok) {
+        const d = await r.json();
+        cuMembersCacheRef.current[listId] = d.members || [];
+        setCuMembers(d.members || []);
+      }
+    } catch {}
+  }
+
   function openCuRegModal() {
     const title = noteTitleRef.current || '';
     const text = quillRef.current ? quillRef.current.getText().trim() : '';
@@ -1007,12 +1023,15 @@ export default function App() {
     const detectProduct = (str) => productKeys.find(k => new RegExp(`\\[${k}\\]`, 'i').test(str));
     const detectedProduct = detectProduct(title) || detectProduct(taskName) || detectProduct(text);
     const nextProduct = detectedProduct || null;
+    const resolvedProduct = nextProduct || 'MFO';
     setCuRegForm(f => ({
       ...f,
-      taskName, description, customerSearch: '', customer: '', imageUrls, attachImages: imageUrls.length > 0,
+      taskName, description, customerSearch: '', customer: '', imageUrls, attachImages: imageUrls.length > 0, extraAssignees: [],
       ...(nextProduct ? { product: nextProduct, productLabels: [nextProduct] } : {}),
     }));
+    setCuMemberSearch('');
     setCuRegMsg('');
+    fetchCuMembers(DEQ_LISTS[resolvedProduct]);
     setCuRegModal(true);
   }
 
@@ -1031,7 +1050,7 @@ export default function App() {
         body: JSON.stringify({
           name: cuRegForm.taskName,
           description: cuRegForm.description,
-          assignees: myUserIdRef.current ? [Number(myUserIdRef.current)] : [],
+          assignees: [...(myUserIdRef.current ? [Number(myUserIdRef.current)] : []), ...cuRegForm.extraAssignees.map(u => u.id)],
           custom_fields: [
             { id: 'cc55be6f-f4bf-42b7-9a33-b06e1b60f800', value: cuRegForm.customer },
             { id: '6d0330f1-3102-4eea-9099-90875ec6700a', value: cuRegForm.issueType },
@@ -1191,7 +1210,7 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>제품 *</div>
-                <select value={cuRegForm.product} onChange={e => setCuRegForm(f => ({ ...f, product: e.target.value, productLabels: DEQ_PRODUCT_LABELS[e.target.value] ? [e.target.value] : [] }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}>
+                <select value={cuRegForm.product} onChange={e => { setCuRegForm(f => ({ ...f, product: e.target.value, productLabels: DEQ_PRODUCT_LABELS[e.target.value] ? [e.target.value] : [] })); fetchCuMembers(DEQ_LISTS[e.target.value]); }} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}>
                   {Object.keys(DEQ_LISTS).map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
@@ -1224,8 +1243,43 @@ export default function App() {
               </div>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>담당자</div>
-                <div style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg-sub, #f9f9f9)', color: 'var(--text, #333)' }}>
+                <div style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg-sub, #f9f9f9)', color: 'var(--text, #333)', marginBottom: '6px' }}>
                   {myUserIdRef.current ? '나 (본인)' : '로그인 필요'}
+                </div>
+                {cuRegForm.extraAssignees.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                    {cuRegForm.extraAssignees.map(u => (
+                      <span key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '12px', background: '#e8f0fe', border: '1px solid #0066cc', fontSize: '12px', color: '#0066cc' }}>
+                        {u.username.split(' /')[0]}
+                        <button type="button" onClick={() => setCuRegForm(f => ({ ...f, extraAssignees: f.extraAssignees.filter(a => a.id !== u.id) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0066cc', fontSize: '12px', lineHeight: 1 }}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text" placeholder="담당자 추가 검색..." value={cuMemberSearch}
+                    onChange={e => setCuMemberSearch(e.target.value)}
+                    onFocus={() => setCuMemberFocused(true)}
+                    onBlur={() => setTimeout(() => setCuMemberFocused(false), 150)}
+                    style={{ width: '100%', padding: '7px 8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '13px', background: 'var(--bg, #fff)', color: 'var(--text, #333)', boxSizing: 'border-box' }}
+                  />
+                  {cuMemberFocused && cuMemberSearch && (() => {
+                    const q = cuMemberSearch.toLowerCase();
+                    const filtered = cuMembers.filter(m => !cuRegForm.extraAssignees.find(a => a.id === m.id) && (m.username?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q)));
+                    return filtered.length > 0 ? (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '6px', zIndex: 100, maxHeight: '160px', overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        {filtered.slice(0, 8).map(m => (
+                          <div key={m.id} onMouseDown={() => { setCuRegForm(f => ({ ...f, extraAssignees: [...f.extraAssignees, { id: m.id, username: m.username }] })); setCuMemberSearch(''); }} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: '13px', borderBottom: '1px solid var(--border, #eee)' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary, #f5f5f5)'}
+                            onMouseLeave={e => e.currentTarget.style.background = ''}>
+                            <div style={{ fontWeight: 500 }}>{m.username.split(' /')[0]}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted, #999)' }}>{m.username.split('/ ').slice(1).join(' / ')}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               <div>
@@ -1251,7 +1305,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v117</span>
+              <span className="sidebar-title">록근_v118</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
