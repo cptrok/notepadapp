@@ -1001,17 +1001,20 @@ export default function App() {
       });
       const data = await r.json();
       if (!r.ok) { setCuRegMsg('오류: ' + (data.err || JSON.stringify(data))); return; }
+      let productMsg = '';
       if (data.id && cuRegForm.productLabels.length > 0) {
         const labelIds = cuRegForm.productLabels.map(p => DEQ_PRODUCT_LABELS[p]).filter(Boolean);
         if (labelIds.length > 0) {
-          await fetch(`https://api.clickup.com/api/v2/task/${data.id}/field/1294915f-d95c-4f52-8cdb-ce03f94be7f6`, {
+          const fr = await fetch(`https://api.clickup.com/api/v2/task/${data.id}/field/1294915f-d95c-4f52-8cdb-ce03f94be7f6`, {
             method: 'POST',
             headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
             body: JSON.stringify({ value: labelIds }),
           });
+          const fd = await fr.json();
+          productMsg = fr.ok ? ' | Product ✅' : ' | Product 오류: ' + JSON.stringify(fd);
         }
       }
-      setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id);
+      setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id + productMsg);
     } catch (e) { setCuRegMsg('오류: ' + e.message); }
     finally { setCuRegLoading(false); }
   }
@@ -1195,7 +1198,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v99</span>
+              <span className="sidebar-title">록근_v100</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
