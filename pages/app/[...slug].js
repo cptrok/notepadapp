@@ -550,7 +550,7 @@ export default function App() {
     navFn(`/app/clickup/${id}`, undefined, { shallow: true });
     setCuDetail({ loading: true, id });
     setCuAppendDesc('');
-    const res = await fetch(`https://api.clickup.com/api/v2/task/${id}`, { headers: { Authorization: clickupTokenRef.current } });
+    const res = await fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
     const data = await res.json();
     setCuDetail({ task: data });
   }
@@ -1372,7 +1372,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v125</span>
+              <span className="sidebar-title">Clickpad_v126</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
