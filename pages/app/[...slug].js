@@ -138,7 +138,7 @@ export default function App() {
   ];
 
   const [cuRegModal, setCuRegModal] = useState(false);
-  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '' });
+  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '' });
   const [cuRegLoading, setCuRegLoading] = useState(false);
   const [cuRegMsg, setCuRegMsg] = useState('');
   const [cuSearchFocused, setCuSearchFocused] = useState(false);
@@ -1001,12 +1001,15 @@ export default function App() {
       });
       const data = await r.json();
       if (!r.ok) { setCuRegMsg('오류: ' + (data.err || JSON.stringify(data))); return; }
-      if (data.id && DEQ_PRODUCT_LABELS[cuRegForm.product]) {
-        await fetch(`https://api.clickup.com/api/v2/task/${data.id}/field/1294915f-d95c-4f52-8cdb-ce03f94be7f6`, {
-          method: 'POST',
-          headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ value: [DEQ_PRODUCT_LABELS[cuRegForm.product]] }),
-        });
+      if (data.id && cuRegForm.productLabels.length > 0) {
+        const labelIds = cuRegForm.productLabels.map(p => DEQ_PRODUCT_LABELS[p]).filter(Boolean);
+        if (labelIds.length > 0) {
+          await fetch(`https://api.clickup.com/api/v2/task/${data.id}/field/1294915f-d95c-4f52-8cdb-ce03f94be7f6`, {
+            method: 'POST',
+            headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value: labelIds }),
+          });
+        }
       }
       setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id);
     } catch (e) { setCuRegMsg('오류: ' + e.message); }
@@ -1122,7 +1125,7 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>제품 *</div>
-                <select value={cuRegForm.product} onChange={e => setCuRegForm(f => ({ ...f, product: e.target.value }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}>
+                <select value={cuRegForm.product} onChange={e => setCuRegForm(f => ({ ...f, product: e.target.value, productLabels: [e.target.value] }))} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg, #fff)', color: 'var(--text, #333)' }}>
                   {Object.keys(DEQ_LISTS).map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
@@ -1154,6 +1157,22 @@ export default function App() {
                 </select>
               </div>
               <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: 'var(--text-sub, #666)' }}>* Product</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {Object.keys(DEQ_PRODUCT_LABELS).map(k => {
+                    const selected = cuRegForm.productLabels.includes(k);
+                    return (
+                      <button key={k} type="button" onClick={() => setCuRegForm(f => ({
+                        ...f,
+                        productLabels: selected ? f.productLabels.filter(p => p !== k) : [...f.productLabels, k]
+                      }))} style={{ padding: '4px 10px', borderRadius: '12px', border: `1.5px solid ${selected ? '#0066cc' : 'var(--border, #ddd)'}`, background: selected ? '#0066cc' : 'var(--bg, #fff)', color: selected ? '#fff' : 'var(--text, #555)', fontSize: '12px', fontWeight: selected ? 600 : 400, cursor: 'pointer' }}>
+                        {k}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>담당자</div>
                 <div style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg-sub, #f9f9f9)', color: 'var(--text, #333)' }}>
                   {myUserIdRef.current ? '나 (본인)' : '로그인 필요'}
@@ -1176,7 +1195,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v98</span>
+              <span className="sidebar-title">록근_v99</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
