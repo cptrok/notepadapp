@@ -1011,7 +1011,7 @@ export default function App() {
             body: JSON.stringify({ value: labelIds }),
           });
           const fd = await fr.json();
-          productMsg = fr.ok ? ' | Product ✅' : ' | Product 오류: ' + JSON.stringify(fd);
+          productMsg = ' | Product응답: ' + JSON.stringify(fd);
         }
       }
       setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id + productMsg);
@@ -1198,7 +1198,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v100</span>
+              <span className="sidebar-title">록근_v101</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
