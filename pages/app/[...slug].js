@@ -944,7 +944,9 @@ export default function App() {
       const parts = clickupTokenRef.current.split('_');
       if (parts.length >= 2) myUserIdRef.current = parts[1];
     }
-    setCuRegForm(f => ({ ...f, taskName, description: text, customerSearch: '', customer: '' }));
+    const dateMatch = title.match(/\d{4}\.\d{2}\.\d{2}/);
+    const description = dateMatch ? `${dateMatch[0]}\n${text}` : text;
+    setCuRegForm(f => ({ ...f, taskName, description, customerSearch: '', customer: '' }));
     setCuRegMsg('');
     setCuRegModal(true);
   }
@@ -1142,7 +1144,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v92</span>
+              <span className="sidebar-title">록근_v93</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
