@@ -940,6 +940,10 @@ export default function App() {
         if (nextLine) taskName = nextLine.trim();
       }
     }
+    if (!myUserIdRef.current) {
+      const parts = clickupTokenRef.current.split('_');
+      if (parts.length >= 2) myUserIdRef.current = parts[1];
+    }
     setCuRegForm(f => ({ ...f, taskName, description: text, customerSearch: '', customer: '' }));
     setCuRegMsg('');
     setCuRegModal(true);
@@ -1138,7 +1142,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v91</span>
+              <span className="sidebar-title">록근_v92</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
