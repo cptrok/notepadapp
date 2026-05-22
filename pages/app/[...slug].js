@@ -989,17 +989,15 @@ export default function App() {
     } catch {}
   }
 
-  function openCuRegModal() {
-    const title = noteTitleRef.current || '';
-    const text = quillRef.current ? quillRef.current.getText().trim() : '';
+  function openCuRegModal(overrideTitle, overrideText, overrideImageUrls) {
+    const title = overrideTitle ?? (noteTitleRef.current || '');
+    const text = overrideText ?? (quillRef.current ? quillRef.current.getText().trim() : '');
     let taskName = title;
-    if (quillRef.current) {
-      const lines = text.split('\n');
-      const h2Idx = lines.findIndex(l => l.startsWith('## '));
-      if (h2Idx !== -1) {
-        const nextLine = lines.slice(h2Idx + 1).find(l => l.trim() !== '');
-        if (nextLine) taskName = nextLine.trim();
-      }
+    const lines = text.split('\n');
+    const h2Idx = lines.findIndex(l => l.startsWith('## '));
+    if (h2Idx !== -1) {
+      const nextLine = lines.slice(h2Idx + 1).find(l => l.trim() !== '');
+      if (nextLine) taskName = nextLine.trim();
     }
     if (!myUserIdRef.current) {
       const parts = clickupTokenRef.current.split('_');
@@ -1021,7 +1019,7 @@ export default function App() {
     const body = bodyParts || text;
     const description = dateStr ? `${dateStr}\n${body}` : body;
     const html = quillRef.current?.root.innerHTML || '';
-    const imageUrls = [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(m => m[1]).filter(u => u.startsWith('http'));
+    const imageUrls = overrideImageUrls ?? [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(m => m[1]).filter(u => u.startsWith('http'));
     const productKeys = Object.keys(DEQ_LISTS);
     const detectProduct = (str) => productKeys.find(k => new RegExp(`\\[${k}\\]`, 'i').test(str));
     const detectedProduct = detectProduct(title) || detectProduct(taskName) || detectProduct(text);
@@ -1308,7 +1306,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v119</span>
+              <span className="sidebar-title">록근_v120</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1663,6 +1661,7 @@ export default function App() {
                   <div style={{ marginBottom: mmDateSummaryCollapsed[mmSelectedChannel?.id] ? 0 : '6px' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', marginBottom: '6px' }}>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id], mmDateImageIds[mmSelectedChannel?.id] || [], mmTokenRef.current)}>📋 메모저장</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#0066cc', padding: '2px 7px', fontWeight: 600 }} onClick={() => { const dateLabel = (mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일'); openCuRegModal(`${mmChannelDisplayName(mmSelectedChannel)} - ${dateLabel}`, mmDateSummary[mmSelectedChannel.id], []); }}>📋 ClickUp 등록</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing}>🔄 다시 요약하기</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(prev => ({ ...prev, [mmSelectedChannel.id]: !prev[mmSelectedChannel.id] }))}>{mmDateSummaryCollapsed[mmSelectedChannel?.id] ? '▼' : '▲'}</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary(prev => ({ ...prev, [mmSelectedChannel.id]: '' }))}>✕</button>
