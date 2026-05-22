@@ -585,18 +585,17 @@ export default function App() {
     if (!cuAppendDesc.trim() || !cuDetail?.task) return;
     setCuDescSaving(true);
     await ensureCuMyUser();
-    const existing = cuDetail.task.description || '';
     const resolved = resolveCuMentions(cuAppendDesc.trim());
-    const newDesc = existing ? resolved + '\n\n' + existing : resolved;
-    const res = await fetch(`https://api.clickup.com/api/v2/task/${cuDetail.task.id}`, {
-      method: 'PUT',
+    const body = { comment_text: resolved, notify_all: false };
+    if (cuMyUserRef.current) body.assignee = cuMyUserRef.current.id;
+    const res = await fetch(`https://api.clickup.com/api/v2/task/${cuDetail.task.id}/comment`, {
+      method: 'POST',
       headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description: newDesc }),
+      body: JSON.stringify(body),
     });
     if (res.ok) {
-      setCuDetail(prev => ({ ...prev, task: { ...prev.task, description: newDesc } }));
       setCuAppendDesc('');
-      showToastMsg('설명이 추가되었습니다.');
+      showToastMsg('댓글이 추가되었습니다.');
     } else {
       showToastMsg('저장 실패. 다시 시도해주세요.');
     }
@@ -1401,7 +1400,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v130</span>
+              <span className="sidebar-title">Clickpad_v131</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1660,15 +1659,15 @@ export default function App() {
                     </div>
                   )}
                   <div className="task-edit-section">
-                    <div className="task-edit-label">설명 추가</div>
+                    <div className="task-edit-label">댓글 추가</div>
                     <textarea
                       className="task-edit-textarea"
-                      placeholder="기존 설명 아래에 내용을 추가합니다..."
+                      placeholder="댓글 내용을 입력하세요. @me 입력 시 본인 멘션으로 자동 변환됩니다."
                       value={cuAppendDesc}
                       onChange={e => setCuAppendDesc(e.target.value)}
                     />
                     <button className="btn-task-save" onClick={appendCuDescription} disabled={cuDescSaving || !cuAppendDesc.trim()}>
-                      {cuDescSaving ? '저장 중...' : '설명 저장'}
+                      {cuDescSaving ? '저장 중...' : '댓글 저장'}
                     </button>
                   </div>
                   <div className="task-edit-section">
