@@ -1001,6 +1001,13 @@ export default function App() {
       });
       const data = await r.json();
       if (!r.ok) { setCuRegMsg('오류: ' + (data.err || JSON.stringify(data))); return; }
+      if (data.id && DEQ_PRODUCT_LABELS[cuRegForm.product]) {
+        await fetch(`https://api.clickup.com/api/v2/task/${data.id}/field/1294915f-d95c-4f52-8cdb-ce03f94be7f6`, {
+          method: 'POST',
+          headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: [DEQ_PRODUCT_LABELS[cuRegForm.product]] }),
+        });
+      }
       setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id);
     } catch (e) { setCuRegMsg('오류: ' + e.message); }
     finally { setCuRegLoading(false); }
@@ -1169,7 +1176,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v97</span>
+              <span className="sidebar-title">록근_v98</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
