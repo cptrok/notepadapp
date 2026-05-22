@@ -103,6 +103,7 @@ export default function App() {
   const [mmSummarizing, setMmSummarizing] = useState(false);
   const [mmSummaryCollapsed, setMmSummaryCollapsed] = useState(false);
   const [mmDateInputs, setMmDateInputs] = useState({});
+  const [mmDateImageIds, setMmDateImageIds] = useState({});
   const [mmDateSummary, setMmDateSummary] = useState({});
   const [mmDateSummarizing, setMmDateSummarizing] = useState(false);
   const [mmDateSummaryCollapsed, setMmDateSummaryCollapsed] = useState({});
@@ -898,10 +899,12 @@ export default function App() {
       const data = await r.json();
       if (!r.ok) { setMmDateSummary('오류: ' + data.error); return; }
       const order = data.order || [];
-      const posts = order
+      const allDayPosts = order
         .map(id => data.posts[id])
-        .filter(p => p.create_at >= startOfDay.getTime() && p.create_at <= endOfDay.getTime() && p.message?.trim())
-        .sort((a, b) => a.create_at - b.create_at);
+        .filter(p => p.create_at >= startOfDay.getTime() && p.create_at <= endOfDay.getTime());
+      const allFileIds = allDayPosts.flatMap(p => p.file_ids || []);
+      setMmDateImageIds(prev => ({ ...prev, [chId]: allFileIds }));
+      const posts = allDayPosts.filter(p => p.message?.trim()).sort((a, b) => a.create_at - b.create_at);
       if (posts.length === 0) { setMmDateSummary(prev => ({ ...prev, [chId]: '해당 날짜의 메시지가 없습니다.' })); return; }
       const unknownIds = [...new Set(posts.map(p => p.user_id).filter(id => !mmUsersCacheRef.current[id]))];
       if (unknownIds.length > 0) {
@@ -929,10 +932,30 @@ export default function App() {
     finally { setMmDateSummarizing(false); }
   }
 
-  async function saveToNote(title, text) {
+  async function saveToNote(title, text, fileIds = [], mmToken = null) {
     const username = localStorage.getItem('memo_user');
     if (!username) return alert('로그인이 필요합니다.');
-    const content = '<p>' + text.replace(/\n/g, '</p><p>') + '</p>';
+    let imageHtml = '';
+    if (fileIds.length > 0 && mmToken) {
+      for (const fileId of fileIds) {
+        try {
+          const r = await fetch(`/api/mattermost?action=file&fileId=${fileId}`, { headers: { 'x-mm-token': mmToken } });
+          if (r.ok) {
+            const blob = await r.blob();
+            if (blob.type.startsWith('image/')) {
+              const ext = blob.type.includes('png') ? 'png' : blob.type.includes('gif') ? 'gif' : 'jpg';
+              const fileName = `${username}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+              const { error: uploadErr } = await sb.storage.from('memo-images').upload(fileName, blob, { contentType: blob.type });
+              if (!uploadErr) {
+                const { data: urlData } = sb.storage.from('memo-images').getPublicUrl(fileName);
+                imageHtml += `<p><img src="${urlData.publicUrl}"></p>`;
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+    const content = '<p>' + text.replace(/\n/g, '</p><p>') + '</p>' + imageHtml;
     const { data, error } = await sb.rpc('save_user_note', {
       p_username: username, p_id: null, p_title: title, p_content: content,
     });
@@ -1185,7 +1208,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v112</span>
+              <span className="sidebar-title">록근_v113</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1539,7 +1562,7 @@ export default function App() {
                 <div style={{ marginBottom: '10px', padding: '12px', borderRadius: '8px', background: 'var(--accent-bg, #e8f0fe)', border: '1px solid var(--accent, #0066cc)', flexShrink: 0 }}>
                   <div style={{ marginBottom: mmDateSummaryCollapsed[mmSelectedChannel?.id] ? 0 : '6px' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', marginBottom: '6px' }}>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id])}>📋 메모저장</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id], mmDateImageIds[mmSelectedChannel?.id] || [], mmTokenRef.current)}>📋 메모저장</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing}>🔄 다시 요약하기</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(prev => ({ ...prev, [mmSelectedChannel.id]: !prev[mmSelectedChannel.id] }))}>{mmDateSummaryCollapsed[mmSelectedChannel?.id] ? '▼' : '▲'}</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummary(prev => ({ ...prev, [mmSelectedChannel.id]: '' }))}>✕</button>
