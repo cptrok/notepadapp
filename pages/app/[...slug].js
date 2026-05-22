@@ -559,7 +559,7 @@ export default function App() {
     if (!cuAppendDesc.trim() || !cuDetail?.task) return;
     setCuDescSaving(true);
     const existing = cuDetail.task.description || '';
-    const newDesc = existing ? existing + '\n\n' + cuAppendDesc.trim() : cuAppendDesc.trim();
+    const newDesc = existing ? cuAppendDesc.trim() + '\n\n' + existing : cuAppendDesc.trim();
     const res = await fetch(`https://api.clickup.com/api/v2/task/${cuDetail.task.id}`, {
       method: 'PUT',
       headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
@@ -1372,7 +1372,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v126</span>
+              <span className="sidebar-title">Clickpad_v127</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
