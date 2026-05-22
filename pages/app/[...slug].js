@@ -1163,22 +1163,6 @@ export default function App() {
                 </select>
               </div>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: 'var(--text-sub, #666)' }}>* Product</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {Object.keys(DEQ_PRODUCT_LABELS).map(k => {
-                    const selected = cuRegForm.productLabels.includes(k);
-                    return (
-                      <button key={k} type="button" onClick={() => setCuRegForm(f => ({
-                        ...f,
-                        productLabels: selected ? f.productLabels.filter(p => p !== k) : [...f.productLabels, k]
-                      }))} style={{ padding: '4px 10px', borderRadius: '12px', border: `1.5px solid ${selected ? '#0066cc' : 'var(--border, #ddd)'}`, background: selected ? '#0066cc' : 'var(--bg, #fff)', color: selected ? '#fff' : 'var(--text, #555)', fontSize: '12px', fontWeight: selected ? 600 : 400, cursor: 'pointer' }}>
-                        {k}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px', color: 'var(--text-sub, #666)' }}>담당자</div>
                 <div style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', fontSize: '14px', background: 'var(--bg-sub, #f9f9f9)', color: 'var(--text, #333)' }}>
                   {myUserIdRef.current ? '나 (본인)' : '로그인 필요'}
@@ -1201,7 +1185,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v110</span>
+              <span className="sidebar-title">록근_v111</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
