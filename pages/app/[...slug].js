@@ -933,8 +933,11 @@ export default function App() {
     let taskName = title;
     if (quillRef.current) {
       const lines = text.split('\n');
-      const h2Line = lines.find(l => l.startsWith('## '));
-      if (h2Line) taskName = h2Line.replace(/^##\s+/, '').trim();
+      const h2Idx = lines.findIndex(l => l.startsWith('## '));
+      if (h2Idx !== -1) {
+        const nextLine = lines.slice(h2Idx + 1).find(l => l.trim() !== '');
+        if (nextLine) taskName = nextLine.trim();
+      }
     }
     setCuRegForm(f => ({ ...f, taskName, description: text, customerSearch: '', customer: '' }));
     setCuRegMsg('');
@@ -1134,7 +1137,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">록근_v89</span>
+              <span className="sidebar-title">록근_v90</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
