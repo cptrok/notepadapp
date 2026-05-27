@@ -649,7 +649,12 @@ export default function App() {
         const blob = await fileRes.blob();
         const contentDisposition = fileRes.headers.get('content-disposition') || '';
         const nameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-        const fileName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : `image_${fileId}.png`;
+        let fileName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : '';
+        if (!fileName) {
+          const extMap = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
+          const ext = extMap[blob.type] || 'png';
+          fileName = `image_${fileId}.${ext}`;
+        }
         const form = new FormData();
         form.append('attachment', blob, fileName);
         const attachRes = await fetch(`https://api.clickup.com/api/v2/task/${taskId}/attachment`, {
@@ -658,7 +663,8 @@ export default function App() {
           body: form,
         });
         if (attachRes.ok) uploadedCount++;
-      } catch (e) { console.error(e); }
+        else { const errText = await attachRes.text().catch(() => ''); console.error('첨부 실패', attachRes.status, errText); }
+      } catch (e) { console.error('첨부 오류', e); }
     }
 
     setCuCommentPosting(false);
@@ -1479,7 +1485,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v137</span>
+              <span className="sidebar-title">Clickpad_v138</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">

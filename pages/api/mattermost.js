@@ -58,7 +58,9 @@ export default async function handler(req, res) {
         });
         if (!r.ok) return res.status(r.status).json({ error: '파일 로드 실패' });
         const contentType = r.headers.get('content-type') || 'application/octet-stream';
+        const contentDisposition = r.headers.get('content-disposition');
         res.setHeader('Content-Type', contentType);
+        if (contentDisposition) res.setHeader('Content-Disposition', contentDisposition);
         res.setHeader('Cache-Control', 'public, max-age=86400');
         const buffer = await r.arrayBuffer();
         return res.send(Buffer.from(buffer));
