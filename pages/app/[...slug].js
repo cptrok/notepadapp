@@ -125,6 +125,13 @@ export default function App() {
     MFP: '900303164467', MFH: '900303116521', Dashboard: '901804149604',
   };
   const DEQ_LIST_NAMES = Object.fromEntries(Object.entries(DEQ_LISTS).map(([k, v]) => [v, k]));
+  const DEQ_LABEL_NAMES = Object.fromEntries(Object.entries(DEQ_PRODUCT_LABELS).map(([k, v]) => [v, k]));
+  const PRODUCTS_FIELD_ID = '7ff58f07-8cd6-43ba-98f3-045f8b35f765';
+  const getTaskProducts = (t) => {
+    const field = t.custom_fields?.find(f => f.id === PRODUCTS_FIELD_ID);
+    if (!field?.value?.length) return [];
+    return field.value.map(v => DEQ_LABEL_NAMES[v.id] || v.label || v.name).filter(Boolean);
+  };
   const TEAM_IN_CHARGE = {
     MFO: 8, MFD: 8, MFT: 8, MFA: 8,
     MFM: 7, MFH: 7, MFP: 7, MFS: 7,
@@ -1486,7 +1493,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v140</span>
+              <span className="sidebar-title">Clickpad_v141</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1573,7 +1580,7 @@ export default function App() {
                       <div className="task-item-title">{t.name}</div>
                       <div className="task-item-meta">
                         <span className="task-status" style={{ background: t.status?.color || '#666' }}>{t.status?.status}</span>
-                        {DEQ_LIST_NAMES[t.list?.id] && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#4A7AB5', borderRadius: '3px', padding: '1px 5px' }}>{DEQ_LIST_NAMES[t.list?.id]}</span>}
+                        {getTaskProducts(t).map(p => <span key={p} style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#4A7AB5', borderRadius: '3px', padding: '1px 5px', marginRight: '2px' }}>{p}</span>)}
                         {t.assignees?.[0] && <span className="task-assignee">{t.assignees[0].username}</span>}
                         {t.due_date && <span className="task-due">{new Date(Number(t.due_date)).toLocaleDateString('ko-KR')}</span>}
                       </div>
@@ -1596,7 +1603,7 @@ export default function App() {
                       <div className="task-item-title">{t.name}</div>
                       <div className="task-item-meta">
                         <span className="task-status" style={{ background: t.status?.color || '#666' }}>{t.status?.status}</span>
-                        {DEQ_LIST_NAMES[t.list?.id] && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#4A7AB5', borderRadius: '3px', padding: '1px 5px' }}>{DEQ_LIST_NAMES[t.list?.id]}</span>}
+                        {getTaskProducts(t).map(p => <span key={p} style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#4A7AB5', borderRadius: '3px', padding: '1px 5px', marginRight: '2px' }}>{p}</span>)}
                         {t.due_date && <span className="task-due">{new Date(Number(t.due_date)).toLocaleDateString('ko-KR')}</span>}
                       </div>
                     </div>
