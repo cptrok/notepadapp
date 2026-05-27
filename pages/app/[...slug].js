@@ -27,6 +27,24 @@ const CLICKUP_SPACE_ID = '90030550766';
 const LICENSE_SPACE_ID = '60975902';
 const TEAM_ID = '25540965';
 
+const PRODUCTS_FIELD_ID = '7ff58f07-8cd6-43ba-98f3-045f8b35f765';
+const DEQ_LABEL_MAP = {
+  MFO: '37380433-ed62-488a-85a7-75de8ff1dd65', MFM: 'fe56b30c-60d5-4af4-b604-0442c85e1e4e',
+  MFT: '4f0d3c0c-b0a9-47b0-be98-f8e39df6491a', MFH: '1ff22cde-5d33-4506-ab0f-98419d9d4d20',
+  MFD: '6fc80999-58b5-4d8d-ac63-b932799232f2', MFA: '2cc747cb-4ec8-4d21-b7b8-393e3fbf49a8',
+  MFS: '241cfc52-ef33-4792-8002-e5b20c4b5ff9', MFP: '3603f65b-68ec-4426-ad20-e2dc9ed9ed99',
+  OSLIB: '304a2e9d-d855-483e-8e51-79cf7cee0603',
+  'DFM (Dashboard for maxgauge)': 'a7b8ba2e-a3a1-4ec1-9987-590d443a0a63',
+  'DFL (Dashboard for license)': 'adab33f6-8094-428d-99c1-0deb2e31144c',
+  SNDF: 'fd59ec23-0c75-4ee1-aa71-75b8d92902d1',
+};
+const DEQ_LABEL_NAMES = Object.fromEntries(Object.entries(DEQ_LABEL_MAP).map(([k, v]) => [v, k]));
+function getTaskProducts(t) {
+  const field = t.custom_fields?.find(f => f.id === PRODUCTS_FIELD_ID);
+  if (!field?.value?.length) return [];
+  return field.value.map(v => DEQ_LABEL_NAMES[v.id] || v.label || v.name).filter(Boolean);
+}
+
 function stripHtml(html) {
   if (typeof window === 'undefined') return '';
   const tmp = document.createElement('div');
@@ -125,13 +143,6 @@ export default function App() {
     MFP: '900303164467', MFH: '900303116521', Dashboard: '901804149604',
   };
   const DEQ_LIST_NAMES = Object.fromEntries(Object.entries(DEQ_LISTS).map(([k, v]) => [v, k]));
-  const DEQ_LABEL_NAMES = Object.fromEntries(Object.entries(DEQ_PRODUCT_LABELS).map(([k, v]) => [v, k]));
-  const PRODUCTS_FIELD_ID = '7ff58f07-8cd6-43ba-98f3-045f8b35f765';
-  const getTaskProducts = (t) => {
-    const field = t.custom_fields?.find(f => f.id === PRODUCTS_FIELD_ID);
-    if (!field?.value?.length) return [];
-    return field.value.map(v => DEQ_LABEL_NAMES[v.id] || v.label || v.name).filter(Boolean);
-  };
   const TEAM_IN_CHARGE = {
     MFO: 8, MFD: 8, MFT: 8, MFA: 8,
     MFM: 7, MFH: 7, MFP: 7, MFS: 7,
@@ -1493,7 +1504,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v141</span>
+              <span className="sidebar-title">Clickpad_v142</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
