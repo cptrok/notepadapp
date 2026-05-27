@@ -483,26 +483,41 @@ export default function App() {
 
   const CU_PAGE_SIZE = 6;
 
-  async function fetchApiPage(keyword) {
-    if (cuApiExhaustedRef.current) return;
+  async function fetchApiPageNum(pageNum, keyword) {
     const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&page=${cuApiPageRef.current}`,
+      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&page=${pageNum}`,
       { headers: { Authorization: clickupTokenRef.current } }
     );
     const data = await res.json();
     const tasks = data.tasks || [];
-    const filtered = keyword ? tasks.filter(t =>
-      (t.name || '').toLowerCase().includes(keyword.toLowerCase()) ||
-      (t.description || '').toLowerCase().includes(keyword.toLowerCase())
-    ) : tasks;
-    cuBufferRef.current = [...cuBufferRef.current, ...filtered];
-    cuApiPageRef.current += 1;
-    if (tasks.length < 100) cuApiExhaustedRef.current = true;
+    return { tasks, exhausted: tasks.length < 100 };
   }
 
-  async function fillBuffer(keyword) {
+  function filterTasks(tasks, keyword) {
+    if (!keyword) return tasks;
+    const kw = keyword.toLowerCase();
+    return tasks.filter(t =>
+      (t.name || '').toLowerCase().includes(kw) ||
+      (t.description || '').toLowerCase().includes(kw)
+    );
+  }
+
+  async function fillBuffer(keyword, parallel = false) {
+    if (parallel && cuApiPageRef.current === 0 && !cuApiExhaustedRef.current) {
+      // 첫 검색: 2페이지 병렬 fetch
+      const [r0, r1] = await Promise.all([
+        fetchApiPageNum(0, keyword),
+        fetchApiPageNum(1, keyword),
+      ]);
+      cuBufferRef.current = [...filterTasks(r0.tasks, keyword), ...filterTasks(r1.tasks, keyword)];
+      cuApiPageRef.current = 2;
+      if (r0.exhausted || r1.exhausted) cuApiExhaustedRef.current = true;
+    }
     while (cuBufferRef.current.length < CU_PAGE_SIZE && !cuApiExhaustedRef.current) {
-      await fetchApiPage(keyword);
+      const { tasks, exhausted } = await fetchApiPageNum(cuApiPageRef.current, keyword);
+      cuBufferRef.current = [...cuBufferRef.current, ...filterTasks(tasks, keyword)];
+      cuApiPageRef.current += 1;
+      if (exhausted) cuApiExhaustedRef.current = true;
     }
   }
 
@@ -518,10 +533,12 @@ export default function App() {
     cuApiExhaustedRef.current = false;
     setCuLoading(true);
     try {
-      await fillBuffer(q);
+      await fillBuffer(q, true);
       const toShow = cuBufferRef.current.splice(0, CU_PAGE_SIZE);
       setCuTasks(toShow);
       setCuHasMore(cuBufferRef.current.length > 0 || !cuApiExhaustedRef.current);
+      // 다음 페이지 백그라운드 pre-fetch
+      if (!cuApiExhaustedRef.current) fillBuffer(q).catch(() => {});
     } catch (e) { console.error(e); }
     setCuLoading(false);
   }
@@ -533,6 +550,8 @@ export default function App() {
       const toShow = cuBufferRef.current.splice(0, CU_PAGE_SIZE);
       setCuTasks(prev => [...prev, ...toShow]);
       setCuHasMore(cuBufferRef.current.length > 0 || !cuApiExhaustedRef.current);
+      // 다음 페이지 백그라운드 pre-fetch
+      if (!cuApiExhaustedRef.current) fillBuffer(cuKeywordRef.current).catch(() => {});
     } catch (e) { console.error(e); }
     setCuLoadingMore(false);
   }
@@ -1507,7 +1526,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v144</span>
+              <span className="sidebar-title">Clickpad_v145</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
