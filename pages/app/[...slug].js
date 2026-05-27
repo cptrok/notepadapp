@@ -1485,7 +1485,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v138</span>
+              <span className="sidebar-title">Clickpad_v139</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1695,7 +1695,7 @@ export default function App() {
                 onChange={e => { setNoteTitle(e.target.value); noteTitleRef.current = e.target.value; }} />
               <div className="editor-actions">
                 <span className={`save-indicator ${showSaved ? 'show' : ''}`}>저장됨 ✓</span>
-                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={openCuRegModal}>📋 ClickUp 등록</button>
+                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={() => openCuRegModal()}>📋 ClickUp 등록</button>
                 <button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
                 {showDelete && <button className="btn-delete" onClick={deleteNote}>삭제</button>}
               </div>
