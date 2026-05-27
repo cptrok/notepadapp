@@ -41,8 +41,6 @@ const DEQ_LABEL_MAP = {
 const DEQ_LABEL_NAMES = Object.fromEntries(Object.entries(DEQ_LABEL_MAP).map(([k, v]) => [v, k]));
 function getTaskProducts(t) {
   const field = t.custom_fields?.find(f => f.id === PRODUCTS_FIELD_ID);
-  if (!field) return [];
-  if (process.env.NODE_ENV !== 'production') console.log('[Products field]', JSON.stringify(field));
   if (!field?.value?.length) return [];
   return field.value.map(v => {
     if (typeof v === 'string') return DEQ_LABEL_NAMES[v];
@@ -1509,7 +1507,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v143</span>
+              <span className="sidebar-title">Clickpad_v144</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
