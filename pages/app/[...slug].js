@@ -958,6 +958,7 @@ export default function App() {
         headers: { 'x-gw-session': gwSessionRef.current },
       });
       const data = await r.json();
+      console.log('[FAQ list raw]', JSON.stringify(data).slice(0, 1000));
       if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); return; }
       if (!r.ok) { showToastMsg('FAQ 로드 실패'); return; }
       const items = data.content || data.list || data.data || (Array.isArray(data) ? data : []);
@@ -985,6 +986,7 @@ export default function App() {
         headers: { 'x-gw-session': gwSessionRef.current },
       });
       const data = await r.json();
+      console.log('[FAQ detail raw]', JSON.stringify(data).slice(0, 1000));
       if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); setFaqDetail(null); return; }
       setFaqDetail({ loading: false, doc: data });
     } catch (e) {
@@ -1594,7 +1596,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v146</span>
+              <span className="sidebar-title">Clickpad_v147</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
