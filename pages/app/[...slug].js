@@ -186,6 +186,8 @@ export default function App() {
   const [faqSearch, setFaqSearch] = useState('');
   const [faqPage, setFaqPage] = useState(0);
   const [faqHasMore, setFaqHasMore] = useState(false);
+  const faqAllItemsRef = useRef([]);
+  const faqAllLoadedRef = useRef(false);
 
   const DEQ_LISTS = {
     MFO: '900303022977', MFT: '900303031749', MFA: '900303116533',
@@ -982,32 +984,80 @@ export default function App() {
     if (tab === 'license') loadLicenseTasks();
     if (tab === 'clickup' && cuSubTab === 'my' && !myTasksLoaded) fetchMyTasks(false);
     if (tab === 'chat' && mmTokenRef.current && mmChannels.length === 0) mmLoadChannels();
-    if (tab === 'faq' && faqList.length === 0) loadFaqList('', 0, true);
+    if (tab === 'faq' && faqAllItemsRef.current.length === 0) loadFaqPage(0, true);
     const path = tab === 'notes' ? 'note' : tab;
     router.push(`/app/${path}`, undefined, { shallow: true });
   }
 
-  async function loadFaqList(q, page, replace = false) {
+  function applyFaqFilter(searchTerm) {
+    const q = (searchTerm || '').toLowerCase().trim();
+    if (!q) {
+      setFaqList(faqAllItemsRef.current);
+    } else {
+      setFaqList(faqAllItemsRef.current.filter(item => {
+        const title = getFaqTitle(item.values || {});
+        return title.toLowerCase().includes(q);
+      }));
+    }
+  }
+
+  async function loadFaqPage(page, replace = false) {
+    if (!gwSessionRef.current) return null;
+    const r = await fetch(`/api/groupware?action=list&page=${page}&offset=20`, {
+      headers: { 'x-gw-session': gwSessionRef.current },
+    });
+    const data = await r.json();
+    if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); return null; }
+    if (!r.ok) { showToastMsg('FAQ 로드 실패'); return null; }
+    const items = data.data || [];
+    const isLast = data.page?.lastPage ?? items.length < 20;
+    if (replace) {
+      faqAllItemsRef.current = items;
+    } else {
+      faqAllItemsRef.current = [...faqAllItemsRef.current, ...items];
+    }
+    if (isLast) faqAllLoadedRef.current = true;
+    return { items, isLast, page };
+  }
+
+  async function loadFaqList(searchTerm, page, replace = false) {
     if (!gwSessionRef.current) return;
     setFaqLoading(true);
     try {
-      const r = await fetch(`/api/groupware?action=list&q=${encodeURIComponent(q)}&page=${page}&offset=20`, {
-        headers: { 'x-gw-session': gwSessionRef.current },
-      });
-      const data = await r.json();
-      if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); return; }
-      if (!r.ok) { showToastMsg('FAQ 로드 실패'); return; }
-      const items = data.data || [];
-      const isLast = data.page?.lastPage ?? items.length < 20;
-      if (replace) {
-        setFaqList(items);
-      } else {
-        setFaqList(prev => [...prev, ...items]);
-      }
-      setFaqPage(page);
-      setFaqHasMore(!isLast);
+      const result = await loadFaqPage(page, replace);
+      if (!result) return;
+      applyFaqFilter(searchTerm);
+      setFaqPage(result.page);
+      setFaqHasMore(!result.isLast);
     } catch (e) {
       showToastMsg('FAQ 로드 오류: ' + e.message);
+    } finally {
+      setFaqLoading(false);
+    }
+  }
+
+  async function searchFaq(searchTerm) {
+    if (!gwSessionRef.current) return;
+    setFaqSearch(searchTerm);
+    if (faqAllLoadedRef.current) {
+      applyFaqFilter(searchTerm);
+      return;
+    }
+    // 전체 로드 후 필터
+    setFaqLoading(true);
+    try {
+      let page = Math.floor(faqAllItemsRef.current.length / 20);
+      let isDone = faqAllLoadedRef.current;
+      while (!isDone) {
+        const result = await loadFaqPage(page, false);
+        if (!result) break;
+        isDone = result.isLast;
+        page++;
+      }
+      applyFaqFilter(searchTerm);
+      setFaqHasMore(false);
+    } catch (e) {
+      showToastMsg('FAQ 검색 오류: ' + e.message);
     } finally {
       setFaqLoading(false);
     }
@@ -1631,7 +1681,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v160</span>
+              <span className="sidebar-title">Clickpad_v161</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1651,9 +1701,9 @@ export default function App() {
                 <input className="search-box" type="text" placeholder="FAQ 검색..."
                   value={faqSearch}
                   onChange={e => setFaqSearch(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && loadFaqList(faqSearch, 0, true)}
+                  onKeyDown={e => e.key === 'Enter' && searchFaq(faqSearch)}
                   style={{ margin: 0, flex: 1, width: 0 }} />
-                <button className="btn-search-clickup" onClick={() => loadFaqList(faqSearch, 0, true)}>🔍</button>
+                <button className="btn-search-clickup" onClick={() => searchFaq(faqSearch)}>🔍</button>
               </div>
             )}
 
@@ -1855,7 +1905,7 @@ export default function App() {
               })}
               {gwSession && !faqLoading && faqHasMore && (
                 <div style={{ padding: '8px 6px' }}>
-                  <button className="page-btn" style={{ width: '100%' }} onClick={() => loadFaqList(faqSearch, faqPage + 1)}>더 보기</button>
+                  <button className="page-btn" style={{ width: '100%' }} onClick={() => loadFaqList('', faqPage + 1)}>더 보기</button>
                 </div>
               )}
               {gwSession && faqLoading && faqList.length > 0 && (

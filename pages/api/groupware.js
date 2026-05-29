@@ -7,8 +7,8 @@ export default async function handler(req, res) {
   try {
     switch (action) {
       case 'list': {
-        const { q = '', page = 0, offset = 20 } = req.query;
-        const url = `${GW_BASE}/api/works/applets/134/docs?q=${encodeURIComponent(q)}&page=${page}&offset=${offset}&ac=true`;
+        const { page = 0, offset = 20 } = req.query;
+        const url = `${GW_BASE}/api/works/applets/134/docs?page=${page}&offset=${offset}&ac=true`;
         const r = await fetch(url, {
           headers: { Cookie: `GOSSOcookie=${gwSession}` },
         });
@@ -16,7 +16,6 @@ export default async function handler(req, res) {
         const text = await r.text();
         let data;
         try { data = JSON.parse(text); } catch {
-          console.log('[GW list] non-JSON response status:', r.status, 'body:', text.slice(0, 300));
           return res.status(500).json({ error: 'GW응답파싱실패', raw: text.slice(0, 200) });
         }
         if (!r.ok) return res.status(r.status).json({ error: '목록 로드 실패', status: r.status, body: text.slice(0, 300) });
