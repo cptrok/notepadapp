@@ -1022,7 +1022,11 @@ export default function App() {
       });
       const data = await r.json();
       if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); setFaqDetail(null); return; }
-      setFaqDetail({ loading: false, doc: data.data || data, title: knownTitle || '' });
+      const doc = data.data || data;
+      const vals = doc.values || doc;
+      console.log('[FAQ detail values keys]', Object.keys(vals));
+      Object.entries(vals).forEach(([k, v]) => { if (typeof v === 'string' && v.length > 50) console.log(`[FAQ field ${k}] len=${v.length} html=${v.includes('<')} preview=`, JSON.stringify(v.slice(0, 200))); });
+      setFaqDetail({ loading: false, doc, title: knownTitle || '' });
     } catch (e) {
       showToastMsg('FAQ 상세 로드 오류: ' + e.message);
       setFaqDetail(null);
@@ -1630,7 +1634,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v155</span>
+              <span className="sidebar-title">Clickpad_v156</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
