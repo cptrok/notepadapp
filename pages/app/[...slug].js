@@ -113,7 +113,7 @@ export default function App() {
   const [trialPanel, setTrialPanel] = useState(null);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '' });
+  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '', gwSession: '' });
   const [settingsMsg, setSettingsMsg] = useState({ text: '', type: '' });
 
   const [mmToken, setMmToken] = useState(null);
@@ -139,6 +139,16 @@ export default function App() {
   const [cuCommentSearch, setCuCommentSearch] = useState('');
   const [cuCommentSearching, setCuCommentSearching] = useState(false);
   const [cuCommentPosting, setCuCommentPosting] = useState(false);
+
+  const [gwSession, setGwSession] = useState('');
+  const gwSessionRef = useRef('');
+  const [faqList, setFaqList] = useState([]);
+  const [faqLoading, setFaqLoading] = useState(false);
+  const [faqDetail, setFaqDetail] = useState(null);
+  const [faqDetailLoading, setFaqDetailLoading] = useState(false);
+  const [faqSearch, setFaqSearch] = useState('');
+  const [faqPage, setFaqPage] = useState(0);
+  const [faqHasMore, setFaqHasMore] = useState(false);
 
   const DEQ_LISTS = {
     MFO: '900303022977', MFT: '900303031749', MFA: '900303116533',
@@ -264,6 +274,7 @@ export default function App() {
     else if (section === 'license') setCurrentTab('license');
     else if (section === 'trial') { setCurrentTab('license'); setLicSubTab('trial'); }
     else if (section === 'chat') setCurrentTab('chat');
+    else if (section === 'faq') setCurrentTab('faq');
   }, [router.isReady, router.asPath]);
 
   useEffect(() => {
@@ -374,6 +385,11 @@ export default function App() {
         setMmToken(p.mm_token);
         localStorage.setItem('mm_token', p.mm_token);
       }
+
+      // 그룹웨어 세션 복원
+      const storedGwSession = localStorage.getItem('gw_session') || '';
+      gwSessionRef.current = storedGwSession;
+      setGwSession(storedGwSession);
 
       // ClickUp 본인 유저 정보 캐시
       const token = p.clickup_token || clickupTokenRef.current;
@@ -847,7 +863,7 @@ export default function App() {
     const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
     if (data && data[0]) {
       const p = data[0];
-      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '' });
+      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '', gwSession: localStorage.getItem('gw_session') || '' });
     }
     setSettingsMsg({ text: '', type: '' });
     setShowSettings(true);
@@ -889,6 +905,11 @@ export default function App() {
     if (error) { setSettingsMsg({ text: '저장 실패: ' + error.message, type: 'error' }); return; }
     if (settingsData.clickupToken) clickupTokenRef.current = settingsData.clickupToken;
     if (settingsData.displayName) setDisplayName(settingsData.displayName);
+    if (settingsData.gwSession !== undefined) {
+      localStorage.setItem('gw_session', settingsData.gwSession);
+      gwSessionRef.current = settingsData.gwSession;
+      setGwSession(settingsData.gwSession);
+    }
 
     if (mmToken_new) {
       mmTokenRef.current = mmToken_new;
@@ -920,11 +941,58 @@ export default function App() {
     setCuDetail(null);
     setLicDetail(null);
     setTrialPanel(null);
+    setFaqDetail(null);
     if (tab === 'license') loadLicenseTasks();
     if (tab === 'clickup' && cuSubTab === 'my' && !myTasksLoaded) fetchMyTasks(false);
     if (tab === 'chat' && mmTokenRef.current && mmChannels.length === 0) mmLoadChannels();
+    if (tab === 'faq' && faqList.length === 0) loadFaqList('', 0, true);
     const path = tab === 'notes' ? 'note' : tab;
     router.push(`/app/${path}`, undefined, { shallow: true });
+  }
+
+  async function loadFaqList(q, page, replace = false) {
+    if (!gwSessionRef.current) return;
+    setFaqLoading(true);
+    try {
+      const r = await fetch(`/api/groupware?action=list&q=${encodeURIComponent(q)}&page=${page}&offset=20`, {
+        headers: { 'x-gw-session': gwSessionRef.current },
+      });
+      const data = await r.json();
+      if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); return; }
+      if (!r.ok) { showToastMsg('FAQ 로드 실패'); return; }
+      const items = data.content || data.list || data.data || (Array.isArray(data) ? data : []);
+      const totalPages = data.totalPages ?? data.total_pages ?? null;
+      const isLast = data.last ?? (totalPages !== null ? page >= totalPages - 1 : items.length < 20);
+      if (replace) {
+        setFaqList(items);
+      } else {
+        setFaqList(prev => [...prev, ...items]);
+      }
+      setFaqPage(page);
+      setFaqHasMore(!isLast);
+    } catch (e) {
+      showToastMsg('FAQ 로드 오류: ' + e.message);
+    } finally {
+      setFaqLoading(false);
+    }
+  }
+
+  async function openFaqDetail(docId) {
+    setFaqDetail({ loading: true, doc: null });
+    setFaqDetailLoading(true);
+    try {
+      const r = await fetch(`/api/groupware?action=detail&docId=${docId}`, {
+        headers: { 'x-gw-session': gwSessionRef.current },
+      });
+      const data = await r.json();
+      if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); setFaqDetail(null); return; }
+      setFaqDetail({ loading: false, doc: data });
+    } catch (e) {
+      showToastMsg('FAQ 상세 로드 오류: ' + e.message);
+      setFaqDetail(null);
+    } finally {
+      setFaqDetailLoading(false);
+    }
   }
 
   function switchCuTab(tab) {
@@ -1526,7 +1594,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v145</span>
+              <span className="sidebar-title">Clickpad_v146</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1534,10 +1602,22 @@ export default function App() {
               <button className={`tab-btn ${currentTab === 'clickup' ? 'active' : ''}`} onClick={() => switchTab('clickup')}>ClickUp</button>
               <button className={`tab-btn ${currentTab === 'license' ? 'active' : ''}`} onClick={() => switchTab('license')}>라이선스</button>
               <button className={`tab-btn ${currentTab === 'chat' ? 'active' : ''}`} onClick={() => switchTab('chat')}>MM</button>
+              <button className={`tab-btn ${currentTab === 'faq' ? 'active' : ''}`} onClick={() => switchTab('faq')}>FAQ</button>
             </div>
 
             {currentTab === 'notes' && (
               <input className="search-box" type="text" placeholder="메모 검색..." onChange={e => searchNotes(e.target.value)} />
+            )}
+
+            {currentTab === 'faq' && (
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <input className="search-box" type="text" placeholder="FAQ 검색..."
+                  value={faqSearch}
+                  onChange={e => setFaqSearch(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && loadFaqList(faqSearch, 0, true)}
+                  style={{ margin: 0, flex: 1, width: 0 }} />
+                <button className="btn-search-clickup" onClick={() => loadFaqList(faqSearch, 0, true)}>🔍</button>
+              </div>
             )}
 
             {currentTab === 'clickup' && (
@@ -1712,6 +1792,36 @@ export default function App() {
             </div>
           )}
 
+          {currentTab === 'faq' && (
+            <div className="notes-list">
+              {!gwSession && (
+                <div className="empty-list">설정에서 그룹웨어<br />GOSSOcookie를 입력해주세요.</div>
+              )}
+              {gwSession && faqLoading && faqList.length === 0 && (
+                <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
+              )}
+              {gwSession && !faqLoading && faqList.length === 0 && (
+                <div className="empty-list">FAQ 항목이 없습니다.</div>
+              )}
+              {gwSession && faqList.map(item => (
+                <div key={item.id || item.docId}
+                  className={`note-item ${faqDetail?.doc?.id === (item.id || item.docId) ? 'active' : ''}`}
+                  onClick={() => openFaqDetail(item.id || item.docId)}>
+                  <div className="note-item-title">{item.title || item.subject || item.name || '(제목 없음)'}</div>
+                  {item.regDate && <div className="note-item-date">{item.regDate?.slice(0, 10)}</div>}
+                </div>
+              ))}
+              {gwSession && !faqLoading && faqHasMore && (
+                <div style={{ padding: '8px 6px' }}>
+                  <button className="page-btn" style={{ width: '100%' }} onClick={() => loadFaqList(faqSearch, faqPage + 1)}>더 보기</button>
+                </div>
+              )}
+              {gwSession && faqLoading && faqList.length > 0 && (
+                <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
+              )}
+            </div>
+          )}
+
           <div className="sidebar-footer">
             <div className="user-info">
               <span className="user-name">{displayName || currentUsername}</span>
@@ -1726,7 +1836,8 @@ export default function App() {
           (currentTab === 'clickup' && cuDetail !== null) ||
           (currentTab === 'license' && licSubTab === 'my' && licDetail !== null) ||
           (currentTab === 'license' && licSubTab === 'trial' && trialPanel !== null) ||
-          (currentTab === 'chat' && mmSelectedChannel !== null)
+          (currentTab === 'chat' && mmSelectedChannel !== null) ||
+          (currentTab === 'faq' && faqDetail !== null)
             ? 'open' : ''
         }`}>
           {/* Quill 에디터 - 항상 DOM에 유지 */}
@@ -1930,6 +2041,36 @@ export default function App() {
               )}
             </div>
           )}
+          {currentTab === 'faq' && !faqDetail && (
+            <div className="editor-empty">
+              <div className="editor-empty-icon">📖</div>
+              <h3>FAQ 항목을 선택하세요</h3>
+              <p>왼쪽에서 항목을 선택하면<br />상세 내용이 표시됩니다</p>
+            </div>
+          )}
+          {currentTab === 'faq' && faqDetail && (
+            <div className="task-detail">
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '12px' }} onClick={() => setFaqDetail(null)}>←</button>
+              {faqDetail.loading
+                ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
+                : faqDetail.doc && (
+                  <>
+                    <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '12px', lineHeight: 1.4 }}>
+                      {faqDetail.doc.title || faqDetail.doc.subject || faqDetail.doc.name}
+                    </div>
+                    {faqDetail.doc.regDate && (
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                        {faqDetail.doc.regDate?.slice(0, 10)}
+                        {faqDetail.doc.regUserName && ` · ${faqDetail.doc.regUserName}`}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '14px', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                      dangerouslySetInnerHTML={{ __html: faqDetail.doc.content || faqDetail.doc.body || faqDetail.doc.description || '' }} />
+                  </>
+                )
+              }
+            </div>
+          )}
         </div>
       </div>
 
@@ -1989,6 +2130,14 @@ export default function App() {
               </div>
             </>
           )}
+          <div className="settings-divider">그룹웨어 연동</div>
+          <div className="form-group">
+            <label>GOSSOcookie 값</label>
+            <input type="text" value={settingsData.gwSession}
+              onChange={e => setSettingsData(p => ({ ...p, gwSession: e.target.value }))}
+              placeholder="그룹웨어 로그인 후 쿠키값 입력" />
+            <div className="input-hint">gw.ex-em.com 로그인 후 개발자도구 → Application → Cookies → GOSSOcookie 값</div>
+          </div>
           <button className="btn-success" onClick={saveProfile}>저장</button>
           <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
         </div>
