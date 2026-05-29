@@ -940,12 +940,15 @@ export default function App() {
       p_display_name: settingsData.displayName,
       p_new_password: settingsData.newPassword || null,
       p_clickup_token: settingsData.clickupToken || null,
+      p_mm_username: settingsData.mmUsername || null,
+      p_mm_password: settingsData.mmPassword || null,
+      p_mm_token: mmToken_new || null,
+      p_gw_session: settingsData.gwSession || null,
     });
     if (error) { setSettingsMsg({ text: '저장 실패: ' + error.message, type: 'error' }); return; }
     if (settingsData.clickupToken) clickupTokenRef.current = settingsData.clickupToken;
     if (settingsData.displayName) setDisplayName(settingsData.displayName);
     if (settingsData.gwSession !== undefined) {
-      await sb.from('users').update({ gw_session: settingsData.gwSession || null }).eq('username', currentUsername);
       gwSessionRef.current = settingsData.gwSession;
       setGwSession(settingsData.gwSession);
     }
@@ -957,7 +960,6 @@ export default function App() {
       setMmUserId(mmUserId_new);
       localStorage.setItem('mm_token', mmToken_new);
       localStorage.setItem('mm_user_id', mmUserId_new);
-      await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: mmToken_new });
       setSettingsMsg({ text: '저장되었습니다. Mattermost 연동 완료.', type: 'success' });
     } else {
       setSettingsMsg({ text: '저장되었습니다.', type: 'success' });
@@ -1681,7 +1683,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v163</span>
+              <span className="sidebar-title">Clickpad_v164</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
