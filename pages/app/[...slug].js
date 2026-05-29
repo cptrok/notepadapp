@@ -936,7 +936,7 @@ export default function App() {
     // MM 인증 통과 후 전체 저장 (p_mm_token은 별도 처리 — null 전달 시 기존 토큰 삭제됨)
     const { error } = await sb.rpc('update_user_profile', {
       p_username: currentUsername,
-      p_new_id: settingsData.username || currentUsername,
+      p_new_id: currentUsername,
       p_display_name: settingsData.displayName,
       p_new_password: settingsData.newPassword || null,
       p_clickup_token: settingsData.clickupToken || null,
@@ -960,7 +960,7 @@ export default function App() {
       setMmUserId(mmUserId_new);
       localStorage.setItem('mm_token', mmToken_new);
       localStorage.setItem('mm_user_id', mmUserId_new);
-      await sb.rpc('update_mm_token', { p_username: settingsData.username || currentUsername, p_mm_token: mmToken_new });
+      await sb.rpc('update_mm_token', { p_username: currentUsername, p_mm_token: mmToken_new });
       setSettingsMsg({ text: '저장되었습니다. Mattermost 연동 완료.', type: 'success' });
     } else {
       setSettingsMsg({ text: '저장되었습니다.', type: 'success' });
@@ -1684,7 +1684,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v166</span>
+              <span className="sidebar-title">Clickpad_v167</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2227,7 +2227,7 @@ export default function App() {
           <div className="settings-divider">계정 정보</div>
           <div className="form-group">
             <label>아이디</label>
-            <input type="text" value={settingsData.username} onChange={e => setSettingsData(p => ({ ...p, username: e.target.value }))} />
+            <input type="text" value={settingsData.username} readOnly style={{ opacity: 0.6, cursor: 'default' }} />
           </div>
           <div className="form-group">
             <label>이름 (표시용)</label>
