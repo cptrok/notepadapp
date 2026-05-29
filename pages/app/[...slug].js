@@ -69,6 +69,18 @@ function sortByDateCreated(tasks) {
   return [...tasks].sort((a, b) => Number(b.date_created) - Number(a.date_created));
 }
 
+function getFaqTitle(vals) {
+  // 값 객체에서 가장 긴 문자열 = 제목으로 간주 (날짜/ID 형식 제외)
+  let best = '';
+  for (const [k, v] of Object.entries(vals)) {
+    if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
+    if (typeof v === 'string' && v.length > best.length && !/^\d{8}$/.test(v) && !/^\d{4}-\d{2}-\d{2}T/.test(v)) {
+      best = v;
+    }
+  }
+  return best || '(제목 없음)';
+}
+
 export default function App() {
   const router = useRouter();
   const [currentUsername, setCurrentUsername] = useState(null);
@@ -958,12 +970,10 @@ export default function App() {
         headers: { 'x-gw-session': gwSessionRef.current },
       });
       const data = await r.json();
-      console.log('[FAQ list raw]', JSON.stringify(data).slice(0, 1000));
       if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); return; }
       if (!r.ok) { showToastMsg('FAQ 로드 실패'); return; }
-      const items = data.content || data.list || data.data || (Array.isArray(data) ? data : []);
-      const totalPages = data.totalPages ?? data.total_pages ?? null;
-      const isLast = data.last ?? (totalPages !== null ? page >= totalPages - 1 : items.length < 20);
+      const items = data.data || [];
+      const isLast = data.page?.lastPage ?? items.length < 20;
       if (replace) {
         setFaqList(items);
       } else {
@@ -1596,7 +1606,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v147</span>
+              <span className="sidebar-title">Clickpad_v148</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1805,14 +1815,19 @@ export default function App() {
               {gwSession && !faqLoading && faqList.length === 0 && (
                 <div className="empty-list">FAQ 항목이 없습니다.</div>
               )}
-              {gwSession && faqList.map(item => (
-                <div key={item.id || item.docId}
-                  className={`note-item ${faqDetail?.doc?.id === (item.id || item.docId) ? 'active' : ''}`}
-                  onClick={() => openFaqDetail(item.id || item.docId)}>
-                  <div className="note-item-title">{item.title || item.subject || item.name || '(제목 없음)'}</div>
-                  {item.regDate && <div className="note-item-date">{item.regDate?.slice(0, 10)}</div>}
-                </div>
-              ))}
+              {gwSession && faqList.map(item => {
+                const vals = item.values || {};
+                const title = getFaqTitle(vals);
+                const dateStr = vals.create_date ? vals.create_date.slice(0, 10) : '';
+                return (
+                  <div key={item.id}
+                    className={`note-item ${faqDetail?.doc?.id === item.id ? 'active' : ''}`}
+                    onClick={() => openFaqDetail(item.id)}>
+                    <div className="note-item-title">{title}</div>
+                    {dateStr && <div className="note-item-date">{dateStr}</div>}
+                  </div>
+                );
+              })}
               {gwSession && !faqLoading && faqHasMore && (
                 <div style={{ padding: '8px 6px' }}>
                   <button className="page-btn" style={{ width: '100%' }} onClick={() => loadFaqList(faqSearch, faqPage + 1)}>더 보기</button>
@@ -2055,21 +2070,37 @@ export default function App() {
               <button className="btn-back" style={{ display: 'flex', marginBottom: '12px' }} onClick={() => setFaqDetail(null)}>←</button>
               {faqDetail.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
-                : faqDetail.doc && (
-                  <>
-                    <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '12px', lineHeight: 1.4 }}>
-                      {faqDetail.doc.title || faqDetail.doc.subject || faqDetail.doc.name}
-                    </div>
-                    {faqDetail.doc.regDate && (
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                        {faqDetail.doc.regDate?.slice(0, 10)}
-                        {faqDetail.doc.regUserName && ` · ${faqDetail.doc.regUserName}`}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '14px', lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                      dangerouslySetInnerHTML={{ __html: faqDetail.doc.content || faqDetail.doc.body || faqDetail.doc.description || '' }} />
-                  </>
-                )
+                : faqDetail.doc && (() => {
+                  const doc = faqDetail.doc;
+                  const vals = doc.values || doc;
+                  const title = getFaqTitle(typeof vals === 'object' ? vals : {});
+                  const dateStr = vals.create_date ? vals.create_date.slice(0, 10) : '';
+                  const creator = vals.creator?.fullName || vals.creator?.name || '';
+                  // HTML 콘텐츠 필드 찾기: <가 포함된 가장 긴 문자열
+                  let htmlContent = '';
+                  for (const v of Object.values(vals)) {
+                    if (typeof v === 'string' && v.includes('<') && v.length > htmlContent.length) htmlContent = v;
+                  }
+                  // HTML 없으면 가장 긴 텍스트
+                  if (!htmlContent) {
+                    for (const [k, v] of Object.entries(vals)) {
+                      if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
+                      if (typeof v === 'string' && v.length > htmlContent.length) htmlContent = v;
+                    }
+                  }
+                  return (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '12px', lineHeight: 1.4 }}>{title}</div>
+                      {(dateStr || creator) && (
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                          {dateStr}{creator ? ` · ${creator}` : ''}
+                        </div>
+                      )}
+                      <div style={{ fontSize: '14px', lineHeight: 1.7, wordBreak: 'break-word' }}
+                        dangerouslySetInnerHTML={{ __html: htmlContent || '(내용 없음)' }} />
+                    </>
+                  );
+                })()
               }
             </div>
           )}
