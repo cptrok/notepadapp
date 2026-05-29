@@ -936,7 +936,7 @@ export default function App() {
     // MM 인증 통과 후 전체 저장
     const { error } = await sb.rpc('update_user_profile', {
       p_username: currentUsername,
-      p_new_id: settingsData.username,
+      p_new_id: settingsData.username || currentUsername,
       p_display_name: settingsData.displayName,
       p_new_password: settingsData.newPassword || null,
       p_clickup_token: settingsData.clickupToken || null,
@@ -1683,7 +1683,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v164</span>
+              <span className="sidebar-title">Clickpad_v165</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
