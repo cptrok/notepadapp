@@ -1008,8 +1008,8 @@ export default function App() {
     }
   }
 
-  async function openFaqDetail(docId) {
-    setFaqDetail({ loading: true, doc: null });
+  async function openFaqDetail(docId, knownTitle) {
+    setFaqDetail({ loading: true, doc: null, title: knownTitle || '' });
     setFaqDetailLoading(true);
     try {
       const r = await fetch(`/api/groupware?action=detail&docId=${docId}`, {
@@ -1017,7 +1017,7 @@ export default function App() {
       });
       const data = await r.json();
       if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); setFaqDetail(null); return; }
-      setFaqDetail({ loading: false, doc: data.data || data });
+      setFaqDetail({ loading: false, doc: data.data || data, title: knownTitle || '' });
     } catch (e) {
       showToastMsg('FAQ 상세 로드 오류: ' + e.message);
       setFaqDetail(null);
@@ -1625,7 +1625,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v150</span>
+              <span className="sidebar-title">Clickpad_v151</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1841,7 +1841,7 @@ export default function App() {
                 return (
                   <div key={item.id}
                     className={`note-item ${faqDetail?.doc?.id === item.id ? 'active' : ''}`}
-                    onClick={() => openFaqDetail(item.id)}>
+                    onClick={() => openFaqDetail(item.id, title)}>
                     <div className="note-item-title">{title}</div>
                     {dateStr && <div className="note-item-date">{dateStr}</div>}
                   </div>
@@ -2091,11 +2091,25 @@ export default function App() {
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : faqDetail.doc && (() => {
                   const vals = faqDetail.doc.values || faqDetail.doc;
-                  const title = getFaqTitle(typeof vals === 'object' ? vals : {});
+                  // 목록에서 전달받은 제목 우선 사용
+                  const title = faqDetail.title || getFaqTitle(typeof vals === 'object' ? vals : {});
                   const metaFields = getFaqMetaFields(vals, title);
-                  const htmlContent = getFaqHtmlContent(vals);
                   const dateStr = vals.create_date ? vals.create_date.slice(0, 10) : '';
                   const creator = vals.creator?.fullName || vals.creator?.name || '';
+                  // HTML 본문 우선, 없으면 title·메타를 제외한 가장 긴 평문 텍스트
+                  let bodyContent = getFaqHtmlContent(vals);
+                  let bodyIsHtml = !!bodyContent;
+                  if (!bodyContent) {
+                    const metaValues = new Set(metaFields);
+                    let longest = '';
+                    for (const [k, v] of Object.entries(vals)) {
+                      if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
+                      if (typeof v !== 'string' || v === title || metaValues.has(v)) continue;
+                      if (/^\d{8}$/.test(v) || /^\d{4}-\d{2}-\d{2}T/.test(v)) continue;
+                      if (v.length > longest.length) longest = v;
+                    }
+                    bodyContent = longest;
+                  }
                   return (
                     <>
                       {/* 이슈요약 섹션 */}
@@ -2129,9 +2143,11 @@ export default function App() {
                       {/* 공지 상세 섹션 */}
                       <div>
                         <div style={{ fontSize: '12px', fontWeight: 700, color: '#c0392b', marginBottom: '10px', letterSpacing: '0.5px' }}>◆ 공지 상세 ◆</div>
-                        {htmlContent
-                          ? <div className="faq-content" style={{ fontSize: '14px', lineHeight: 1.8, wordBreak: 'break-word', color: 'var(--text)' }}
-                              dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                        {bodyContent
+                          ? bodyIsHtml
+                            ? <div className="faq-content" style={{ fontSize: '14px', lineHeight: 1.8, wordBreak: 'break-word', color: 'var(--text)' }}
+                                dangerouslySetInnerHTML={{ __html: bodyContent }} />
+                            : <div style={{ fontSize: '14px', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--text)' }}>{bodyContent}</div>
                           : <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>(내용 없음)</div>
                         }
                       </div>
