@@ -426,7 +426,7 @@ export default function App() {
       }
 
       // 그룹웨어 세션 복원
-      const storedGwSession = localStorage.getItem('gw_session') || '';
+      const storedGwSession = p.gw_session || '';
       gwSessionRef.current = storedGwSession;
       setGwSession(storedGwSession);
 
@@ -902,7 +902,7 @@ export default function App() {
     const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
     if (data && data[0]) {
       const p = data[0];
-      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '', gwSession: localStorage.getItem('gw_session') || '' });
+      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '', gwSession: p.gw_session || '' });
     }
     setSettingsMsg({ text: '', type: '' });
     setShowSettings(true);
@@ -945,7 +945,7 @@ export default function App() {
     if (settingsData.clickupToken) clickupTokenRef.current = settingsData.clickupToken;
     if (settingsData.displayName) setDisplayName(settingsData.displayName);
     if (settingsData.gwSession !== undefined) {
-      localStorage.setItem('gw_session', settingsData.gwSession);
+      await sb.from('users').update({ gw_session: settingsData.gwSession || null }).eq('username', currentUsername);
       gwSessionRef.current = settingsData.gwSession;
       setGwSession(settingsData.gwSession);
     }
@@ -1681,7 +1681,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v162</span>
+              <span className="sidebar-title">Clickpad_v163</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
