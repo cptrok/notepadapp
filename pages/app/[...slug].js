@@ -70,15 +70,35 @@ function sortByDateCreated(tasks) {
 }
 
 function getFaqTitle(vals) {
-  // 값 객체에서 가장 긴 문자열 = 제목으로 간주 (날짜/ID 형식 제외)
+  // HTML 제외, 가장 긴 문자열 = 제목 (날짜/ID 형식 제외)
   let best = '';
   for (const [k, v] of Object.entries(vals)) {
     if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
-    if (typeof v === 'string' && v.length > best.length && !/^\d{8}$/.test(v) && !/^\d{4}-\d{2}-\d{2}T/.test(v)) {
+    if (typeof v === 'string' && !v.includes('<') && v.length > best.length
+        && !/^\d{8}$/.test(v) && !/^\d{4}-\d{2}-\d{2}T/.test(v)) {
       best = v;
     }
   }
   return best || '(제목 없음)';
+}
+
+function getFaqMetaFields(vals, titleStr) {
+  const result = [];
+  for (const [k, v] of Object.entries(vals)) {
+    if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
+    if (typeof v !== 'string' || v === titleStr || v.includes('<') || v.length === 0) continue;
+    if (/^\d{8}$/.test(v) || /^\d{4}-\d{2}-\d{2}T/.test(v)) continue;
+    result.push(v);
+  }
+  return result;
+}
+
+function getFaqHtmlContent(vals) {
+  let best = '';
+  for (const v of Object.values(vals)) {
+    if (typeof v === 'string' && v.includes('<') && v.length > best.length) best = v;
+  }
+  return best;
 }
 
 export default function App() {
@@ -1605,7 +1625,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v149</span>
+              <span className="sidebar-title">Clickpad_v150</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2065,38 +2085,56 @@ export default function App() {
             </div>
           )}
           {currentTab === 'faq' && faqDetail && (
-            <div className="task-detail">
-              <button className="btn-back" style={{ display: 'flex', marginBottom: '12px' }} onClick={() => setFaqDetail(null)}>←</button>
+            <div className="task-detail" style={{ overflowY: 'auto' }}>
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '16px' }} onClick={() => setFaqDetail(null)}>←</button>
               {faqDetail.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : faqDetail.doc && (() => {
-                  const doc = faqDetail.doc;
-                  const vals = doc.values || doc;
+                  const vals = faqDetail.doc.values || faqDetail.doc;
                   const title = getFaqTitle(typeof vals === 'object' ? vals : {});
+                  const metaFields = getFaqMetaFields(vals, title);
+                  const htmlContent = getFaqHtmlContent(vals);
                   const dateStr = vals.create_date ? vals.create_date.slice(0, 10) : '';
                   const creator = vals.creator?.fullName || vals.creator?.name || '';
-                  // HTML 콘텐츠 필드 찾기: <가 포함된 가장 긴 문자열
-                  let htmlContent = '';
-                  for (const v of Object.values(vals)) {
-                    if (typeof v === 'string' && v.includes('<') && v.length > htmlContent.length) htmlContent = v;
-                  }
-                  // HTML 없으면 가장 긴 텍스트
-                  if (!htmlContent) {
-                    for (const [k, v] of Object.entries(vals)) {
-                      if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
-                      if (typeof v === 'string' && v.length > htmlContent.length) htmlContent = v;
-                    }
-                  }
                   return (
                     <>
-                      <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '12px', lineHeight: 1.4 }}>{title}</div>
-                      {(dateStr || creator) && (
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                          {dateStr}{creator ? ` · ${creator}` : ''}
+                      {/* 이슈요약 섹션 */}
+                      <div style={{ borderBottom: '2px solid var(--border, #e0e0e0)', marginBottom: '16px', paddingBottom: '12px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#c0392b', marginBottom: '6px', letterSpacing: '0.5px' }}>◆ 이슈요약 ◆</div>
+                        <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.5, color: 'var(--text)' }}>{title}</div>
+                      </div>
+
+                      {/* 기본정보 섹션 */}
+                      {metaFields.length > 0 && (
+                        <div style={{ borderBottom: '2px solid var(--border, #e0e0e0)', marginBottom: '16px', paddingBottom: '12px' }}>
+                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#c0392b', marginBottom: '10px', letterSpacing: '0.5px' }}>◆ 기본정보 ◆</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 24px' }}>
+                            {metaFields.map((v, i) => (
+                              <div key={i} style={{ fontSize: '13px', color: 'var(--text)', minWidth: '120px' }}>
+                                <span style={{ color: '#2980b9', fontWeight: 600, marginRight: '6px' }}>●</span>{v}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
-                      <div style={{ fontSize: '14px', lineHeight: 1.7, wordBreak: 'break-word' }}
-                        dangerouslySetInnerHTML={{ __html: htmlContent || '(내용 없음)' }} />
+
+                      {/* 작성자/날짜 */}
+                      {(dateStr || creator) && (
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                          {creator && <span style={{ marginRight: '8px' }}>{creator}</span>}
+                          {dateStr}
+                        </div>
+                      )}
+
+                      {/* 공지 상세 섹션 */}
+                      <div>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#c0392b', marginBottom: '10px', letterSpacing: '0.5px' }}>◆ 공지 상세 ◆</div>
+                        {htmlContent
+                          ? <div className="faq-content" style={{ fontSize: '14px', lineHeight: 1.8, wordBreak: 'break-word', color: 'var(--text)' }}
+                              dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                          : <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>(내용 없음)</div>
+                        }
+                      </div>
                     </>
                   );
                 })()

@@ -30,6 +30,16 @@ export default async function handler(req, res) {
         return res.json(data);
       }
 
+      case 'schema': {
+        const r = await fetch(`${GW_BASE}/api/works/applets/134`, {
+          headers: { Cookie: `GOSSOcookie=${gwSession}` },
+        });
+        if (r.status === 401 || r.status === 403) return res.status(401).json({ error: '세션이 만료되었습니다.' });
+        const data = await r.json();
+        if (!r.ok) return res.status(r.status).json({ error: '스키마 로드 실패' });
+        return res.json(data);
+      }
+
       default:
         return res.status(400).json({ error: 'Unknown action' });
     }
