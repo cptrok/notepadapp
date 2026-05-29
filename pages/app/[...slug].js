@@ -86,7 +86,7 @@ function getFaqMetaFields(vals, titleStr) {
   const result = [];
   for (const [k, v] of Object.entries(vals)) {
     if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
-    if (typeof v !== 'string' || v === titleStr || v.includes('<') || v.startsWith('http') || v.length === 0) continue;
+    if (typeof v !== 'string' || v === titleStr || v.includes('<') || v.startsWith('http') || v.length === 0 || v.length > 100) continue;
     if (/^\d{8}$/.test(v) || /^\d{4}-\d{2}-\d{2}T/.test(v)) continue;
     result.push(v);
   }
@@ -1625,7 +1625,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v152</span>
+              <span className="sidebar-title">Clickpad_v153</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
