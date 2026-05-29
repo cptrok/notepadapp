@@ -150,7 +150,7 @@ export default function App() {
   const [trialPanel, setTrialPanel] = useState(null);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '', gwSession: '' });
+  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '', mmToken: '', gwSession: '' });
   const [settingsMsg, setSettingsMsg] = useState({ text: '', type: '' });
 
   const [mmToken, setMmToken] = useState(null);
@@ -902,7 +902,7 @@ export default function App() {
     const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
     if (data && data[0]) {
       const p = data[0];
-      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '', gwSession: p.gw_session || '' });
+      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '', mmToken: p.mm_token || '', gwSession: p.gw_session || '' });
     }
     setSettingsMsg({ text: '', type: '' });
     setShowSettings(true);
@@ -933,7 +933,7 @@ export default function App() {
       }
     }
 
-    // MM 인증 통과 후 전체 저장
+    // MM 인증 통과 후 전체 저장 (p_mm_token은 별도 처리 — null 전달 시 기존 토큰 삭제됨)
     const { error } = await sb.rpc('update_user_profile', {
       p_username: currentUsername,
       p_new_id: settingsData.username || currentUsername,
@@ -942,7 +942,7 @@ export default function App() {
       p_clickup_token: settingsData.clickupToken || null,
       p_mm_username: settingsData.mmUsername || null,
       p_mm_password: settingsData.mmPassword || null,
-      p_mm_token: mmToken_new || null,
+      p_mm_token: mmToken_new || settingsData.mmToken || null,
       p_gw_session: settingsData.gwSession || null,
     });
     if (error) { setSettingsMsg({ text: '저장 실패: ' + error.message, type: 'error' }); return; }
@@ -960,6 +960,7 @@ export default function App() {
       setMmUserId(mmUserId_new);
       localStorage.setItem('mm_token', mmToken_new);
       localStorage.setItem('mm_user_id', mmUserId_new);
+      await sb.rpc('update_mm_token', { p_username: settingsData.username || currentUsername, p_mm_token: mmToken_new });
       setSettingsMsg({ text: '저장되었습니다. Mattermost 연동 완료.', type: 'success' });
     } else {
       setSettingsMsg({ text: '저장되었습니다.', type: 'success' });
@@ -1683,7 +1684,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v165</span>
+              <span className="sidebar-title">Clickpad_v166</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
