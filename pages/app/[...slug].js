@@ -996,9 +996,8 @@ export default function App() {
         headers: { 'x-gw-session': gwSessionRef.current },
       });
       const data = await r.json();
-      console.log('[FAQ detail raw]', JSON.stringify(data).slice(0, 1000));
       if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); setFaqDetail(null); return; }
-      setFaqDetail({ loading: false, doc: data });
+      setFaqDetail({ loading: false, doc: data.data || data });
     } catch (e) {
       showToastMsg('FAQ 상세 로드 오류: ' + e.message);
       setFaqDetail(null);
@@ -1606,7 +1605,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v148</span>
+              <span className="sidebar-title">Clickpad_v149</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
