@@ -93,12 +93,17 @@ function getFaqMetaFields(vals, titleStr) {
   return result;
 }
 
-function getFaqHtmlContent(vals) {
-  let best = '';
-  for (const v of Object.values(vals)) {
-    if (typeof v === 'string' && v.includes('<') && v.length > best.length) best = v;
+function getFaqBodySections(vals, titleStr, metaFields) {
+  // 본문 섹션: HTML 필드 또는 100자 초과 평문 필드 전부 수집 (순서 유지)
+  const metaSet = new Set(metaFields);
+  const sections = [];
+  for (const [k, v] of Object.entries(vals)) {
+    if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
+    if (typeof v !== 'string' || v === titleStr || metaSet.has(v) || v.length === 0) continue;
+    if (/^\d{8}$/.test(v) || /^\d{4}-\d{2}-\d{2}T/.test(v) || v.startsWith('http')) continue;
+    if (v.includes('<') || v.length > 100) sections.push({ html: v.includes('<'), content: v });
   }
-  return best;
+  return sections;
 }
 
 export default function App() {
@@ -1625,7 +1630,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v153</span>
+              <span className="sidebar-title">Clickpad_v154</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2096,20 +2101,7 @@ export default function App() {
                   const metaFields = getFaqMetaFields(vals, title);
                   const dateStr = vals.create_date ? vals.create_date.slice(0, 10) : '';
                   const creator = vals.creator?.fullName || vals.creator?.name || '';
-                  // HTML 본문 우선, 없으면 title·메타를 제외한 가장 긴 평문 텍스트
-                  let bodyContent = getFaqHtmlContent(vals);
-                  let bodyIsHtml = !!bodyContent;
-                  if (!bodyContent) {
-                    const metaValues = new Set(metaFields);
-                    let longest = '';
-                    for (const [k, v] of Object.entries(vals)) {
-                      if (k === 'create_date' || k === 'update_date' || k === 'creator' || k === 'updater') continue;
-                      if (typeof v !== 'string' || v === title || metaValues.has(v)) continue;
-                      if (/^\d{8}$/.test(v) || /^\d{4}-\d{2}-\d{2}T/.test(v)) continue;
-                      if (v.length > longest.length) longest = v;
-                    }
-                    bodyContent = longest;
-                  }
+                  const bodySections = getFaqBodySections(vals, title, metaFields);
                   return (
                     <>
                       {/* 이슈요약 섹션 */}
@@ -2143,12 +2135,17 @@ export default function App() {
                       {/* 공지 상세 섹션 */}
                       <div>
                         <div style={{ fontSize: '12px', fontWeight: 700, color: '#c0392b', marginBottom: '10px', letterSpacing: '0.5px' }}>◆ 공지 상세 ◆</div>
-                        {bodyContent
-                          ? bodyIsHtml
-                            ? <div className="faq-content" style={{ fontSize: '14px', lineHeight: 1.8, wordBreak: 'break-word', color: 'var(--text)' }}
-                                dangerouslySetInnerHTML={{ __html: bodyContent }} />
-                            : <div style={{ fontSize: '14px', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--text)' }}>{bodyContent}</div>
-                          : <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>(내용 없음)</div>
+                        {bodySections.length === 0
+                          ? <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>(내용 없음)</div>
+                          : bodySections.map((s, i) => (
+                            <div key={i} style={{ marginBottom: i < bodySections.length - 1 ? '16px' : 0 }}>
+                              {s.html
+                                ? <div className="faq-content" style={{ fontSize: '14px', lineHeight: 1.8, wordBreak: 'break-word', color: 'var(--text)' }}
+                                    dangerouslySetInnerHTML={{ __html: s.content }} />
+                                : <div style={{ fontSize: '14px', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--text)' }}>{s.content}</div>
+                              }
+                            </div>
+                          ))
                         }
                       </div>
                     </>
