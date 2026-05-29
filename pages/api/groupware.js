@@ -19,7 +19,7 @@ export default async function handler(req, res) {
           console.log('[GW list] non-JSON response status:', r.status, 'body:', text.slice(0, 300));
           return res.status(500).json({ error: 'GW응답파싱실패', raw: text.slice(0, 200) });
         }
-        if (!r.ok) return res.status(r.status).json({ error: '목록 로드 실패' });
+        if (!r.ok) return res.status(r.status).json({ error: '목록 로드 실패', status: r.status, body: text.slice(0, 300) });
         return res.json(data);
       }
 
