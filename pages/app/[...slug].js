@@ -1023,9 +1023,6 @@ export default function App() {
       const data = await r.json();
       if (r.status === 401) { showToastMsg('그룹웨어 세션 만료. 설정에서 GOSSOcookie를 갱신하세요.'); setFaqDetail(null); return; }
       const doc = data.data || data;
-      const vals = doc.values || doc;
-      console.log('[FAQ detail values keys]', Object.keys(vals));
-      Object.entries(vals).forEach(([k, v]) => { if (typeof v === 'string' && v.length > 50) console.log(`[FAQ field ${k}] len=${v.length} html=${v.includes('<')} preview=`, JSON.stringify(v.slice(0, 200))); });
       setFaqDetail({ loading: false, doc, title: knownTitle || '' });
     } catch (e) {
       showToastMsg('FAQ 상세 로드 오류: ' + e.message);
@@ -1634,7 +1631,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v156</span>
+              <span className="sidebar-title">Clickpad_v157</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2145,7 +2142,7 @@ export default function App() {
                             <div key={i} style={{ marginBottom: i < bodySections.length - 1 ? '16px' : 0 }}>
                               {s.html
                                 ? <div className="faq-content" style={{ fontSize: '14px', lineHeight: 1.8, wordBreak: 'break-word', color: 'var(--text)' }}
-                                    dangerouslySetInnerHTML={{ __html: s.content }} />
+                                    dangerouslySetInnerHTML={{ __html: s.content.replace(/\n/g, '<br>') }} />
                                 : <div style={{ fontSize: '14px', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--text)' }}>{s.content}</div>
                               }
                             </div>
