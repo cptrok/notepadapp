@@ -9,11 +9,13 @@ export default async function handler(req, res) {
       case 'list': {
         const { q = '', page = 0, offset = 20 } = req.query;
         const url = `${GW_BASE}/api/works/applets/134/docs?q=${encodeURIComponent(q)}&page=${page}&offset=${offset}&ac=true`;
+        console.log('[GW list] url:', url);
         const r = await fetch(url, {
           headers: { Cookie: `GOSSOcookie=${gwSession}` },
         });
         if (r.status === 401 || r.status === 403) return res.status(401).json({ error: '세션이 만료되었습니다. 그룹웨어 세션을 다시 입력해주세요.' });
         const data = await r.json();
+        console.log('[GW list] total:', data?.page?.total, 'items:', data?.data?.length);
         if (!r.ok) return res.status(r.status).json({ error: '목록 로드 실패' });
         return res.json(data);
       }
