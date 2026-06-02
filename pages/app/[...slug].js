@@ -933,7 +933,6 @@ export default function App() {
     setCuDocPanel({ loading: true });
     try {
       if (pageId) {
-        // 먼저 docId/pages/pageId 시도
         const res = await fetch(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`,
           { headers: { Authorization: clickupTokenRef.current } }
@@ -943,7 +942,7 @@ export default function App() {
           setCuDocPanel({ name: data.name || data.title || 'Doc 페이지', content: data.content });
           return;
         }
-        // 실패하면 pages 목록 전체 불러와서 이름으로 표시
+        // pageId 직접 조회 실패 시 pages 목록 시도
         const resList = await fetch(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`,
           { headers: { Authorization: clickupTokenRef.current } }
@@ -957,12 +956,11 @@ export default function App() {
             { headers: { Authorization: clickupTokenRef.current } }
           );
           const data2 = await res2.json();
-          setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content: data2.content || '', pages, debug: !data2.content ? `page응답: ${JSON.stringify(data2).slice(0,300)}` : null });
+          setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content: data2.content || '' });
           return;
         }
-        setCuDocPanel({ name: 'Doc 페이지', content: '', debug: `pageId조회: ${JSON.stringify(data).slice(0,200)} | pages: ${JSON.stringify(dataList).slice(0,200)}` });
+        setCuDocPanel({ error: 'API 접근 권한이 없습니다. ClickUp에서 해당 Doc의 접근 권한을 확인해주세요.' });
       } else {
-        // 1) doc 자체 content 직접 시도
         const resDoc = await fetch(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}?content_format=text%2Fmd`,
           { headers: { Authorization: clickupTokenRef.current } }
@@ -972,7 +970,6 @@ export default function App() {
           setCuDocPanel({ name: dataDoc.name || dataDoc.title || 'Doc 페이지', content: dataDoc.content });
           return;
         }
-        // 2) pages 목록 시도
         const res = await fetch(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`,
           { headers: { Authorization: clickupTokenRef.current } }
@@ -980,18 +977,16 @@ export default function App() {
         const data = await res.json();
         const pages = Array.isArray(data) ? data : (data.pages || []);
         if (pages.length === 0) {
-          setCuDocPanel({ error: '내용을 불러올 수 없습니다.', debug: `doc응답: ${JSON.stringify(dataDoc).slice(0, 300)} | pages응답: ${JSON.stringify(data).slice(0, 200)}` });
+          setCuDocPanel({ error: 'API 접근 권한이 없습니다. ClickUp에서 해당 Doc의 접근 권한을 확인해주세요.' });
           return;
         }
-        // 첫 페이지 자동 로드
         const firstPage = pages[0];
         const res2 = await fetch(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${firstPage.id}?content_format=text%2Fmd`,
           { headers: { Authorization: clickupTokenRef.current } }
         );
         const data2 = await res2.json();
-        const content = data2.content || '';
-        setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content, pages, debug: !content ? JSON.stringify(data2).slice(0, 400) : null });
+        setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content: data2.content || '' });
       }
     } catch (e) { setCuDocPanel({ error: e.message }); }
   }
@@ -1794,7 +1789,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v182</span>
+              <span className="sidebar-title">Clickpad_v183</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2092,10 +2087,9 @@ export default function App() {
                   ? <div style={{ color: 'red', padding: '16px' }}>{cuDocPanel.error}</div>
                   : <>
                     <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>
-                    {cuDocPanel.content
-                      ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
-                      : <pre style={{ fontSize: '11px', background: '#f4f4f4', padding: '8px', borderRadius: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{cuDocPanel.debug}</pre>
-                    }
+                    {cuDocPanel.content && (
+                      <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
+                    )}
                   </>
               }
             </div>
