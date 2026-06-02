@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { sb } from '../../lib/supabase';
+import { DOC_GUIDE_IMAGE } from '../../lib/docGuideImage';
 
 function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -1853,7 +1854,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v192</span>
+              <span className="sidebar-title">Clickpad_v193</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2176,7 +2177,7 @@ export default function App() {
                     <div>④ <b>Publish</b> 후 Public link 복사</div>
                     <div>⑤ 위 입력창에 붙여넣고 🔍 클릭</div>
                   </div>
-                  <img src="/clickup-doc-guide.jpg" alt="ClickUp 공유 방법" style={{ height: '220px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', objectFit: 'contain' }} />
+                  <img src={DOC_GUIDE_IMAGE} alt="ClickUp 공유 방법" style={{ height: '220px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', objectFit: 'contain' }} />
                 </div>
               </> : <>
                 <div className="editor-empty-icon">📋</div>
