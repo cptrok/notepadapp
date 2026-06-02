@@ -1853,7 +1853,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v189</span>
+              <span className="sidebar-title">Clickpad_v190</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1910,7 +1910,7 @@ export default function App() {
                       value={cuDocInput} onChange={e => setCuDocInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && loadCuDocPage(cuDocInput)}
                       style={{ margin: 0, flex: 1, width: 0 }} />
-                    <button className="btn-search-clickup" onClick={() => loadCuDocPage(cuDocInput)}>→</button>
+                    <button className="btn-search-clickup" onClick={() => loadCuDocPage(cuDocInput)}>🔍</button>
                   </div>
                 )}
               </div>
