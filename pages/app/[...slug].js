@@ -1751,7 +1751,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v172</span>
+              <span className="sidebar-title">Clickpad_v173</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2042,6 +2042,7 @@ export default function App() {
 
           {currentTab === 'clickup' && cuSubTab === 'doc' && cuDocPanel && (
             <div className="task-detail">
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => setCuDocPanel(null)}>←</button>
               {cuDocPanel.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : cuDocPanel.error
