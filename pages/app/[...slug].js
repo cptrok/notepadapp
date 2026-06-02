@@ -931,63 +931,15 @@ export default function App() {
       pageId = appMatch[2] || null;
     }
     setCuDocPanel({ loading: true });
-    // 인증 실패(403) 시 공개 문서로 간주하고 토큰 없이 재시도
-    const cuFetch = async (url) => {
-      const r = await fetch(url, { headers: { Authorization: clickupTokenRef.current } });
-      if (r.status === 403) return fetch(url); // 토큰 없이 재시도
-      return r;
-    };
+    // 서버사이드 프록시를 통해 호출 (CORS 우회 + 공개 doc 지원)
     try {
-      if (pageId) {
-        const res = await cuFetch(
-          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`
-        );
-        const data = await res.json();
-        if (data.content) {
-          setCuDocPanel({ name: data.name || data.title || 'Doc 페이지', content: data.content });
-          return;
-        }
-        // pageId 직접 조회 실패 시 pages 목록 시도
-        const resList = await cuFetch(
-          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`
-        );
-        const dataList = await resList.json();
-        const pages = Array.isArray(dataList) ? dataList : (dataList.pages || []);
-        if (pages.length > 0) {
-          const firstPage = pages[0];
-          const res2 = await cuFetch(
-            `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${firstPage.id}?content_format=text%2Fmd`
-          );
-          const data2 = await res2.json();
-          setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content: data2.content || '' });
-          return;
-        }
-        setCuDocPanel({ error: '내용을 불러올 수 없습니다.' });
-      } else {
-        const resDoc = await cuFetch(
-          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}?content_format=text%2Fmd`
-        );
-        const dataDoc = await resDoc.json();
-        if (dataDoc.content) {
-          setCuDocPanel({ name: dataDoc.name || dataDoc.title || 'Doc 페이지', content: dataDoc.content });
-          return;
-        }
-        const res = await cuFetch(
-          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`
-        );
-        const data = await res.json();
-        const pages = Array.isArray(data) ? data : (data.pages || []);
-        if (pages.length === 0) {
-          setCuDocPanel({ error: '내용을 불러올 수 없습니다.' });
-          return;
-        }
-        const firstPage = pages[0];
-        const res2 = await cuFetch(
-          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${firstPage.id}?content_format=text%2Fmd`
-        );
-        const data2 = await res2.json();
-        setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content: data2.content || '' });
-      }
+      const params = pageId ? `docId=${docId}&pageId=${pageId}` : `docId=${docId}`;
+      const res = await fetch(`/api/clickup-doc?${params}`, {
+        headers: { 'x-clickup-token': clickupTokenRef.current }
+      });
+      const data = await res.json();
+      if (data.error) { setCuDocPanel({ error: data.error }); return; }
+      setCuDocPanel({ name: data.name || 'Doc 페이지', content: data.content || '' });
     } catch (e) { setCuDocPanel({ error: e.message }); }
   }
 
@@ -1789,7 +1741,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v184</span>
+              <span className="sidebar-title">Clickpad_v185</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
