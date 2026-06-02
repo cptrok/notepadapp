@@ -1853,7 +1853,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v195</span>
+              <span className="sidebar-title">Clickpad_v196</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1920,7 +1920,7 @@ export default function App() {
                         <div>② 우상단 <b>공유(Share)</b> 클릭</div>
                         <div>③ <b>Public</b> 탭 → <b>Publish</b></div>
                         <div>④ Public link 복사 후 위에 붙여넣기</div>
-                        <img src="/clickup-doc-guide.jpg" alt="ClickUp 공유 방법" style={{ width: '100%', borderRadius: '6px', marginTop: '8px', objectFit: 'contain' }} />
+                        <img src="/clickup-doc-guide.jpg" alt="ClickUp 공유 방법" style={{ width: '60%', maxWidth: '160px', display: 'block', margin: '8px auto 0', borderRadius: '6px', objectFit: 'contain' }} />
                       </div>
                     )}
                   </div>
