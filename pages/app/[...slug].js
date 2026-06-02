@@ -2,6 +2,31 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { sb } from '../../lib/supabase';
 
+function renderMarkdown(text) {
+  if (!text) return '';
+  // 마크다운 → HTML 변환 (링크, 굵게, 코드, 줄바꿈)
+  let html = text
+    // 코드블록
+    .replace(/```[\s\S]*?```/g, m => `<pre style="background:var(--bg-sub,#f4f4f4);padding:8px;border-radius:4px;overflow-x:auto;font-size:12px">${m.slice(3, -3).replace(/</g, '&lt;')}</pre>`)
+    // 인라인 코드
+    .replace(/`([^`]+)`/g, '<code style="background:var(--bg-sub,#f4f4f4);padding:2px 4px;border-radius:3px;font-size:12px">$1</code>')
+    // 마크다운 링크 [text](url)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" style="color:var(--accent,#0891b2);text-decoration:underline">$1</a>')
+    // 굵게 **text**
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // 이탤릭 *text*
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // 헤딩 ## text
+    .replace(/^### (.+)$/gm, '<strong style="font-size:13px">$1</strong>')
+    .replace(/^## (.+)$/gm, '<strong style="font-size:14px">$1</strong>')
+    .replace(/^# (.+)$/gm, '<strong style="font-size:15px">$1</strong>')
+    // bare URL (마크다운 링크로 처리 안 된 것)
+    .replace(/(^|[\s(])(https?:\/\/[^\s)<]+)/g, '$1<a href="$2" target="_blank" rel="noreferrer" style="color:var(--accent,#0891b2);text-decoration:underline">$2</a>')
+    // 줄바꿈
+    .replace(/\n/g, '<br>');
+  return html;
+}
+
 function MmImage({ fileId, token }) {
   const [src, setSrc] = useState(null);
   useEffect(() => {
@@ -1684,7 +1709,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v167</span>
+              <span className="sidebar-title">Clickpad_v168</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1981,7 +2006,7 @@ export default function App() {
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{cuDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">마감일</span><span>{cuDetail.task.due_date ? new Date(Number(cuDetail.task.due_date)).toLocaleDateString('ko-KR') : '-'}</span></div>
                   </div>
-                  {cuDetail.task.description && <div className="task-detail-desc">{cuDetail.task.description}</div>}
+                  {cuDetail.task.description && <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDetail.task.description) }} />}
                   {cuDetail.task.attachments?.length > 0 && (
                     <div className="task-attachments">
                       <div className="task-attachments-title">첨부파일</div>
