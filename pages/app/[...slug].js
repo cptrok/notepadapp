@@ -921,11 +921,11 @@ export default function App() {
     const appMatch = url.match(/app\.clickup\.com\/[^/]+\/v\/dc\/([^/?#]+)(?:\/([^/?#]+))?/);
     const docMatch = url.match(/doc\.clickup\.com\/[^/]+\/p\/h\/([^/?#]+)(?:\/([^/?#]+))?/);
     if (!appMatch && !docMatch) { setCuDocPanel({ error: '올바른 ClickUp Doc URL이 아닙니다.' }); return; }
-    // doc.clickup.com은 두 번째 세그먼트가 실제 docId
+    // doc.clickup.com: {parentId}/{childId} — parentId가 실제 docId, childId가 pageId
     let docId, pageId;
     if (docMatch) {
-      docId = docMatch[2] || docMatch[1]; // 두 번째 값 우선
-      pageId = null;
+      docId = docMatch[1];           // rbeb5-2724398
+      pageId = docMatch[2] || null;  // 28ffba6942726fd
     } else {
       docId = appMatch[1];
       pageId = appMatch[2] || null;
@@ -933,14 +933,34 @@ export default function App() {
     setCuDocPanel({ loading: true });
     try {
       if (pageId) {
+        // 먼저 docId/pages/pageId 시도
         const res = await fetch(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`,
           { headers: { Authorization: clickupTokenRef.current } }
         );
         const data = await res.json();
-        const content = data.content || '';
-        const name = data.name || data.title || 'Doc 페이지';
-        setCuDocPanel({ name, content, debug: !content ? JSON.stringify(data).slice(0, 400) : null });
+        if (data.content) {
+          setCuDocPanel({ name: data.name || data.title || 'Doc 페이지', content: data.content });
+          return;
+        }
+        // 실패하면 pages 목록 전체 불러와서 이름으로 표시
+        const resList = await fetch(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`,
+          { headers: { Authorization: clickupTokenRef.current } }
+        );
+        const dataList = await resList.json();
+        const pages = Array.isArray(dataList) ? dataList : (dataList.pages || []);
+        if (pages.length > 0) {
+          const firstPage = pages[0];
+          const res2 = await fetch(
+            `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${firstPage.id}?content_format=text%2Fmd`,
+            { headers: { Authorization: clickupTokenRef.current } }
+          );
+          const data2 = await res2.json();
+          setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content: data2.content || '', pages, debug: !data2.content ? `page응답: ${JSON.stringify(data2).slice(0,300)}` : null });
+          return;
+        }
+        setCuDocPanel({ name: 'Doc 페이지', content: '', debug: `pageId조회: ${JSON.stringify(data).slice(0,200)} | pages: ${JSON.stringify(dataList).slice(0,200)}` });
       } else {
         // 1) doc 자체 content 직접 시도
         const resDoc = await fetch(
@@ -1774,7 +1794,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v181</span>
+              <span className="sidebar-title">Clickpad_v182</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
