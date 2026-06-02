@@ -706,12 +706,6 @@ export default function App() {
     setCuAppendDesc('');
     const res = await fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
     const data = await res.json();
-    // 원본 포맷 비교용 (markdown_description 파라미터 없이)
-    const res2 = await fetch(`https://api.clickup.com/api/v2/task/${id}`, { headers: { Authorization: clickupTokenRef.current } });
-    const data2 = await res2.json();
-    console.log('[TASK markdown]', data);
-    console.log('[TASK raw] description:', JSON.stringify(data2.description));
-    console.log('[TASK raw] all keys:', Object.keys(data2));
     setCuDetail({ task: data });
   }
 
@@ -1757,7 +1751,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v175</span>
+              <span className="sidebar-title">Clickpad_v176</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
