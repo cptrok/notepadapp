@@ -703,7 +703,9 @@ export default function App() {
     setCuAppendDesc('');
     const res = await fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
     const data = await res.json();
-    console.log('[DEBUG] task description raw:', JSON.stringify(data.description));
+    console.log('[DEBUG] description:', JSON.stringify(data.description));
+    console.log('[DEBUG] markdown_description:', JSON.stringify(data.markdown_description));
+    console.log('[DEBUG] text_content:', JSON.stringify(data.text_content));
     setCuDetail({ task: data });
   }
 
@@ -1710,7 +1712,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v169</span>
+              <span className="sidebar-title">Clickpad_v170</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
