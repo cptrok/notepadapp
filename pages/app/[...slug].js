@@ -942,14 +942,27 @@ export default function App() {
         const name = data.name || data.title || 'Doc 페이지';
         setCuDocPanel({ name, content, debug: !content ? JSON.stringify(data).slice(0, 400) : null });
       } else {
-        // pageId 없으면 doc의 첫 페이지 목록 불러오기
+        // 1) doc 자체 content 직접 시도
+        const resDoc = await fetch(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}?content_format=text%2Fmd`,
+          { headers: { Authorization: clickupTokenRef.current } }
+        );
+        const dataDoc = await resDoc.json();
+        if (dataDoc.content) {
+          setCuDocPanel({ name: dataDoc.name || dataDoc.title || 'Doc 페이지', content: dataDoc.content });
+          return;
+        }
+        // 2) pages 목록 시도
         const res = await fetch(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`,
           { headers: { Authorization: clickupTokenRef.current } }
         );
         const data = await res.json();
         const pages = Array.isArray(data) ? data : (data.pages || []);
-        if (pages.length === 0) { setCuDocPanel({ error: '페이지가 없습니다.' }); return; }
+        if (pages.length === 0) {
+          setCuDocPanel({ error: '내용을 불러올 수 없습니다.', debug: `doc응답: ${JSON.stringify(dataDoc).slice(0, 300)} | pages응답: ${JSON.stringify(data).slice(0, 200)}` });
+          return;
+        }
         // 첫 페이지 자동 로드
         const firstPage = pages[0];
         const res2 = await fetch(
@@ -1761,7 +1774,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v180</span>
+              <span className="sidebar-title">Clickpad_v181</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
