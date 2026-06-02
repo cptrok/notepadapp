@@ -1853,7 +1853,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v190</span>
+              <span className="sidebar-title">Clickpad_v191</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2164,9 +2164,22 @@ export default function App() {
 
           {currentTab === 'clickup' && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && (
             <div className="editor-empty">
-              <div className="editor-empty-icon">📋</div>
-              <h3>{cuSubTab === 'doc' ? 'Doc URL을 입력하세요' : '태스크를 선택하세요'}</h3>
-              <p>{cuSubTab === 'doc' ? '위 입력창에 ClickUp Doc URL을 붙여넣고\n엔터를 누르세요' : '왼쪽에서 태스크를 선택하면\n상세 정보가 표시됩니다'}</p>
+              {cuSubTab === 'doc' ? <>
+                <div className="editor-empty-icon">📄</div>
+                <h3>Doc URL을 입력하세요</h3>
+                <div style={{ marginTop: '16px', textAlign: 'left', background: 'var(--bg-sub,#f8f8f8)', borderRadius: '8px', padding: '14px 18px', fontSize: '13px', lineHeight: '2', color: 'var(--text,#333)' }}>
+                  <div style={{ fontWeight: 700, marginBottom: '6px' }}>URL 가져오는 방법</div>
+                  <div>① ClickUp에서 Doc 페이지 열기</div>
+                  <div>② 우상단 <b>공유(Share)</b> 클릭</div>
+                  <div>③ <b>Share this Page → Public</b> 탭 선택</div>
+                  <div>④ <b>Publish</b> 후 Public link 복사</div>
+                  <div>⑤ 위 입력창에 붙여넣고 🔍 클릭</div>
+                </div>
+              </> : <>
+                <div className="editor-empty-icon">📋</div>
+                <h3>태스크를 선택하세요</h3>
+                <p>왼쪽에서 태스크를 선택하면{'\n'}상세 정보가 표시됩니다</p>
+              </>}
             </div>
           )}
           {currentTab === 'clickup' && cuDetail && (
