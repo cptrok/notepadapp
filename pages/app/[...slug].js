@@ -1068,13 +1068,27 @@ export default function App() {
   }
 
   async function openSettings() {
-    const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
-    if (data && data[0]) {
-      const p = data[0];
-      setSettingsData({ username: p.username || currentUsername, displayName: p.display_name || '', newPassword: '', clickupToken: p.clickup_token || '', mmUsername: p.mm_username || '', mmPassword: p.mm_password || '', mmToken: p.mm_token || '', gwSession: p.gw_session || '' });
-    }
+    // 캐시된 값으로 즉시 표시
+    setSettingsData({
+      username: currentUsername || '',
+      displayName: displayName || '',
+      newPassword: '',
+      clickupToken: clickupTokenRef.current || '',
+      mmUsername: '',
+      mmPassword: '',
+      mmToken: mmTokenRef.current || '',
+      gwSession: gwSessionRef.current || '',
+    });
     setSettingsMsg({ text: '', type: '' });
     setShowSettings(true);
+    // RPC로 추가 정보(mm_username 등) 보완
+    try {
+      const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
+      if (data && data[0]) {
+        const p = data[0];
+        setSettingsData(prev => ({ ...prev, mmUsername: p.mm_username || prev.mmUsername }));
+      }
+    } catch {}
   }
 
   async function saveProfile() {
@@ -1853,7 +1867,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v197</span>
+              <span className="sidebar-title">Clickpad_v198</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
