@@ -939,7 +939,7 @@ export default function App() {
       });
       const data = await res.json();
       if (data.error) { setCuDocPanel({ error: data.error }); return; }
-      setCuDocPanel({ name: data.name || 'Doc 페이지', content: data.content || '' });
+      setCuDocPanel({ name: data.name || 'Doc 페이지', content: data.content || '', debug: data.raw || null });
     } catch (e) { setCuDocPanel({ error: e.message }); }
   }
 
@@ -1741,7 +1741,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v185</span>
+              <span className="sidebar-title">Clickpad_v186</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2041,6 +2041,9 @@ export default function App() {
                     <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>
                     {cuDocPanel.content && (
                       <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
+                    )}
+                    {!cuDocPanel.content && cuDocPanel.debug && (
+                      <pre style={{ fontSize: '11px', background: '#f4f4f4', padding: '8px', borderRadius: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{cuDocPanel.debug}</pre>
                     )}
                   </>
               }
