@@ -932,6 +932,8 @@ export default function App() {
           { headers: { Authorization: clickupTokenRef.current } }
         );
         const data = await res.json();
+        console.log('[DOC PAGE] docId:', docId, 'pageId:', pageId);
+        console.log('[DOC PAGE] response:', JSON.stringify(data).slice(0, 500));
         const content = data.content || '';
         const name = data.name || data.title || 'Doc 페이지';
         setCuDocPanel({ name, content });
@@ -1755,7 +1757,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v177</span>
+              <span className="sidebar-title">Clickpad_v178</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
