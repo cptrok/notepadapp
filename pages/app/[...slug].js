@@ -551,17 +551,8 @@ export default function App() {
   }
 
   async function loadUserProfile() {
-    const { data: rows, error } = await sb.from('users').select('*').eq('username', currentUsername).single();
-    console.log('[profile] users 직접조회:', rows, 'error:', error, 'username:', currentUsername);
-    const p = rows || null;
-    if (!p) {
-      // fallback: RPC 시도
-      const { data, error: rpcErr } = await sb.rpc('get_user_profile', { p_username: currentUsername });
-      console.log('[profile] RPC fallback:', data, 'error:', rpcErr);
-      if (data && data[0]) applyUserProfile(data[0]);
-      return;
-    }
-    applyUserProfile(p);
+    const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
+    if (data && data[0]) applyUserProfile(data[0]);
   }
 
   function applyUserProfile(p) {
@@ -1091,19 +1082,18 @@ export default function App() {
     });
     setSettingsMsg({ text: '', type: '' });
     setShowSettings(true);
-    // users 테이블 직접 조회로 mm_username 등 보완
+    // RPC로 최신값 보완 (display_name, gw_session 등)
     try {
-      const { data: row, error: rowErr } = await sb.from('users').select('mm_username, display_name, gw_session').eq('username', currentUsername).single();
-      console.log('[openSettings] 보완 조회:', row, 'error:', rowErr);
-      if (row) {
+      const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
+      if (data && data[0]) {
+        const p = data[0];
         setSettingsData(prev => ({
           ...prev,
-          mmUsername: row.mm_username || prev.mmUsername,
-          displayName: prev.displayName || row.display_name || '',
-          gwSession: prev.gwSession || row.gw_session || '',
+          displayName: prev.displayName || p.display_name || '',
+          gwSession: prev.gwSession || p.gw_session || '',
         }));
       }
-    } catch (e) { console.log('[openSettings] 보완 조회 예외:', e); }
+    } catch {}
   }
 
   async function saveProfile() {
@@ -1882,7 +1872,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v200</span>
+              <span className="sidebar-title">Clickpad_v201</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
