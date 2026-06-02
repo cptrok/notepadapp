@@ -915,8 +915,12 @@ export default function App() {
   }
 
   async function loadCuDocPage(url) {
-    // ClickUp URL 파싱: https://app.clickup.com/{workspaceId}/v/dc/{docId}/{pageId}
-    const match = url.match(/app\.clickup\.com\/[^/]+\/v\/dc\/([^/?#]+)(?:\/([^/?#]+))?/);
+    // ClickUp URL 파싱
+    // 형식1: https://app.clickup.com/{workspaceId}/v/dc/{docId}/{pageId}
+    // 형식2: https://doc.clickup.com/{workspaceId}/p/h/{docId}/{pageId}
+    const match =
+      url.match(/app\.clickup\.com\/[^/]+\/v\/dc\/([^/?#]+)(?:\/([^/?#]+))?/) ||
+      url.match(/doc\.clickup\.com\/[^/]+\/p\/h\/([^/?#]+)(?:\/([^/?#]+))?/);
     if (!match) { setCuDocPanel({ error: '올바른 ClickUp Doc URL이 아닙니다.' }); return; }
     const docId = match[1];
     const pageId = match[2] || null;
@@ -1751,7 +1755,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v176</span>
+              <span className="sidebar-title">Clickpad_v177</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
