@@ -917,13 +917,19 @@ export default function App() {
   async function loadCuDocPage(url) {
     // ClickUp URL 파싱
     // 형식1: https://app.clickup.com/{workspaceId}/v/dc/{docId}/{pageId}
-    // 형식2: https://doc.clickup.com/{workspaceId}/p/h/{docId}/{pageId}
-    const match =
-      url.match(/app\.clickup\.com\/[^/]+\/v\/dc\/([^/?#]+)(?:\/([^/?#]+))?/) ||
-      url.match(/doc\.clickup\.com\/[^/]+\/p\/h\/([^/?#]+)(?:\/([^/?#]+))?/);
-    if (!match) { setCuDocPanel({ error: '올바른 ClickUp Doc URL이 아닙니다.' }); return; }
-    const docId = match[1];
-    const pageId = match[2] || null;
+    // 형식2: https://doc.clickup.com/{workspaceId}/p/h/{parentId}/{docId}  ← 두 번째가 실제 docId
+    const appMatch = url.match(/app\.clickup\.com\/[^/]+\/v\/dc\/([^/?#]+)(?:\/([^/?#]+))?/);
+    const docMatch = url.match(/doc\.clickup\.com\/[^/]+\/p\/h\/([^/?#]+)(?:\/([^/?#]+))?/);
+    if (!appMatch && !docMatch) { setCuDocPanel({ error: '올바른 ClickUp Doc URL이 아닙니다.' }); return; }
+    // doc.clickup.com은 두 번째 세그먼트가 실제 docId
+    let docId, pageId;
+    if (docMatch) {
+      docId = docMatch[2] || docMatch[1]; // 두 번째 값 우선
+      pageId = null;
+    } else {
+      docId = appMatch[1];
+      pageId = appMatch[2] || null;
+    }
     setCuDocPanel({ loading: true });
     try {
       if (pageId) {
@@ -934,8 +940,7 @@ export default function App() {
         const data = await res.json();
         const content = data.content || '';
         const name = data.name || data.title || 'Doc 페이지';
-        const rawKeys = Object.keys(data).join(', ');
-        setCuDocPanel({ name, content, debug: `keys: ${rawKeys} | content길이: ${content.length} | raw: ${JSON.stringify(data).slice(0, 300)}` });
+        setCuDocPanel({ name, content, debug: !content ? JSON.stringify(data).slice(0, 400) : null });
       } else {
         // pageId 없으면 doc의 첫 페이지 목록 불러오기
         const res = await fetch(
@@ -953,7 +958,7 @@ export default function App() {
         );
         const data2 = await res2.json();
         const content = data2.content || '';
-        setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content, pages });
+        setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content, pages, debug: !content ? JSON.stringify(data2).slice(0, 400) : null });
       }
     } catch (e) { setCuDocPanel({ error: e.message }); }
   }
@@ -1756,7 +1761,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v179</span>
+              <span className="sidebar-title">Clickpad_v180</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
