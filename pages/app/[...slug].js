@@ -551,32 +551,40 @@ export default function App() {
   }
 
   async function loadUserProfile() {
-    const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
-    if (data && data[0]) {
-      const p = data[0];
-      setDisplayName(p.display_name || currentUsername);
-      if (p.clickup_token) clickupTokenRef.current = p.clickup_token;
+    const { data: rows, error } = await sb.from('users').select('*').eq('username', currentUsername).single();
+    const p = rows || null;
+    if (!p) {
+      // fallback: RPC 시도
+      const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
+      if (data && data[0]) applyUserProfile(data[0]);
+      return;
+    }
+    applyUserProfile(p);
+  }
 
-      // DB 저장 토큰 복원
-      if (p.mm_token) {
-        mmTokenRef.current = p.mm_token;
-        setMmToken(p.mm_token);
-        localStorage.setItem('mm_token', p.mm_token);
-      }
+  function applyUserProfile(p) {
+    setDisplayName(p.display_name || currentUsername);
+    if (p.clickup_token) clickupTokenRef.current = p.clickup_token;
 
-      // 그룹웨어 세션 복원
-      const storedGwSession = p.gw_session || '';
-      gwSessionRef.current = storedGwSession;
-      setGwSession(storedGwSession);
+    // DB 저장 토큰 복원
+    if (p.mm_token) {
+      mmTokenRef.current = p.mm_token;
+      setMmToken(p.mm_token);
+      localStorage.setItem('mm_token', p.mm_token);
+    }
 
-      // ClickUp 본인 유저 정보 캐시
-      const token = p.clickup_token || clickupTokenRef.current;
-      if (token && !cuMyUserRef.current) {
-        fetch('https://api.clickup.com/api/v2/user', { headers: { Authorization: token } })
-          .then(r => r.json())
-          .then(d => { if (d.user) cuMyUserRef.current = d.user; })
-          .catch(() => {});
-      }
+    // 그룹웨어 세션 복원
+    const storedGwSession = p.gw_session || '';
+    gwSessionRef.current = storedGwSession;
+    setGwSession(storedGwSession);
+
+    // ClickUp 본인 유저 정보 캐시
+    const token = p.clickup_token || clickupTokenRef.current;
+    if (token && !cuMyUserRef.current) {
+      fetch('https://api.clickup.com/api/v2/user', { headers: { Authorization: token } })
+        .then(r => r.json())
+        .then(d => { if (d.user) cuMyUserRef.current = d.user; })
+        .catch(() => {});
     }
   }
 
@@ -1081,12 +1089,16 @@ export default function App() {
     });
     setSettingsMsg({ text: '', type: '' });
     setShowSettings(true);
-    // RPC로 추가 정보(mm_username 등) 보완
+    // users 테이블 직접 조회로 mm_username 등 보완
     try {
-      const { data } = await sb.rpc('get_user_profile', { p_username: currentUsername });
-      if (data && data[0]) {
-        const p = data[0];
-        setSettingsData(prev => ({ ...prev, mmUsername: p.mm_username || prev.mmUsername }));
+      const { data: row } = await sb.from('users').select('mm_username, display_name, gw_session').eq('username', currentUsername).single();
+      if (row) {
+        setSettingsData(prev => ({
+          ...prev,
+          mmUsername: row.mm_username || prev.mmUsername,
+          displayName: prev.displayName || row.display_name || '',
+          gwSession: prev.gwSession || row.gw_session || '',
+        }));
       }
     } catch {}
   }
@@ -1867,7 +1879,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v198</span>
+              <span className="sidebar-title">Clickpad_v199</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
