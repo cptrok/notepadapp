@@ -172,8 +172,8 @@ body {
 /* SETTINGS MODAL */
 .settings-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
 .settings-overlay.show { display: flex; }
-.settings-card { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; margin: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-.settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.settings-card { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; margin: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+.settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; position: sticky; top: 0; background: white; z-index: 1; padding-bottom: 4px; }
 .settings-header h2 { font-size: 18px; font-weight: 700; }
 .settings-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
 .settings-divider { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin: 16px 0 10px; }
