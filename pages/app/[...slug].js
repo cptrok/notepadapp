@@ -1853,7 +1853,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v191</span>
+              <span className="sidebar-title">Clickpad_v192</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2167,13 +2167,16 @@ export default function App() {
               {cuSubTab === 'doc' ? <>
                 <div className="editor-empty-icon">📄</div>
                 <h3>Doc URL을 입력하세요</h3>
-                <div style={{ marginTop: '16px', textAlign: 'left', background: 'var(--bg-sub,#f8f8f8)', borderRadius: '8px', padding: '14px 18px', fontSize: '13px', lineHeight: '2', color: 'var(--text,#333)' }}>
-                  <div style={{ fontWeight: 700, marginBottom: '6px' }}>URL 가져오는 방법</div>
-                  <div>① ClickUp에서 Doc 페이지 열기</div>
-                  <div>② 우상단 <b>공유(Share)</b> 클릭</div>
-                  <div>③ <b>Share this Page → Public</b> 탭 선택</div>
-                  <div>④ <b>Publish</b> 후 Public link 복사</div>
-                  <div>⑤ 위 입력창에 붙여넣고 🔍 클릭</div>
+                <div style={{ marginTop: '16px', display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'left', background: 'var(--bg-sub,#f8f8f8)', borderRadius: '8px', padding: '14px 18px', fontSize: '13px', lineHeight: '2', color: 'var(--text,#333)' }}>
+                    <div style={{ fontWeight: 700, marginBottom: '6px' }}>URL 가져오는 방법</div>
+                    <div>① ClickUp에서 Doc 페이지 열기</div>
+                    <div>② 우상단 <b>공유(Share)</b> 클릭</div>
+                    <div>③ <b>Share this Page → Public</b> 탭 선택</div>
+                    <div>④ <b>Publish</b> 후 Public link 복사</div>
+                    <div>⑤ 위 입력창에 붙여넣고 🔍 클릭</div>
+                  </div>
+                  <img src="/clickup-doc-guide.jpg" alt="ClickUp 공유 방법" style={{ height: '220px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', objectFit: 'contain' }} />
                 </div>
               </> : <>
                 <div className="editor-empty-icon">📋</div>
