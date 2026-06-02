@@ -932,11 +932,10 @@ export default function App() {
           { headers: { Authorization: clickupTokenRef.current } }
         );
         const data = await res.json();
-        console.log('[DOC PAGE] docId:', docId, 'pageId:', pageId);
-        console.log('[DOC PAGE] response:', JSON.stringify(data).slice(0, 500));
         const content = data.content || '';
         const name = data.name || data.title || 'Doc 페이지';
-        setCuDocPanel({ name, content });
+        const rawKeys = Object.keys(data).join(', ');
+        setCuDocPanel({ name, content, debug: `keys: ${rawKeys} | content길이: ${content.length} | raw: ${JSON.stringify(data).slice(0, 300)}` });
       } else {
         // pageId 없으면 doc의 첫 페이지 목록 불러오기
         const res = await fetch(
@@ -1757,7 +1756,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v178</span>
+              <span className="sidebar-title">Clickpad_v179</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2055,9 +2054,10 @@ export default function App() {
                   ? <div style={{ color: 'red', padding: '16px' }}>{cuDocPanel.error}</div>
                   : <>
                     <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>
-                    {cuDocPanel.content && (
-                      <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
-                    )}
+                    {cuDocPanel.content
+                      ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
+                      : <pre style={{ fontSize: '11px', background: '#f4f4f4', padding: '8px', borderRadius: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{cuDocPanel.debug}</pre>
+                    }
                   </>
               }
             </div>
