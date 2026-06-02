@@ -938,8 +938,12 @@ export default function App() {
         headers: { 'x-clickup-token': clickupTokenRef.current }
       });
       const data = await res.json();
-      if (data.error) { setCuDocPanel({ error: data.error }); return; }
-      setCuDocPanel({ name: data.name || 'Doc 페이지', content: data.content || '', debug: data.raw || null });
+      if (data.error && !data.iframeUrl) { setCuDocPanel({ error: data.error }); return; }
+      if (data.iframeUrl) {
+        setCuDocPanel({ name: data.name || '', iframeUrl: data.iframeUrl });
+      } else {
+        setCuDocPanel({ name: data.name || 'Doc 페이지', content: data.content || '' });
+      }
     } catch (e) { setCuDocPanel({ error: e.message }); }
   }
 
@@ -1741,7 +1745,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v186</span>
+              <span className="sidebar-title">Clickpad_v187</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2031,21 +2035,30 @@ export default function App() {
           )}
 
           {currentTab === 'clickup' && cuSubTab === 'doc' && cuDocPanel && (
-            <div className="task-detail">
-              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => setCuDocPanel(null)}>←</button>
+            <div className="task-detail" style={cuDocPanel.iframeUrl ? { padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' } : {}}>
+              <div style={{ display: 'flex', alignItems: 'center', padding: cuDocPanel.iframeUrl ? '8px 12px' : '0 0 8px 0', borderBottom: cuDocPanel.iframeUrl ? '1px solid #e0e0e0' : 'none', flexShrink: 0 }}>
+                <button className="btn-back" style={{ display: 'flex', marginRight: '8px' }} onClick={() => setCuDocPanel(null)}>←</button>
+                {cuDocPanel.name && <span style={{ fontSize: '15px', fontWeight: 700 }}>{cuDocPanel.name}</span>}
+              </div>
               {cuDocPanel.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : cuDocPanel.error
                   ? <div style={{ color: 'red', padding: '16px' }}>{cuDocPanel.error}</div>
-                  : <>
-                    <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>
-                    {cuDocPanel.content && (
-                      <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
-                    )}
-                    {!cuDocPanel.content && cuDocPanel.debug && (
-                      <pre style={{ fontSize: '11px', background: '#f4f4f4', padding: '8px', borderRadius: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{cuDocPanel.debug}</pre>
-                    )}
-                  </>
+                  : cuDocPanel.iframeUrl
+                    ? <iframe
+                        src={cuDocPanel.iframeUrl}
+                        style={{ flex: 1, border: 'none', width: '100%', minHeight: '500px' }}
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                        title="ClickUp Doc"
+                      />
+                    : <>
+                        {cuDocPanel.name && !cuDocPanel.iframeUrl && (
+                          <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>
+                        )}
+                        {cuDocPanel.content && (
+                          <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
+                        )}
+                      </>
               }
             </div>
           )}
