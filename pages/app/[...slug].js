@@ -165,6 +165,9 @@ export default function App() {
   const cuAttachInputRef = useRef(null);
   const cuMyUserRef = useRef(null);
 
+  const [cuDocInput, setCuDocInput] = useState('');
+  const [cuDocPanel, setCuDocPanel] = useState(null);
+
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
   const [currentLicTaskId, setCurrentLicTaskId] = useState(null);
@@ -909,6 +912,45 @@ export default function App() {
       }
     }
     return sections.filter(s => s.files.length > 0);
+  }
+
+  async function loadCuDocPage(url) {
+    // ClickUp URL 파싱: https://app.clickup.com/{workspaceId}/v/dc/{docId}/{pageId}
+    const match = url.match(/app\.clickup\.com\/[^/]+\/v\/dc\/([^/?#]+)(?:\/([^/?#]+))?/);
+    if (!match) { setCuDocPanel({ error: '올바른 ClickUp Doc URL이 아닙니다.' }); return; }
+    const docId = match[1];
+    const pageId = match[2] || null;
+    setCuDocPanel({ loading: true });
+    try {
+      if (pageId) {
+        const res = await fetch(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`,
+          { headers: { Authorization: clickupTokenRef.current } }
+        );
+        const data = await res.json();
+        const content = data.content || '';
+        const name = data.name || data.title || 'Doc 페이지';
+        setCuDocPanel({ name, content });
+      } else {
+        // pageId 없으면 doc의 첫 페이지 목록 불러오기
+        const res = await fetch(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`,
+          { headers: { Authorization: clickupTokenRef.current } }
+        );
+        const data = await res.json();
+        const pages = Array.isArray(data) ? data : (data.pages || []);
+        if (pages.length === 0) { setCuDocPanel({ error: '페이지가 없습니다.' }); return; }
+        // 첫 페이지 자동 로드
+        const firstPage = pages[0];
+        const res2 = await fetch(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${firstPage.id}?content_format=text%2Fmd`,
+          { headers: { Authorization: clickupTokenRef.current } }
+        );
+        const data2 = await res2.json();
+        const content = data2.content || '';
+        setCuDocPanel({ name: firstPage.name || firstPage.title || 'Doc 페이지', content, pages });
+      }
+    } catch (e) { setCuDocPanel({ error: e.message }); }
   }
 
   async function downloadAttachment(url, filename) {
@@ -1709,7 +1751,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v171</span>
+              <span className="sidebar-title">Clickpad_v172</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1740,6 +1782,7 @@ export default function App() {
                 <div className="sidebar-tabs" style={{ marginBottom: 0 }}>
                   <button className={`tab-btn ${cuSubTab === 'search' ? 'active' : ''}`} onClick={() => switchCuTab('search')}>태스크 조회</button>
                   <button className={`tab-btn ${cuSubTab === 'my' ? 'active' : ''}`} onClick={() => switchCuTab('my')}>내 태스크</button>
+                  <button className={`tab-btn ${cuSubTab === 'doc' ? 'active' : ''}`} onClick={() => switchCuTab('doc')}>Doc 페이지</button>
                 </div>
                 {cuSubTab === 'search' && (
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -1757,6 +1800,15 @@ export default function App() {
                       onChange={e => { setMySearchInput(e.target.value); filterMyTasks(e.target.value); }}
                       style={{ margin: 0, flex: 1, width: 0 }} />
                     <button className="btn-search-clickup" onClick={() => fetchMyTasks(true)}>🔍</button>
+                  </div>
+                )}
+                {cuSubTab === 'doc' && (
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <input className="search-box" type="text" placeholder="ClickUp Doc URL 붙여넣기"
+                      value={cuDocInput} onChange={e => setCuDocInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && loadCuDocPage(cuDocInput)}
+                      style={{ margin: 0, flex: 1, width: 0 }} />
+                    <button className="btn-search-clickup" onClick={() => loadCuDocPage(cuDocInput)}>→</button>
                   </div>
                 )}
               </div>
@@ -1954,6 +2006,7 @@ export default function App() {
         <div className={`editor ${
           (currentTab === 'notes' && editorOpen) ||
           (currentTab === 'clickup' && cuDetail !== null) ||
+          (currentTab === 'clickup' && cuSubTab === 'doc' && cuDocPanel !== null) ||
           (currentTab === 'license' && licSubTab === 'my' && licDetail !== null) ||
           (currentTab === 'license' && licSubTab === 'trial' && trialPanel !== null) ||
           (currentTab === 'chat' && mmSelectedChannel !== null) ||
@@ -1987,11 +2040,27 @@ export default function App() {
             </div>
           )}
 
-          {currentTab === 'clickup' && !cuDetail && (
+          {currentTab === 'clickup' && cuSubTab === 'doc' && cuDocPanel && (
+            <div className="task-detail">
+              {cuDocPanel.loading
+                ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
+                : cuDocPanel.error
+                  ? <div style={{ color: 'red', padding: '16px' }}>{cuDocPanel.error}</div>
+                  : <>
+                    <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>
+                    {cuDocPanel.content && (
+                      <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
+                    )}
+                  </>
+              }
+            </div>
+          )}
+
+          {currentTab === 'clickup' && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && (
             <div className="editor-empty">
               <div className="editor-empty-icon">📋</div>
-              <h3>태스크를 선택하세요</h3>
-              <p>왼쪽에서 태스크를 선택하면<br />상세 정보가 표시됩니다</p>
+              <h3>{cuSubTab === 'doc' ? 'Doc URL을 입력하세요' : '태스크를 선택하세요'}</h3>
+              <p>{cuSubTab === 'doc' ? '위 입력창에 ClickUp Doc URL을 붙여넣고\n엔터를 누르세요' : '왼쪽에서 태스크를 선택하면\n상세 정보가 표시됩니다'}</p>
             </div>
           )}
           {currentTab === 'clickup' && cuDetail && (
