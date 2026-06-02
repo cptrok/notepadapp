@@ -1853,7 +1853,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v194</span>
+              <span className="sidebar-title">Clickpad_v195</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1905,12 +1905,24 @@ export default function App() {
                   </div>
                 )}
                 {cuSubTab === 'doc' && (
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <input className="search-box" type="text" placeholder="ClickUp Doc URL 붙여넣기"
-                      value={cuDocInput} onChange={e => setCuDocInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && loadCuDocPage(cuDocInput)}
-                      style={{ margin: 0, flex: 1, width: 0 }} />
-                    <button className="btn-search-clickup" onClick={() => loadCuDocPage(cuDocInput)}>🔍</button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <input className="search-box" type="text" placeholder="ClickUp Doc URL 붙여넣기"
+                        value={cuDocInput} onChange={e => setCuDocInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && loadCuDocPage(cuDocInput)}
+                        style={{ margin: 0, flex: 1, width: 0 }} />
+                      <button className="btn-search-clickup" onClick={() => loadCuDocPage(cuDocInput)}>🔍</button>
+                    </div>
+                    {!cuDocPanel && (
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.8', background: 'var(--bg-sub,#f8f8f8)', borderRadius: '8px', padding: '10px 12px' }}>
+                        <div style={{ fontWeight: 700, marginBottom: '4px', color: 'var(--text)' }}>URL 가져오는 방법</div>
+                        <div>① Doc 페이지 열기</div>
+                        <div>② 우상단 <b>공유(Share)</b> 클릭</div>
+                        <div>③ <b>Public</b> 탭 → <b>Publish</b></div>
+                        <div>④ Public link 복사 후 위에 붙여넣기</div>
+                        <img src="/clickup-doc-guide.jpg" alt="ClickUp 공유 방법" style={{ width: '100%', borderRadius: '6px', marginTop: '8px', objectFit: 'contain' }} />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2164,25 +2176,9 @@ export default function App() {
 
           {currentTab === 'clickup' && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && (
             <div className="editor-empty">
-              {cuSubTab === 'doc' ? <>
-                <div className="editor-empty-icon">📄</div>
-                <h3>Doc URL을 입력하세요</h3>
-                <div style={{ marginTop: '16px', display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <div style={{ textAlign: 'left', background: 'var(--bg-sub,#f8f8f8)', borderRadius: '8px', padding: '14px 18px', fontSize: '13px', lineHeight: '2', color: 'var(--text,#333)' }}>
-                    <div style={{ fontWeight: 700, marginBottom: '6px' }}>URL 가져오는 방법</div>
-                    <div>① ClickUp에서 Doc 페이지 열기</div>
-                    <div>② 우상단 <b>공유(Share)</b> 클릭</div>
-                    <div>③ <b>Share this Page → Public</b> 탭 선택</div>
-                    <div>④ <b>Publish</b> 후 Public link 복사</div>
-                    <div>⑤ 위 입력창에 붙여넣고 🔍 클릭</div>
-                  </div>
-                  <img src="/clickup-doc-guide.jpg" alt="ClickUp 공유 방법" style={{ height: '220px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', objectFit: 'contain' }} />
-                </div>
-              </> : <>
-                <div className="editor-empty-icon">📋</div>
-                <h3>태스크를 선택하세요</h3>
-                <p>왼쪽에서 태스크를 선택하면{'\n'}상세 정보가 표시됩니다</p>
-              </>}
+              <div className="editor-empty-icon">📋</div>
+              <h3>태스크를 선택하세요</h3>
+              <p>왼쪽에서 태스크를 선택하면{'\n'}상세 정보가 표시됩니다</p>
             </div>
           )}
           {currentTab === 'clickup' && cuDetail && (
