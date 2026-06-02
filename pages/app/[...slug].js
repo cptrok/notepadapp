@@ -706,6 +706,7 @@ export default function App() {
     setCuAppendDesc('');
     const res = await fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
     const data = await res.json();
+    console.log('[TASK]', data);
     setCuDetail({ task: data });
   }
 
@@ -1751,7 +1752,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v173</span>
+              <span className="sidebar-title">Clickpad_v174</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
