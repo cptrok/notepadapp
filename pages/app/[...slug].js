@@ -2,6 +2,117 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { sb } from '../../lib/supabase';
 
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ClickUp Quill Delta 포맷 → HTML
+function renderDelta(ops) {
+  let html = '';
+  let blockContent = '';
+  let listType = null;
+
+  function applyInline(text, attrs) {
+    let s = escHtml(text);
+    if (attrs.code) s = `<code style="background:#f0f0f0;padding:2px 4px;border-radius:3px;font-size:12px">${s}</code>`;
+    if (attrs.bold) s = `<strong>${s}</strong>`;
+    if (attrs.italic) s = `<em>${s}</em>`;
+    if (attrs.underline) s = `<u>${s}</u>`;
+    if (attrs.strike) s = `<s>${s}</s>`;
+    if (attrs.link) s = `<a href="${escHtml(attrs.link)}" target="_blank" rel="noreferrer" style="color:var(--accent,#0891b2);text-decoration:underline">${s}</a>`;
+    return s;
+  }
+
+  function closeList() {
+    if (listType === 'bullet') { html += '</ul>'; listType = null; }
+    else if (listType === 'ordered') { html += '</ol>'; listType = null; }
+  }
+
+  function flushBlock(attrs) {
+    const content = blockContent;
+    blockContent = '';
+    const list = attrs.list;
+    const header = attrs.header;
+    const banner = attrs['advanced-banner'];
+    const bannerColor = attrs['advanced-banner-color'];
+    const codeBlock = attrs['code-block'];
+
+    if (list) {
+      const lt = typeof list === 'string' ? list : (list.list || 'bullet');
+      if (lt === 'ordered') {
+        if (listType !== 'ordered') { closeList(); html += '<ol style="padding-left:20px;margin:4px 0">'; listType = 'ordered'; }
+        html += `<li>${content}</li>`;
+      } else {
+        if (listType !== 'bullet') { closeList(); html += '<ul style="padding-left:20px;margin:4px 0">'; listType = 'bullet'; }
+        html += `<li>${content}</li>`;
+      }
+    } else {
+      closeList();
+      if (codeBlock) {
+        html += `<pre style="background:#f4f4f4;padding:8px;border-radius:4px;font-size:12px;overflow-x:auto"><code>${content}</code></pre>`;
+      } else if (header) {
+        const sz = ['', '18px', '16px', '14px'][Math.min(header, 3)] || '13px';
+        html += `<p style="font-size:${sz};font-weight:700;margin:8px 0 4px">${content}</p>`;
+      } else if (banner) {
+        const colors = { green: '#e8f5e9', blue: '#e3f2fd', yellow: '#fffde7', red: '#ffebee', purple: '#f3e5f5', gray: '#f5f5f5' };
+        const bg = colors[bannerColor] || '#f5f5f5';
+        html += content ? `<div style="background:${bg};border-radius:6px;padding:10px 14px;margin:4px 0">${content}</div>` : '';
+      } else {
+        html += content ? `<p style="margin:4px 0">${content}</p>` : '';
+      }
+    }
+  }
+
+  for (const op of ops) {
+    if (typeof op.insert === 'string') {
+      const chars = op.insert;
+      const attrs = op.attributes || {};
+      let pos = 0;
+      while (pos < chars.length) {
+        const nl = chars.indexOf('\n', pos);
+        if (nl === -1) {
+          blockContent += applyInline(chars.slice(pos), attrs);
+          break;
+        }
+        const seg = chars.slice(pos, nl);
+        if (seg) blockContent += applyInline(seg, attrs);
+        flushBlock(attrs);
+        pos = nl + 1;
+      }
+    } else if (op.insert && typeof op.insert === 'object') {
+      if (op.insert.attachment) {
+        const att = op.insert.attachment;
+        const name = att.name || 'file';
+        const url = att.url_w_host || att.url || '';
+        blockContent += url
+          ? `<a href="${url}" target="_blank" rel="noreferrer" style="display:inline-flex;align-items:center;gap:4px;background:#efefef;padding:3px 8px;border-radius:4px;font-size:12px;color:#333;text-decoration:none;margin:2px">📎 ${escHtml(name)}</a>`
+          : `<span style="background:#efefef;padding:3px 8px;border-radius:4px;font-size:12px">📎 ${escHtml(name)}</span>`;
+      } else if (op.insert.mention) {
+        const m = op.insert.mention;
+        blockContent += `<span style="color:var(--accent,#0891b2)">@${escHtml(m.name || m.username || '')}</span>`;
+      }
+    }
+  }
+
+  closeList();
+  if (blockContent) html += `<p style="margin:4px 0">${blockContent}</p>`;
+  return html;
+}
+
+// 콘텐츠 자동 감지 렌더링 (Delta JSON or Markdown)
+function renderContent(content) {
+  if (!content) return '';
+  const trimmed = content.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const ops = parsed.ops || (Array.isArray(parsed) ? parsed : null);
+      if (ops) return renderDelta(ops);
+    } catch {}
+  }
+  return renderMarkdown(content);
+}
+
 function renderMarkdown(text) {
   if (!text) return '';
   // 마크다운 → HTML 변환 (링크, 굵게, 코드, 줄바꿈)
@@ -1742,7 +1853,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v188</span>
+              <span className="sidebar-title">Clickpad_v189</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2041,7 +2152,7 @@ export default function App() {
                   : <>
                       {cuDocPanel.name && <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>}
                       {cuDocPanel.content
-                        ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDocPanel.content) }} />
+                        ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderContent(cuDocPanel.content) }} />
                         : cuDocPanel.debug
                           ? <pre style={{ fontSize: '11px', background: '#f4f4f4', padding: '8px', borderRadius: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{cuDocPanel.debug}</pre>
                           : <div style={{ color: '#888', padding: '16px' }}>내용이 없습니다.</div>
