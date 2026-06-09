@@ -261,6 +261,8 @@ export default function App() {
   const [cuHasMore, setCuHasMore] = useState(false);
   const [cuKeyword, setCuKeyword] = useState('');
   const [cuSearchInput, setCuSearchInput] = useState('');
+  const [cuProductFilter, setCuProductFilter] = useState('');
+  const cuProductFilterRef = useRef('');
   const [myTasks, setMyTasks] = useState([]);
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
   const [myTasksLoaded, setMyTasksLoaded] = useState(false);
@@ -689,12 +691,18 @@ export default function App() {
   }
 
   function filterTasks(tasks, keyword) {
-    if (!keyword) return tasks;
-    const kw = keyword.toLowerCase();
-    return tasks.filter(t =>
-      (t.name || '').toLowerCase().includes(kw) ||
-      (t.description || '').toLowerCase().includes(kw)
-    );
+    let result = tasks;
+    if (keyword) {
+      const kw = keyword.toLowerCase();
+      result = result.filter(t =>
+        (t.name || '').toLowerCase().includes(kw) ||
+        (t.description || '').toLowerCase().includes(kw)
+      );
+    }
+    if (cuProductFilterRef.current) {
+      result = result.filter(t => getTaskProducts(t).includes(cuProductFilterRef.current));
+    }
+    return result;
   }
 
   async function fillBuffer(keyword, parallel = false) {
@@ -717,7 +725,7 @@ export default function App() {
   }
 
   async function fetchTasksByKeyword(q) {
-    if (!q.trim()) return;
+    if (!q.trim() && !cuProductFilterRef.current) return;
     setCuKeyword(q);
     cuKeywordRef.current = q;
     setCuTasks([]);
@@ -1872,7 +1880,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v201</span>
+              <span className="sidebar-title">Clickpad_v202</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1906,12 +1914,28 @@ export default function App() {
                   <button className={`tab-btn ${cuSubTab === 'doc' ? 'active' : ''}`} onClick={() => switchCuTab('doc')}>Doc 페이지</button>
                 </div>
                 {cuSubTab === 'search' && (
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <input className="search-box" type="text" placeholder="검색어 입력"
-                      value={cuSearchInput} onChange={e => setCuSearchInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && fetchTasksByKeyword(cuSearchInput)}
-                      style={{ margin: 0, flex: 1, width: 0 }} />
-                    <button className="btn-search-clickup" onClick={() => fetchTasksByKeyword(cuSearchInput)}>🔍</button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <input className="search-box" type="text" placeholder="검색어 입력"
+                        value={cuSearchInput} onChange={e => setCuSearchInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && fetchTasksByKeyword(cuSearchInput)}
+                        style={{ margin: 0, flex: 1, width: 0 }} />
+                      <button className="btn-search-clickup" onClick={() => fetchTasksByKeyword(cuSearchInput)}>🔍</button>
+                    </div>
+                    <select
+                      value={cuProductFilter}
+                      onChange={e => {
+                        setCuProductFilter(e.target.value);
+                        cuProductFilterRef.current = e.target.value;
+                        fetchTasksByKeyword(cuSearchInput);
+                      }}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
+                    >
+                      <option value="">전체 제품군</option>
+                      {Object.keys(DEQ_LABEL_MAP).map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
                   </div>
                 )}
                 {cuSubTab === 'my' && (
