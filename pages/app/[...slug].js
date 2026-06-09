@@ -292,6 +292,12 @@ export default function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '', mmToken: '', gwSession: '' });
+
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackForm, setFeedbackForm] = useState({ title: '', content: '' });
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [feedbackMsg, setFeedbackMsg] = useState({ text: '', type: '' });
+  const [feedbackView, setFeedbackView] = useState('list'); // 'list' | 'form'
   const [settingsMsg, setSettingsMsg] = useState({ text: '', type: '' });
 
   const [mmToken, setMmToken] = useState(null);
@@ -1074,6 +1080,31 @@ export default function App() {
       a.download = filename;
       a.click();
     } catch { window.open(url, '_blank'); }
+  }
+
+  async function openFeedback() {
+    setFeedbackForm({ title: '', content: '' });
+    setFeedbackMsg({ text: '', type: '' });
+    setFeedbackView('list');
+    setShowFeedback(true);
+    const { data } = await sb.rpc('get_my_improvement_requests', { p_username: currentUsername });
+    setFeedbackList(data || []);
+  }
+
+  async function submitFeedback() {
+    if (!feedbackForm.title.trim()) { setFeedbackMsg({ text: '제목을 입력해주세요.', type: 'error' }); return; }
+    setFeedbackMsg({ text: '등록 중...', type: '' });
+    const { error } = await sb.rpc('submit_improvement_request', {
+      p_username: currentUsername,
+      p_title: feedbackForm.title.trim(),
+      p_content: feedbackForm.content.trim(),
+    });
+    if (error) { setFeedbackMsg({ text: '등록 실패: ' + error.message, type: 'error' }); return; }
+    setFeedbackMsg({ text: '등록되었습니다.', type: 'success' });
+    setFeedbackForm({ title: '', content: '' });
+    const { data } = await sb.rpc('get_my_improvement_requests', { p_username: currentUsername });
+    setFeedbackList(data || []);
+    setTimeout(() => setFeedbackView('list'), 800);
   }
 
   async function openSettings() {
@@ -1880,7 +1911,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v207</span>
+              <span className="sidebar-title">Clickpad_v208</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2153,6 +2184,7 @@ export default function App() {
           <div className="sidebar-footer">
             <div className="user-info">
               <span className="user-name">{displayName || currentUsername}</span>
+              <button className="btn-settings" onClick={openFeedback} title="개선요청">💡</button>
               <button className="btn-settings" onClick={openSettings}>⚙️</button>
               <button className="btn-logout" onClick={logout}>로그아웃</button>
             </div>
@@ -2532,6 +2564,46 @@ export default function App() {
           </div>
           <button className="btn-success" onClick={saveProfile}>저장</button>
           <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
+        </div>
+      </div>
+
+      <div className={`settings-overlay ${showFeedback ? 'show' : ''}`} onClick={e => e.target === e.currentTarget && setShowFeedback(false)}>
+        <div className="settings-card">
+          <div className="settings-header">
+            <h2>💡 개선요청</h2>
+            <button className="settings-close" onClick={() => setShowFeedback(false)}>✕</button>
+          </div>
+
+          {feedbackView === 'list' ? <>
+            <button className="btn-success" style={{ width: '100%', marginBottom: '14px' }} onClick={() => { setFeedbackMsg({ text: '', type: '' }); setFeedbackView('form'); }}>+ 새 개선요청 등록</button>
+            {feedbackList.length === 0
+              ? <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>등록된 개선요청이 없습니다.</div>
+              : feedbackList.map(item => (
+                <div key={item.id} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 12px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '14px' }}>{item.title}</span>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', background: item.status === '완료' ? '#e8f5e9' : item.status === '진행중' ? '#e3f2fd' : '#f5f5f5', color: item.status === '완료' ? '#2e7d32' : item.status === '진행중' ? '#1565c0' : '#666' }}>{item.status}</span>
+                  </div>
+                  {item.content && <div style={{ fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap' }}>{item.content}</div>}
+                  <div style={{ fontSize: '11px', color: '#aaa', marginTop: '6px' }}>{new Date(item.created_at).toLocaleDateString('ko-KR')}</div>
+                </div>
+              ))
+            }
+          </> : <>
+            <div className="form-group">
+              <label>제목</label>
+              <input type="text" value={feedbackForm.title} onChange={e => setFeedbackForm(p => ({ ...p, title: e.target.value }))} placeholder="개선 내용을 요약해주세요" />
+            </div>
+            <div className="form-group">
+              <label>내용</label>
+              <textarea value={feedbackForm.content} onChange={e => setFeedbackForm(p => ({ ...p, content: e.target.value }))} placeholder="자세한 내용을 입력해주세요" style={{ width: '100%', minHeight: '120px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn-logout" style={{ flex: 1 }} onClick={() => setFeedbackView('list')}>취소</button>
+              <button className="btn-success" style={{ flex: 2 }} onClick={submitFeedback}>등록</button>
+            </div>
+            <div className={`settings-message ${feedbackMsg.type}`}>{feedbackMsg.text}</div>
+          </>}
         </div>
       </div>
 
