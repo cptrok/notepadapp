@@ -1880,7 +1880,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v202</span>
+              <span className="sidebar-title">Clickpad_v203</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1915,13 +1915,6 @@ export default function App() {
                 </div>
                 {cuSubTab === 'search' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <input className="search-box" type="text" placeholder="검색어 입력"
-                        value={cuSearchInput} onChange={e => setCuSearchInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && fetchTasksByKeyword(cuSearchInput)}
-                        style={{ margin: 0, flex: 1, width: 0 }} />
-                      <button className="btn-search-clickup" onClick={() => fetchTasksByKeyword(cuSearchInput)}>🔍</button>
-                    </div>
                     <select
                       value={cuProductFilter}
                       onChange={e => {
@@ -1936,6 +1929,13 @@ export default function App() {
                         <option key={name} value={name}>{name}</option>
                       ))}
                     </select>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <input className="search-box" type="text" placeholder="검색어 입력"
+                        value={cuSearchInput} onChange={e => setCuSearchInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && fetchTasksByKeyword(cuSearchInput)}
+                        style={{ margin: 0, flex: 1, width: 0 }} />
+                      <button className="btn-search-clickup" onClick={() => fetchTasksByKeyword(cuSearchInput)}>🔍</button>
+                    </div>
                   </div>
                 )}
                 {cuSubTab === 'my' && (
