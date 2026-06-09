@@ -222,4 +222,6 @@ body {
   .editor { position: absolute; inset: 0; z-index: 20; transform: translateX(100%); transition: transform 0.28s ease; }
   .editor.open { transform: translateX(0); }
   .btn-back { display: flex !important; }
+  .sidebar-tabs { gap: 2px; flex-wrap: nowrap; }
+  .tab-btn { font-size: 11px; padding: 5px 2px; white-space: nowrap; }
 }
