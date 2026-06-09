@@ -1880,7 +1880,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v204</span>
+              <span className="sidebar-title">Clickpad_v205</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2231,6 +2231,7 @@ export default function App() {
                 : <>
                   <a className="task-detail-title" href={cuDetail.task.url} target="_blank" rel="noreferrer">{cuDetail.task.name}</a>
                   <div className="task-detail-info">
+                    <div className="task-detail-row"><span className="task-detail-label">태스크 ID</span><span style={{ fontFamily: 'monospace', fontSize: '12px' }}>{cuDetail.task.id}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">분류</span><span>{cuDetail.task.list?.name}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{cuDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">마감일</span><span>{cuDetail.task.due_date ? new Date(Number(cuDetail.task.due_date)).toLocaleDateString('ko-KR') : '-'}</span></div>
