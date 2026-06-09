@@ -1880,7 +1880,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v203</span>
+              <span className="sidebar-title">Clickpad_v204</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1920,7 +1920,6 @@ export default function App() {
                       onChange={e => {
                         setCuProductFilter(e.target.value);
                         cuProductFilterRef.current = e.target.value;
-                        fetchTasksByKeyword(cuSearchInput);
                       }}
                       style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
                     >
