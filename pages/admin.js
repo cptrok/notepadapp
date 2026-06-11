@@ -18,9 +18,12 @@ export default function Admin() {
   // 계정관리
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [accountView, setAccountView] = useState('idle'); // 'idle' | 'detail' | 'create'
   const [newPw, setNewPw] = useState('');
   const [newPwConfirm, setNewPwConfirm] = useState('');
   const [pwMsg, setPwMsg] = useState({ text: '', type: '' });
+  const [createForm, setCreateForm] = useState({ username: '', password: '', passwordConfirm: '' });
+  const [createMsg, setCreateMsg] = useState({ text: '', type: '' });
 
   // 개선요청관리
   const [requests, setRequests] = useState([]);
@@ -49,9 +52,22 @@ export default function Admin() {
 
   function selectUser(user) {
     setSelectedUser(user);
+    setAccountView('detail');
     setNewPw('');
     setNewPwConfirm('');
     setPwMsg({ text: '', type: '' });
+  }
+
+  async function createUser() {
+    if (!createForm.username.trim()) { setCreateMsg({ text: '아이디를 입력하세요.', type: 'error' }); return; }
+    if (!createForm.password) { setCreateMsg({ text: '비밀번호를 입력하세요.', type: 'error' }); return; }
+    if (createForm.password !== createForm.passwordConfirm) { setCreateMsg({ text: '비밀번호가 일치하지 않습니다.', type: 'error' }); return; }
+    setCreateMsg({ text: '생성 중...', type: '' });
+    const { error } = await sb.rpc('create_memo_user', { p_username: createForm.username.trim(), p_password: createForm.password });
+    if (error) { setCreateMsg({ text: '생성 실패: ' + error.message, type: 'error' }); return; }
+    setCreateMsg({ text: `'${createForm.username.trim()}' 계정이 생성되었습니다.`, type: 'success' });
+    setCreateForm({ username: '', password: '', passwordConfirm: '' });
+    loadUsers();
   }
 
   async function changePassword() {
@@ -95,12 +111,13 @@ export default function Admin() {
   function switchTab(t) {
     setTab(t);
     setSelectedUser(null);
+    setAccountView('idle');
     setSelectedReq(null);
     if (t === 'accounts') loadUsers();
     if (t === 'feedback') loadRequests();
   }
 
-  const detailOpen = (tab === 'accounts' && selectedUser) || (tab === 'feedback' && selectedReq);
+  const detailOpen = (tab === 'accounts' && accountView !== 'idle') || (tab === 'feedback' && selectedReq);
 
   return (
     <>
@@ -117,6 +134,14 @@ export default function Admin() {
               <button className={`tab-btn ${tab === 'feedback' ? 'active' : ''}`} onClick={() => switchTab('feedback')}>개선요청</button>
             </div>
           </div>
+
+          {tab === 'accounts' && (
+            <div style={{ padding: '8px 8px 0' }}>
+              <button className="btn-success" onClick={() => { setAccountView('create'); setSelectedUser(null); setCreateForm({ username: '', password: '', passwordConfirm: '' }); setCreateMsg({ text: '', type: '' }); }}>
+                + 계정 추가
+              </button>
+            </div>
+          )}
 
           <div className="notes-list">
             {tab === 'accounts' && (
@@ -161,17 +186,17 @@ export default function Admin() {
         {/* 에디터 패널 */}
         <div className={`editor ${detailOpen ? 'open' : ''}`}>
 
-          {/* 계정관리 상세 */}
-          {tab === 'accounts' && !selectedUser && (
+          {/* 계정관리 */}
+          {tab === 'accounts' && accountView === 'idle' && (
             <div className="editor-empty">
               <div className="editor-empty-icon">👤</div>
               <h3>계정관리</h3>
-              <p>왼쪽에서 사용자를 선택하세요</p>
+              <p>왼쪽에서 사용자를 선택하거나<br />계정을 추가하세요</p>
             </div>
           )}
-          {tab === 'accounts' && selectedUser && (
+          {tab === 'accounts' && accountView === 'detail' && selectedUser && (
             <div className="task-detail" style={{ maxWidth: '480px' }}>
-              <button className="btn-back" style={{ display: 'flex', marginBottom: '16px' }} onClick={() => setSelectedUser(null)}>←</button>
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '16px' }} onClick={() => { setSelectedUser(null); setAccountView('idle'); }}>←</button>
               <h3 style={{ fontSize: '18px', marginBottom: '4px' }}>{selectedUser.username}</h3>
               {selectedUser.display_name && <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>{selectedUser.display_name}</p>}
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginTop: selectedUser.display_name ? 0 : '20px' }}>
@@ -189,6 +214,27 @@ export default function Admin() {
                 <button className="btn-success" onClick={changePassword}>변경</button>
                 {pwMsg.text && <div className={`settings-message ${pwMsg.type}`}>{pwMsg.text}</div>}
               </div>
+            </div>
+          )}
+          {tab === 'accounts' && accountView === 'create' && (
+            <div className="task-detail" style={{ maxWidth: '480px' }}>
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '16px' }} onClick={() => setAccountView('idle')}>←</button>
+              <h3 style={{ fontSize: '18px', marginBottom: '24px' }}>새 계정 추가</h3>
+              <div className="form-group">
+                <label>아이디</label>
+                <input type="text" value={createForm.username} onChange={e => setCreateForm(p => ({ ...p, username: e.target.value }))} placeholder="아이디 입력" />
+              </div>
+              <div className="form-group">
+                <label>비밀번호</label>
+                <input type="password" value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} placeholder="비밀번호 입력" />
+              </div>
+              <div className="form-group">
+                <label>비밀번호 확인</label>
+                <input type="password" value={createForm.passwordConfirm} onChange={e => setCreateForm(p => ({ ...p, passwordConfirm: e.target.value }))} placeholder="비밀번호 재입력"
+                  onKeyDown={e => e.key === 'Enter' && createUser()} />
+              </div>
+              <button className="btn-success" onClick={createUser}>계정 생성</button>
+              {createMsg.text && <div className={`settings-message ${createMsg.type}`}>{createMsg.text}</div>}
             </div>
           )}
 
