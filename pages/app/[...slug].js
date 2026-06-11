@@ -291,6 +291,7 @@ export default function App() {
   const [trialPanel, setTrialPanel] = useState(null);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [hasClickupToken, setHasClickupToken] = useState(false);
   const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '', mmToken: '', gwSession: '' });
 
   const [feedbackForm, setFeedbackForm] = useState({ title: '', content: '' });
@@ -571,7 +572,7 @@ export default function App() {
 
   function applyUserProfile(p) {
     setDisplayName(p.display_name || currentUsername);
-    if (p.clickup_token) clickupTokenRef.current = p.clickup_token;
+    if (p.clickup_token) { clickupTokenRef.current = p.clickup_token; setHasClickupToken(true); }
 
     // DB 저장 토큰 복원
     if (p.mm_token) {
@@ -1915,7 +1916,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v216</span>
+              <span className="sidebar-title">Clickpad_v217</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1949,7 +1950,10 @@ export default function App() {
               </button>
             )}
 
-            {currentTab === 'clickup' && (
+            {currentTab === 'clickup' && !hasClickupToken && (
+              <div className="empty-list">⚙️ 설정에서 ClickUp 토큰을 등록해 주세요</div>
+            )}
+            {currentTab === 'clickup' && hasClickupToken && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div className="sidebar-tabs" style={{ marginBottom: 0 }}>
                   <button className={`tab-btn ${cuSubTab === 'search' ? 'active' : ''}`} onClick={() => switchCuTab('search')}>태스크 조회</button>
@@ -2013,7 +2017,10 @@ export default function App() {
               </div>
             )}
 
-            {currentTab === 'license' && (
+            {currentTab === 'license' && !hasClickupToken && (
+              <div className="empty-list">⚙️ 설정에서 ClickUp 토큰을 등록해 주세요</div>
+            )}
+            {currentTab === 'license' && hasClickupToken && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div className="sidebar-tabs" style={{ marginBottom: 0 }}>
                   <button className={`tab-btn ${licSubTab === 'my' ? 'active' : ''}`} onClick={() => switchLicTab('my')}>내 태스크</button>
@@ -2259,7 +2266,7 @@ export default function App() {
             </div>
           )}
 
-          {currentTab === 'clickup' && cuSubTab === 'doc' && cuDocPanel && (
+          {currentTab === 'clickup' && hasClickupToken && cuSubTab === 'doc' && cuDocPanel && (
             <div className="task-detail">
               <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => setCuDocPanel(null)}>←</button>
               {cuDocPanel.loading
@@ -2279,7 +2286,14 @@ export default function App() {
             </div>
           )}
 
-          {currentTab === 'clickup' && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && (
+          {currentTab === 'clickup' && !hasClickupToken && (
+            <div className="editor-empty">
+              <div className="editor-empty-icon">🔑</div>
+              <h3>ClickUp 토큰이 필요합니다</h3>
+              <p>우측 하단 ⚙️ 설정에서<br />ClickUp API 토큰을 등록해 주세요</p>
+            </div>
+          )}
+          {currentTab === 'clickup' && hasClickupToken && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && (
             <div className="editor-empty">
               <div className="editor-empty-icon">📋</div>
               <h3>태스크를 선택하세요</h3>
