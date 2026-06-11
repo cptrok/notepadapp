@@ -1916,7 +1916,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v218</span>
+              <span className="sidebar-title">Clickpad_v219</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2055,7 +2055,7 @@ export default function App() {
             </div>
           )}
 
-          {currentTab === 'clickup' && (
+          {currentTab === 'clickup' && hasClickupToken && (
             <div className="notes-list">
               {cuSubTab === 'search' && (
                 <>
@@ -2105,7 +2105,7 @@ export default function App() {
             </div>
           )}
 
-          {currentTab === 'license' && (
+          {currentTab === 'license' && hasClickupToken && (
             <div className="notes-list">
               {licSubTab === 'my' && (
                 <>
