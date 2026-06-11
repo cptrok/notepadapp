@@ -435,6 +435,11 @@ export default function App() {
 
   useEffect(() => {
     if (!currentUsername) return;
+    if (currentTab === 'feedback') loadFeedbackList(currentUsername);
+  }, [currentUsername, currentTab]);
+
+  useEffect(() => {
+    if (!currentUsername) return;
     loadUserProfile();
     loadNotes();
     const onVisibility = () => { if (!document.hidden) loadNotes(); };
@@ -461,7 +466,7 @@ export default function App() {
     else if (section === 'trial') { setCurrentTab('license'); setLicSubTab('trial'); }
     else if (section === 'chat') setCurrentTab('chat');
     else if (section === 'faq') setCurrentTab('faq');
-    else if (section === 'feedback') setCurrentTab('feedback');
+    else if (section === 'feedback') { setCurrentTab('feedback'); loadFeedbackList(); }
   }, [router.isReady, router.asPath]);
 
   useEffect(() => {
@@ -1083,8 +1088,10 @@ export default function App() {
     } catch { window.open(url, '_blank'); }
   }
 
-  async function loadFeedbackList() {
-    const { data } = await sb.rpc('get_my_improvement_requests', { p_username: currentUsername });
+  async function loadFeedbackList(username) {
+    const uname = username || currentUsername;
+    if (!uname) return;
+    const { data } = await sb.rpc('get_my_improvement_requests', { p_username: uname });
     setFeedbackList(data || []);
   }
 
@@ -1211,7 +1218,7 @@ export default function App() {
     if (tab === 'clickup' && cuSubTab === 'my' && !myTasksLoaded) fetchMyTasks(false);
     if (tab === 'chat' && mmTokenRef.current && mmChannels.length === 0) mmLoadChannels();
     if (tab === 'faq' && faqAllItemsRef.current.length === 0) loadFaqList('', 0, true);
-    if (tab === 'feedback') loadFeedbackList();
+    if (tab === 'feedback') { loadFeedbackList(); setFeedbackView('list'); setSelectedFeedback(null); }
     const path = tab === 'notes' ? 'note' : tab;
     router.push(`/app/${path}`, undefined, { shallow: true });
   }
@@ -1908,7 +1915,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v213</span>
+              <span className="sidebar-title">Clickpad_v214</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
