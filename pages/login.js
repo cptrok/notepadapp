@@ -44,7 +44,8 @@ export default function Login() {
     if (savePw) localStorage.setItem('memo_saved_pw', password);
     else localStorage.removeItem('memo_saved_pw');
     localStorage.setItem('memo_user', username.trim());
-    router.push('/app/note');
+    if (username.trim() === 'admin') router.push('/admin');
+    else router.push('/app/note');
   }
 
   function handleLogoClick() {
@@ -81,7 +82,7 @@ export default function Login() {
       <div className="auth-screen">
         <div className="auth-card">
           <div className="auth-logo" onClick={handleLogoClick}>
-            <h1>📝 Clickpad_v214</h1>
+            <h1>📝 Clickpad_v215</h1>
             <p>아이디와 비밀번호로 로그인하세요</p>
           </div>
           <div className="form-group">
