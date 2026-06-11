@@ -1916,7 +1916,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v217</span>
+              <span className="sidebar-title">Clickpad_v218</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2329,13 +2329,20 @@ export default function App() {
             </div>
           )}
 
-          {currentTab === 'license' && licSubTab === 'my' && !licDetail && (
+          {currentTab === 'license' && !hasClickupToken && (
+            <div className="editor-empty">
+              <div className="editor-empty-icon">🔑</div>
+              <h3>ClickUp 토큰이 필요합니다</h3>
+              <p>우측 하단 ⚙️ 설정에서<br />ClickUp API 토큰을 등록해 주세요</p>
+            </div>
+          )}
+          {currentTab === 'license' && hasClickupToken && licSubTab === 'my' && !licDetail && (
             <div className="editor-empty">
               <div className="editor-empty-icon">🔑</div>
               <h3>라이선스 태스크를 선택하세요</h3>
             </div>
           )}
-          {currentTab === 'license' && licSubTab === 'my' && licDetail && (
+          {currentTab === 'license' && hasClickupToken && licSubTab === 'my' && licDetail && (
             <div className="task-detail">
               <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => router.back()}>←</button>
               {licDetail.loading
@@ -2363,13 +2370,13 @@ export default function App() {
             </div>
           )}
 
-          {currentTab === 'license' && licSubTab === 'trial' && !trialPanel && (
+          {currentTab === 'license' && hasClickupToken && licSubTab === 'trial' && !trialPanel && (
             <div className="editor-empty">
               <div className="editor-empty-icon">📅</div>
               <h3>분기를 선택하세요</h3>
             </div>
           )}
-          {currentTab === 'license' && licSubTab === 'trial' && trialPanel && (
+          {currentTab === 'license' && hasClickupToken && licSubTab === 'trial' && trialPanel && (
             <div className="task-detail">
               <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => router.back()}>←</button>
               {trialPanel.loading
