@@ -1916,7 +1916,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v219</span>
+              <span className="sidebar-title">Clickpad_v220</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1951,7 +1951,7 @@ export default function App() {
             )}
 
             {currentTab === 'clickup' && !hasClickupToken && (
-              <div className="empty-list">⚙️ 설정에서 ClickUp 토큰을 등록해 주세요</div>
+              <div className="notes-list"><div className="empty-list">⚙️ 설정에서 ClickUp 토큰을 등록해 주세요</div></div>
             )}
             {currentTab === 'clickup' && hasClickupToken && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -2018,7 +2018,7 @@ export default function App() {
             )}
 
             {currentTab === 'license' && !hasClickupToken && (
-              <div className="empty-list">⚙️ 설정에서 ClickUp 토큰을 등록해 주세요</div>
+              <div className="notes-list"><div className="empty-list">⚙️ 설정에서 ClickUp 토큰을 등록해 주세요</div></div>
             )}
             {currentTab === 'license' && hasClickupToken && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
