@@ -62,7 +62,7 @@ body {
 /* APP */
 .app-layout { display: flex; height: 100vh; }
 
-.sidebar { width: 300px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar { width: 330px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
 .sidebar-header { padding: 18px 14px 12px; border-bottom: 1px solid var(--border); }
 .sidebar-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .sidebar-title { font-size: 17px; font-weight: 700; }
@@ -76,7 +76,7 @@ body {
 .btn-search-clickup:hover { background: var(--primary-light); border-color: var(--primary); }
 
 .sidebar-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
-.tab-btn { flex: 1; padding: 7px; border: 1.5px solid var(--border); border-radius: 8px; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-muted); font-family: inherit; transition: all 0.2s; }
+.tab-btn { flex: 1; padding: 7px 4px; border: 1.5px solid var(--border); border-radius: 8px; background: white; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-muted); font-family: inherit; transition: all 0.2s; white-space: nowrap; }
 .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
 .notes-list { flex: 1; overflow-y: auto; padding: 6px; }
@@ -223,5 +223,5 @@ body {
   .editor.open { transform: translateX(0); }
   .btn-back { display: flex !important; }
   .sidebar-tabs { gap: 2px; flex-wrap: nowrap; }
-  .tab-btn { font-size: 11px; padding: 5px 2px; white-space: nowrap; }
+  .tab-btn { font-size: 11px; padding: 5px 2px; }
 }
