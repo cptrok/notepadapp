@@ -1908,7 +1908,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v212</span>
+              <span className="sidebar-title">Clickpad_v213</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2535,6 +2535,12 @@ export default function App() {
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>{new Date(selectedFeedback.created_at).toLocaleString('ko-KR')}</div>
               <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', lineHeight: '1.7', padding: '16px', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>{selectedFeedback.content || '(내용 없음)'}</div>
+              {selectedFeedback.comment && (
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '6px' }}>💬 운영자 댓글</div>
+                  <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', lineHeight: '1.7', padding: '16px', background: '#f0f4ff', borderRadius: '8px', border: '1px solid #c7d4f7' }}>{selectedFeedback.comment}</div>
+                </div>
+              )}
             </div>
           )}
           {currentTab === 'feedback' && feedbackView === 'form' && (
