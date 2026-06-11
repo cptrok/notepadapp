@@ -296,7 +296,8 @@ export default function App() {
   const [feedbackForm, setFeedbackForm] = useState({ title: '', content: '' });
   const [feedbackList, setFeedbackList] = useState([]);
   const [feedbackMsg, setFeedbackMsg] = useState({ text: '', type: '' });
-  const [feedbackView, setFeedbackView] = useState('list'); // 'list' | 'form'
+  const [feedbackView, setFeedbackView] = useState('list'); // 'list' | 'form' | 'detail'
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [settingsMsg, setSettingsMsg] = useState({ text: '', type: '' });
 
   const [mmToken, setMmToken] = useState(null);
@@ -1907,7 +1908,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v211</span>
+              <span className="sidebar-title">Clickpad_v212</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2191,7 +2192,8 @@ export default function App() {
                 ? <div className="empty-list">등록된 개선요청이 없습니다.</div>
                 : feedbackList.map(item => (
                   <div key={item.id} className="note-item"
-                    style={{ cursor: 'default' }}>
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => { setSelectedFeedback(item); setFeedbackView('detail'); }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div className="note-item-title" style={{ flex: 1 }}>{item.title}</div>
                       <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '10px', flexShrink: 0, marginLeft: '6px', background: item.status === '완료' ? '#e8f5e9' : item.status === '진행중' ? '#e3f2fd' : '#f5f5f5', color: item.status === '완료' ? '#2e7d32' : item.status === '진행중' ? '#1565c0' : '#888' }}>{item.status}</span>
@@ -2220,7 +2222,7 @@ export default function App() {
           (currentTab === 'license' && licSubTab === 'trial' && trialPanel !== null) ||
           (currentTab === 'chat' && mmSelectedChannel !== null) ||
           (currentTab === 'faq' && faqDetail !== null) ||
-          (currentTab === 'feedback' && feedbackView === 'form')
+          (currentTab === 'feedback' && (feedbackView === 'form' || feedbackView === 'detail'))
             ? 'open' : ''
         }`}>
           {/* Quill 에디터 - 항상 DOM에 유지 */}
@@ -2522,6 +2524,17 @@ export default function App() {
               <div className="editor-empty-icon">💡</div>
               <h3>개선요청</h3>
               <p>불편한 점이나 개선이 필요한 내용을<br />왼쪽 버튼을 눌러 등록해주세요</p>
+            </div>
+          )}
+          {currentTab === 'feedback' && feedbackView === 'detail' && selectedFeedback && (
+            <div className="task-detail" style={{ overflowY: 'auto', maxWidth: '600px' }}>
+              <button className="btn-back" style={{ display: 'flex', marginBottom: '16px' }} onClick={() => { setFeedbackView('list'); setSelectedFeedback(null); }}>←</button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', flex: 1 }}>{selectedFeedback.title}</h3>
+                <span style={{ fontSize: '12px', padding: '3px 10px', borderRadius: '12px', flexShrink: 0, marginLeft: '10px', background: selectedFeedback.status === '완료' ? '#e8f5e9' : selectedFeedback.status === '진행중' ? '#e3f2fd' : '#f5f5f5', color: selectedFeedback.status === '완료' ? '#2e7d32' : selectedFeedback.status === '진행중' ? '#1565c0' : '#888' }}>{selectedFeedback.status}</span>
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>{new Date(selectedFeedback.created_at).toLocaleString('ko-KR')}</div>
+              <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px', lineHeight: '1.7', padding: '16px', background: 'var(--bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>{selectedFeedback.content || '(내용 없음)'}</div>
             </div>
           )}
           {currentTab === 'feedback' && feedbackView === 'form' && (
