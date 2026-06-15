@@ -1916,7 +1916,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v222</span>
+              <span className="sidebar-title">Clickpad_v223</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2140,7 +2140,7 @@ export default function App() {
           {currentTab === 'chat' && (
             <div className="notes-list">
               {!mmToken && (
-                <div className="empty-list">설정에서 Mattermost<br />로그인을 먼저 해주세요.</div>
+                <div className="empty-list">⚙️ 설정에서 Mattermost<br />계정을 연동해 주세요.</div>
               )}
               {mmToken && mmLoading && (
                 <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
@@ -2397,7 +2397,14 @@ export default function App() {
               }
             </div>
           )}
-          {currentTab === 'chat' && !mmSelectedChannel && (
+          {currentTab === 'chat' && !mmToken && (
+            <div className="editor-empty">
+              <div className="editor-empty-icon">💬</div>
+              <h3>Mattermost 연동이 필요합니다</h3>
+              <p>우측 하단 ⚙️ 설정에서<br />Mattermost 계정을 연동해 주세요</p>
+            </div>
+          )}
+          {currentTab === 'chat' && mmToken && !mmSelectedChannel && (
             <div className="editor-empty">
               <div className="editor-empty-icon">💬</div>
               <h3>채널을 선택하세요</h3>
