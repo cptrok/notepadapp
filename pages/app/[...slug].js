@@ -1927,7 +1927,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v224</span>
+              <span className="sidebar-title">Clickpad_v225</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2015,8 +2015,9 @@ export default function App() {
                         <div style={{ fontWeight: 700, marginBottom: '4px', color: 'var(--text)' }}>URL 가져오는 방법</div>
                         <div>① Doc 페이지 열기</div>
                         <div>② 우상단 <b>공유(Share)</b> 클릭</div>
-                        <div>③ <b>Public</b> 탭 → <b>Publish</b></div>
-                        <div>④ Public link 복사 후 위에 붙여넣기</div>
+                        <div>③ <b>Share entire Doc</b> 선택</div>
+                        <div>④ <b>Public</b> 탭 → <b>Publish</b></div>
+                        <div>⑤ Public link 복사 후 위에 붙여넣기</div>
                         <img src="/clickup-doc-guide.jpg" alt="ClickUp 공유 방법" style={{ width: '60%', maxWidth: '160px', display: 'block', margin: '8px auto 0', borderRadius: '6px', objectFit: 'contain' }} />
                       </div>
                     )}
