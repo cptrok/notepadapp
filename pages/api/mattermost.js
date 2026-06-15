@@ -19,6 +19,15 @@ export default async function handler(req, res) {
         return res.json({ token: mmToken, userId: data.id, username: data.username });
       }
 
+      case 'me': {
+        const r = await fetch(`${MM_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await r.json();
+        if (!r.ok) return res.status(r.status).json({ error: data.message });
+        return res.json(data);
+      }
+
       case 'teams': {
         const r = await fetch(`${MM_BASE}/users/me/teams`, {
           headers: { Authorization: `Bearer ${token}` },

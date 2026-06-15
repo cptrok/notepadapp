@@ -1375,6 +1375,17 @@ export default function App() {
     if (!mmTokenRef.current) return;
     setMmLoading(true);
     try {
+      if (!mmUserIdRef.current) {
+        const meRes = await fetch('/api/mattermost?action=me', { headers: { 'x-mm-token': mmTokenRef.current } });
+        if (meRes.ok) {
+          const me = await meRes.json();
+          if (me?.id) {
+            mmUserIdRef.current = me.id;
+            setMmUserId(me.id);
+            localStorage.setItem('mm_user_id', me.id);
+          }
+        }
+      }
       const teamsRes = await fetch('/api/mattermost?action=teams', {
         headers: { 'x-mm-token': mmTokenRef.current },
       });
@@ -1916,7 +1927,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v223</span>
+              <span className="sidebar-title">Clickpad_v224</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
