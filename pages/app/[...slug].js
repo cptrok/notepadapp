@@ -1052,7 +1052,7 @@ export default function App() {
     // 형식1: https://app.clickup.com/{workspaceId}/v/dc/{docId}/{pageId}
     // 형식2: https://doc.clickup.com/{workspaceId}/p/h/{parentId}/{docId}  ← 두 번째가 실제 docId
     const appMatch = url.match(/app\.clickup\.com\/[^/]+\/v\/dc\/([^/?#]+)(?:\/([^/?#]+))?/);
-    const docMatch = url.match(/doc\.clickup\.com\/[^/]+\/p\/h\/([^/?#]+)(?:\/([^/?#]+))?/);
+    const docMatch = url.match(/doc\.clickup\.com\/[^/]+\/[pd]\/h\/([^/?#]+)(?:\/([^/?#]+))?/);
     if (!appMatch && !docMatch) { setCuDocPanel({ error: '올바른 ClickUp Doc URL이 아닙니다.' }); return; }
     // doc.clickup.com: {parentId}/{childId} — parentId가 실제 docId, childId가 pageId
     let docId, pageId;
@@ -1927,7 +1927,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v225</span>
+              <span className="sidebar-title">Clickpad_v226</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
