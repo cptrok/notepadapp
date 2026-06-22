@@ -377,6 +377,7 @@ export default function App() {
   const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '', imageUrls: [], attachImages: false, extraAssignees: [] });
   const [cuRegLoading, setCuRegLoading] = useState(false);
   const [cuRegMsg, setCuRegMsg] = useState('');
+  const [cuRegTaskId, setCuRegTaskId] = useState('');
   const [cuSearchFocused, setCuSearchFocused] = useState(false);
   const [cuMembers, setCuMembers] = useState([]);
   const [cuMemberSearch, setCuMemberSearch] = useState('');
@@ -1652,6 +1653,7 @@ export default function App() {
     }));
     setCuMemberSearch('');
     setCuRegMsg('');
+    setCuRegTaskId('');
     fetchCuMembers(DEQ_LISTS[resolvedProduct]);
     setCuRegModal(true);
   }
@@ -1661,6 +1663,7 @@ export default function App() {
     if (!cuRegForm.customer) return setCuRegMsg('고객사를 선택해주세요.');
     setCuRegLoading(true);
     setCuRegMsg('');
+    setCuRegTaskId('');
     await ensureCuMyUser();
     const listId = DEQ_LISTS[cuRegForm.product];
     const today = new Date();
@@ -1718,7 +1721,8 @@ export default function App() {
         }
         imageMsg = ` | 이미지 ${ok}개 첨부${fail > 0 ? ` (${fail}개 실패)` : ''}`;
       }
-      setCuRegMsg('✅ 등록 완료! Task ID: ' + data.id + productMsg + imageMsg);
+      setCuRegTaskId(data.id);
+      setCuRegMsg('✅ 등록 완료!' + imageMsg);
     } catch (e) { setCuRegMsg('오류: ' + e.message); }
     finally { setCuRegLoading(false); }
   }
@@ -1914,7 +1918,10 @@ export default function App() {
                   <span>이미지 첨부 ({cuRegForm.imageUrls.length}개)</span>
                 </label>
               )}
-              {cuRegMsg && <div style={{ fontSize: '13px', color: cuRegMsg.startsWith('✅') ? '#2e7d32' : '#c00', padding: '8px', borderRadius: '6px', background: cuRegMsg.startsWith('✅') ? '#e8f5e9' : '#fff0f0' }}>{cuRegMsg}</div>}
+              {cuRegMsg && <div style={{ fontSize: '13px', color: cuRegMsg.startsWith('✅') ? '#2e7d32' : '#c00', padding: '8px', borderRadius: '6px', background: cuRegMsg.startsWith('✅') ? '#e8f5e9' : '#fff0f0' }}>
+                {cuRegMsg}
+                {cuRegTaskId && <> · <a href={`https://app.clickup.com/t/${cuRegTaskId}`} target="_blank" rel="noreferrer" style={{ color: '#0066cc', fontWeight: 600 }}>일감 바로가기 →</a></>}
+              </div>}
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={() => setCuRegModal(false)} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid var(--border, #ddd)', background: 'var(--bg, #fff)', cursor: 'pointer', fontSize: '14px' }}>취소</button>
                 <button onClick={submitCuReg} disabled={cuRegLoading} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#0066cc', color: '#fff', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>{cuRegLoading ? '등록 중...' : '📋 등록하기'}</button>
@@ -1927,7 +1934,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v227</span>
+              <span className="sidebar-title">Clickpad_v228</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
