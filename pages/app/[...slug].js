@@ -1934,7 +1934,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v228</span>
+              <span className="sidebar-title">Clickpad_v229</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2644,12 +2644,14 @@ export default function App() {
             <label>새 비밀번호</label>
             <input type="password" value={settingsData.newPassword} onChange={e => setSettingsData(p => ({ ...p, newPassword: e.target.value }))} placeholder="변경하지 않으면 비워두세요" />
           </div>
+          {hasClickupToken && (<>
           <div className="settings-divider">ClickUp 연동</div>
           <div className="form-group">
             <label>ClickUp API 토큰</label>
             <input type="text" value={settingsData.clickupToken} onChange={e => setSettingsData(p => ({ ...p, clickupToken: e.target.value }))} placeholder="pk_..." />
             <div className="input-hint">개인 API 토큰을 입력하면 내 태스크 기능이 활성화됩니다</div>
           </div>
+          </>)}
           <div className="settings-divider">Mattermost 연동</div>
           {mmToken ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
