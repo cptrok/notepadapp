@@ -952,11 +952,13 @@ export default function App() {
     setCuDetail({ loading: true, id });
     setCuAppendDesc('');
     const [taskRes, commentRes] = await Promise.all([
-      fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } }),
+      fetch(`https://api.clickup.com/api/v2/task/${id}?include_markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } }),
       fetch(`https://api.clickup.com/api/v2/task/${id}/comment`, { headers: { Authorization: clickupTokenRef.current } }),
     ]);
     const data = await taskRes.json();
     const commentData = await commentRes.json();
+    console.log('[description]', data.description);
+    console.log('[markdown_description]', data.markdown_description);
     setCuDetail({ task: data, comments: commentData.comments || [] });
   }
 
@@ -2061,7 +2063,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v269</span>
+              <span className="sidebar-title">Clickpad_v270</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2504,7 +2506,7 @@ export default function App() {
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{cuDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">마감일</span><span>{cuDetail.task.due_date ? new Date(Number(cuDetail.task.due_date)).toLocaleDateString('ko-KR') : '-'}</span></div>
                   </div>
-                  {cuDetail.task.description && <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderDescWithImages(cuDetail.task.description, cuDetail.task.attachments) }} />}
+                  {(cuDetail.task.markdown_description || cuDetail.task.description) && <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderDescWithImages(cuDetail.task.markdown_description || cuDetail.task.description, cuDetail.task.attachments) }} />}
                   {cuDetail.task.attachments?.length > 0 && (
                     <div className="task-attachments">
                       <div className="task-attachments-title">첨부파일</div>
