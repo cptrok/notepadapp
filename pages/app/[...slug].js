@@ -269,8 +269,8 @@ export default function App() {
   const [myTasks, setMyTasks] = useState([]);
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
   const [myTasksLoaded, setMyTasksLoaded] = useState(false);
-  const [myTasksHasMore, setMyTasksHasMore] = useState(false);
   const [myTasksLoadingMore, setMyTasksLoadingMore] = useState(false);
+  const [myTasksStopped, setMyTasksStopped] = useState(false);
   const [cuLoading, setCuLoading] = useState(false);
   const [cuLoadingMore, setCuLoadingMore] = useState(false);
   const [cuSearchStopped, setCuSearchStopped] = useState(false);
@@ -404,7 +404,7 @@ export default function App() {
   const trialPagesCache = useRef({});
   const myApiPageRef = useRef(0);
   const myUserIdRef = useRef(null);
-  const myBufferRef = useRef([]);
+  const mySearchAbortRef = useRef(0);
   const myApiExhaustedRef = useRef(false);
   const myAllRef = useRef([]);
   const mmTokenRef = useRef(null);
@@ -792,64 +792,89 @@ export default function App() {
     }
   }
 
-  async function fetchMyApiPage() {
-    if (myApiExhaustedRef.current) return;
-    const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${myUserIdRef.current}&page=${myApiPageRef.current}`,
-      { headers: { Authorization: clickupTokenRef.current } }
-    );
-    const data = await res.json();
-    const tasks = data.tasks || [];
-    myBufferRef.current = [...myBufferRef.current, ...tasks];
-    myAllRef.current = [...myAllRef.current, ...tasks];
-    myApiPageRef.current += 1;
-    if (tasks.length < 100) myApiExhaustedRef.current = true;
-  }
-
-  async function fillMyBuffer() {
-    while (myBufferRef.current.length < CU_PAGE_SIZE && !myApiExhaustedRef.current) {
-      await fetchMyApiPage();
-    }
-  }
-
   async function fetchMyTasks(force) {
     if (myTasksLoaded && !force) return;
+    const searchId = ++mySearchAbortRef.current;
     setCuLoading(true);
+    setMyTasksLoadingMore(false);
+    setMyTasksStopped(false);
     const token = clickupTokenRef.current;
     const parts = token.split('_');
     const userId = parts.length >= 2 ? parts[1] : null;
     if (!userId) { setCuLoading(false); return; }
     myUserIdRef.current = userId;
     myApiPageRef.current = 0;
-    myBufferRef.current = [];
     myAllRef.current = [];
     myApiExhaustedRef.current = false;
+    setMyTasks([]);
+    setMyTasksFiltered([]);
     try {
-      await fillMyBuffer();
-      const toShow = myBufferRef.current.splice(0, CU_PAGE_SIZE);
-      setMyTasks(toShow);
-      setMyTasksFiltered(toShow);
-      setMyTasksHasMore(myBufferRef.current.length > 0 || !myApiExhaustedRef.current);
-    } catch (e) { console.error(e); }
-    setMyTasksLoaded(true);
-    setCuLoading(false);
-  }
-
-  async function loadMoreMyTasks() {
-    setMyTasksLoadingMore(true);
-    try {
-      await fillMyBuffer();
-      const toShow = myBufferRef.current.splice(0, CU_PAGE_SIZE);
-      setMyTasks(prev => [...prev, ...toShow]);
-      setMyTasksHasMore(myBufferRef.current.length > 0 || !myApiExhaustedRef.current);
-      const q = mySearchInputRef.current;
-      if (q) {
-        setMyTasksFiltered(myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase())));
-      } else {
-        setMyTasksFiltered(prev => [...prev, ...toShow]);
+      let first = true;
+      while (true) {
+        if (mySearchAbortRef.current !== searchId) break;
+        const res = await fetch(
+          `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${userId}&page=${myApiPageRef.current}`,
+          { headers: { Authorization: clickupTokenRef.current } }
+        );
+        if (mySearchAbortRef.current !== searchId) break;
+        const data = await res.json();
+        const tasks = data.tasks || [];
+        myAllRef.current = [...myAllRef.current, ...tasks];
+        myApiPageRef.current++;
+        const q = mySearchInputRef.current;
+        if (first) {
+          setMyTasks(tasks);
+          setMyTasksFiltered(q ? tasks.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase())) : tasks);
+          setCuLoading(false);
+          first = false;
+        } else {
+          setMyTasks(prev => [...prev, ...tasks]);
+          setMyTasksFiltered(q
+            ? myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase()))
+            : prev => [...prev, ...tasks]
+          );
+        }
+        if (tasks.length < 100) { myApiExhaustedRef.current = true; break; }
+        setMyTasksLoadingMore(true);
       }
     } catch (e) { console.error(e); }
-    setMyTasksLoadingMore(false);
+    if (mySearchAbortRef.current === searchId) {
+      setCuLoading(false);
+      setMyTasksLoadingMore(false);
+      setMyTasksLoaded(true);
+    }
+  }
+
+  async function continueMyTasks() {
+    if (myApiExhaustedRef.current) return;
+    const searchId = ++mySearchAbortRef.current;
+    setMyTasksStopped(false);
+    setMyTasksLoadingMore(true);
+    try {
+      while (true) {
+        if (mySearchAbortRef.current !== searchId) break;
+        const res = await fetch(
+          `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&assignees[]=${myUserIdRef.current}&page=${myApiPageRef.current}`,
+          { headers: { Authorization: clickupTokenRef.current } }
+        );
+        if (mySearchAbortRef.current !== searchId) break;
+        const data = await res.json();
+        const tasks = data.tasks || [];
+        myAllRef.current = [...myAllRef.current, ...tasks];
+        myApiPageRef.current++;
+        const q = mySearchInputRef.current;
+        setMyTasks(prev => [...prev, ...tasks]);
+        setMyTasksFiltered(q
+          ? myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase()))
+          : prev => [...prev, ...tasks]
+        );
+        if (tasks.length < 100) { myApiExhaustedRef.current = true; break; }
+      }
+    } catch (e) { console.error(e); }
+    if (mySearchAbortRef.current === searchId) {
+      setMyTasksLoadingMore(false);
+      if (!myApiExhaustedRef.current) setMyTasksStopped(true);
+    }
   }
 
   function filterMyTasks(q) {
@@ -1958,7 +1983,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v241</span>
+              <span className="sidebar-title">Clickpad_v242</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2150,10 +2175,15 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {myTasksLoadingMore && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
-                  {!cuLoading && !myTasksLoadingMore && myTasksHasMore && (
+                  {myTasksLoadingMore && (
+                    <div className="loading-wrap" style={{ gap: '8px' }}>
+                      <div className="spinner" /><span>추가 로딩 중...</span>
+                      <button onClick={() => { mySearchAbortRef.current++; setMyTasksLoadingMore(false); setMyTasksStopped(true); }} style={{ marginLeft: '4px', padding: '2px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>중지</button>
+                    </div>
+                  )}
+                  {myTasksStopped && !myTasksLoadingMore && (
                     <div style={{ padding: '8px 6px' }}>
-                      <button className="page-btn" style={{ width: '100%' }} onClick={loadMoreMyTasks}>더 보기</button>
+                      <button className="page-btn" style={{ width: '100%' }} onClick={continueMyTasks}>계속 검색</button>
                     </div>
                   )}
                 </>
