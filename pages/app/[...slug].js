@@ -1934,7 +1934,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v231</span>
+              <span className="sidebar-title">Clickpad_v232</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2319,7 +2319,10 @@ export default function App() {
           )}
           {currentTab === 'clickup' && cuDetail && (
             <div className="task-detail">
-              <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => router.back()}>←</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <button className="btn-back" style={{ display: 'flex' }} onClick={() => router.back()}>←</button>
+                {!cuDetail.loading && <button onClick={() => openTask(cuDetail.task.id)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}>↻ 새로고침</button>}
+              </div>
               {cuDetail.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : <>
