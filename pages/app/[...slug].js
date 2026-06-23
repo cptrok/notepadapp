@@ -14,6 +14,14 @@ function renderDelta(ops) {
 
   function applyInline(text, attrs) {
     let s = escHtml(text);
+    let inlineStyle = '';
+    if (attrs.color) inlineStyle += `color:${attrs.color};`;
+    if (attrs.background) inlineStyle += `background:${attrs.background};`;
+    if (attrs.size) {
+      const sizeMap = { small: '12px', large: '18px', huge: '22px' };
+      inlineStyle += `font-size:${sizeMap[attrs.size] || attrs.size};`;
+    }
+    if (inlineStyle) s = `<span style="${inlineStyle}">${s}</span>`;
     if (attrs.code) s = `<code style="background:#f0f0f0;padding:2px 4px;border-radius:3px;font-size:12px">${s}</code>`;
     if (attrs.bold) s = `<strong>${s}</strong>`;
     if (attrs.italic) s = `<em>${s}</em>`;
@@ -80,7 +88,9 @@ function renderDelta(ops) {
         pos = nl + 1;
       }
     } else if (op.insert && typeof op.insert === 'object') {
-      if (op.insert.attachment) {
+      if (op.insert.image) {
+        blockContent += `<img src="${escHtml(op.insert.image)}" style="max-width:100%;height:auto;display:block;margin:4px 0;" />`;
+      } else if (op.insert.attachment) {
         const att = op.insert.attachment;
         const name = att.name || 'file';
         const url = att.url_w_host || att.url || '';
@@ -2034,7 +2044,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v249</span>
+              <span className="sidebar-title">Clickpad_v250</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
