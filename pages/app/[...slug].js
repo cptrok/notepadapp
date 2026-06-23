@@ -2061,7 +2061,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v266</span>
+              <span className="sidebar-title">Clickpad_v267</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2567,6 +2567,7 @@ export default function App() {
                   <a className="task-detail-title" href={licDetail.task.url} target="_blank" rel="noreferrer">{licDetail.task.name}</a>
                   <div className="task-detail-info">
                     <div className="task-detail-row"><span className="task-detail-label">분류</span><span>{licDetail.task.list?.name}</span></div>
+                    <div className="task-detail-row"><span className="task-detail-label">상태</span><span>{licDetail.task.status?.status && <span className="task-status" style={{ background: licDetail.task.status.color || '#666' }}>{licDetail.task.status.status}</span>}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{licDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">마감일</span><span>{licDetail.task.due_date ? new Date(Number(licDetail.task.due_date)).toLocaleDateString('ko-KR') : '-'}</span></div>
                   </div>
