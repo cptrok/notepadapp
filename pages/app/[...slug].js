@@ -393,7 +393,7 @@ export default function App() {
   const noteTitleRef = useRef('');
   const allNotesRef = useRef([]);
   const cuKeywordRef = useRef('');
-  const cuBufferRef = useRef([]);
+  const cuSearchAbortRef = useRef(0);
   const cuApiPageRef = useRef(0);
   const cuApiExhaustedRef = useRef(false);
   const saveTimerRef = useRef(null);
@@ -729,59 +729,43 @@ export default function App() {
     return result;
   }
 
-  async function fillBuffer(keyword, parallel = false) {
-    if (parallel && cuApiPageRef.current === 0 && !cuApiExhaustedRef.current) {
-      // 첫 검색: 2페이지 병렬 fetch
-      const [r0, r1] = await Promise.all([
-        fetchApiPageNum(0, keyword),
-        fetchApiPageNum(1, keyword),
-      ]);
-      cuBufferRef.current = [...filterTasks(r0.tasks, keyword), ...filterTasks(r1.tasks, keyword)];
-      cuApiPageRef.current = 2;
-      if (r0.exhausted || r1.exhausted) cuApiExhaustedRef.current = true;
-    }
-    while (cuBufferRef.current.length < CU_PAGE_SIZE && !cuApiExhaustedRef.current) {
-      const { tasks, exhausted } = await fetchApiPageNum(cuApiPageRef.current, keyword);
-      cuBufferRef.current = [...cuBufferRef.current, ...filterTasks(tasks, keyword)];
-      cuApiPageRef.current += 1;
-      if (exhausted) cuApiExhaustedRef.current = true;
-    }
-  }
-
   async function fetchTasksByKeyword(q) {
     if (!q.trim() && !cuProductFilterRef.current) return;
+    const searchId = ++cuSearchAbortRef.current;
     setCuKeyword(q);
     cuKeywordRef.current = q;
     setCuTasks([]);
     setCuHasMore(false);
     setCuDetail(null);
     setCuStatusFilter('');
-    cuBufferRef.current = [];
     cuApiPageRef.current = 0;
     cuApiExhaustedRef.current = false;
     setCuLoading(true);
-    try {
-      await fillBuffer(q, true);
-      const toShow = cuBufferRef.current.splice(0, CU_PAGE_SIZE);
-      setCuTasks(toShow);
-      setCuHasMore(cuBufferRef.current.length > 0 || !cuApiExhaustedRef.current);
-      // 다음 페이지 백그라운드 pre-fetch
-      if (!cuApiExhaustedRef.current) fillBuffer(q).catch(() => {});
-    } catch (e) { console.error(e); }
-    setCuLoading(false);
-  }
-
-  async function loadMoreCuPage() {
-    setCuLoadingMore(true);
-    try {
-      await fillBuffer(cuKeywordRef.current);
-      const toShow = cuBufferRef.current.splice(0, CU_PAGE_SIZE);
-      setCuTasks(prev => [...prev, ...toShow]);
-      setCuHasMore(cuBufferRef.current.length > 0 || !cuApiExhaustedRef.current);
-      // 다음 페이지 백그라운드 pre-fetch
-      if (!cuApiExhaustedRef.current) fillBuffer(cuKeywordRef.current).catch(() => {});
-    } catch (e) { console.error(e); }
     setCuLoadingMore(false);
+    try {
+      let page = 0;
+      let first = true;
+      while (true) {
+        if (cuSearchAbortRef.current !== searchId) break;
+        const { tasks, exhausted } = await fetchApiPageNum(page, q);
+        if (cuSearchAbortRef.current !== searchId) break;
+        const filtered = filterTasks(tasks, q);
+        if (first) {
+          setCuTasks(filtered);
+          setCuLoading(false);
+          first = false;
+        } else {
+          setCuTasks(prev => [...prev, ...filtered]);
+        }
+        page++;
+        if (exhausted) break;
+        setCuLoadingMore(true);
+      }
+    } catch (e) { console.error(e); }
+    if (cuSearchAbortRef.current === searchId) {
+      setCuLoading(false);
+      setCuLoadingMore(false);
+    }
   }
 
   async function fetchMyApiPage() {
@@ -1945,7 +1929,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v235</span>
+              <span className="sidebar-title">Clickpad_v236</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2110,12 +2094,7 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {cuLoadingMore && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
-                  {!cuLoading && !cuLoadingMore && cuHasMore && (
-                    <div style={{ padding: '8px 6px' }}>
-                      <button className="page-btn" style={{ width: '100%' }} onClick={loadMoreCuPage}>더 보기</button>
-                    </div>
-                  )}
+                  {cuLoadingMore && <div className="loading-wrap"><div className="spinner" /><span>추가 로딩 중...</span></div>}
                 </>
               )}
               {cuSubTab === 'my' && (
