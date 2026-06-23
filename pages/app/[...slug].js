@@ -1680,6 +1680,7 @@ export default function App() {
       ]);
       const task = await taskRes.json();
       const commentData = await commentRes.json();
+      console.log('[댓글 API 응답]', commentData);
       if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
       const desc = task.description || '';
@@ -2062,7 +2063,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v253</span>
+              <span className="sidebar-title">Clickpad_v254</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
