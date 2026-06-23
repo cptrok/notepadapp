@@ -158,7 +158,7 @@ function MmImage({ fileId, token }) {
   );
 }
 
-const CLICKUP_TOKEN_DEFAULT = 'pk_43586564_0YLCBJ33J3UIRLFWTJOEKO98AXN6IVZF';
+const CLICKUP_TOKEN_DEFAULT = '';
 const CLICKUP_SPACE_ID = '90030550766';
 const LICENSE_SPACE_ID = '60975902';
 const TEAM_ID = '25540965';
@@ -1934,7 +1934,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v230</span>
+              <span className="sidebar-title">Clickpad_v231</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
