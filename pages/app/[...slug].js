@@ -263,6 +263,7 @@ export default function App() {
   const [cuSearchInput, setCuSearchInput] = useState('');
   const [cuProductFilter, setCuProductFilter] = useState('');
   const cuProductFilterRef = useRef('');
+  const [cuStatusFilter, setCuStatusFilter] = useState('');
   const [myTasks, setMyTasks] = useState([]);
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
   const [myTasksLoaded, setMyTasksLoaded] = useState(false);
@@ -745,6 +746,7 @@ export default function App() {
     setCuTasks([]);
     setCuHasMore(false);
     setCuDetail(null);
+    setCuStatusFilter('');
     cuBufferRef.current = [];
     cuApiPageRef.current = 0;
     cuApiExhaustedRef.current = false;
@@ -1934,7 +1936,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v233</span>
+              <span className="sidebar-title">Clickpad_v234</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1988,6 +1990,16 @@ export default function App() {
                       <option value="">전체 제품군</option>
                       {Object.keys(DEQ_LABEL_MAP).map(name => (
                         <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={cuStatusFilter}
+                      onChange={e => setCuStatusFilter(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
+                    >
+                      <option value="">전체 상태</option>
+                      {[...new Set(cuTasks.map(t => t.status?.status).filter(Boolean))].sort().map(s => (
+                        <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -2078,7 +2090,7 @@ export default function App() {
                 <>
                   {cuLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
                   {!cuLoading && cuTasks.length === 0 && <div className="empty-list">검색어를 입력하고<br />엔터 또는 🔍를 누르세요.</div>}
-                  {!cuLoading && cuTasks.map(t => (
+                  {!cuLoading && cuTasks.filter(t => !cuStatusFilter || t.status?.status === cuStatusFilter).map(t => (
                     <div key={t.id} className={`task-item ${cuDetail?.task?.id === t.id ? 'active' : ''}`} onClick={() => openTask(t.id)}>
                       <div className="task-item-title">{t.name}</div>
                       <div className="task-item-meta">
