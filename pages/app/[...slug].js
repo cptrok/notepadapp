@@ -1676,6 +1676,7 @@ export default function App() {
     try {
       const res = await fetch(`https://api.clickup.com/api/v2/task/${taskId}`, { headers: { Authorization: clickupTokenRef.current } });
       const task = await res.json();
+      console.log('[ClickUp 불러오기] description:', task.description);
       if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
       // 설명에 이미 인라인으로 포함된 이미지 URL 추출 (중복 방지)
@@ -2044,7 +2045,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v250</span>
+              <span className="sidebar-title">Clickpad_v251</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
