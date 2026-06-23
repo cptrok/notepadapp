@@ -385,6 +385,9 @@ export default function App() {
   const [cuRegModal, setCuRegModal] = useState(false);
   const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '', imageUrls: [], attachImages: false, extraAssignees: [] });
   const [cuRegLoading, setCuRegLoading] = useState(false);
+  const [showCuLinkInput, setShowCuLinkInput] = useState(false);
+  const [cuLinkInput, setCuLinkInput] = useState('');
+  const [cuLinkLoading, setCuLinkLoading] = useState(false);
   const [cuRegMsg, setCuRegMsg] = useState('');
   const [cuRegTaskId, setCuRegTaskId] = useState('');
   const [cuSearchFocused, setCuSearchFocused] = useState(false);
@@ -1653,6 +1656,26 @@ export default function App() {
     } catch {}
   }
 
+  async function loadFromCuLink(url) {
+    const match = url.match(/\/t\/([a-zA-Z0-9]+)/);
+    if (!match) { alert('유효한 ClickUp 태스크 URL이 아닙니다.\n예: https://app.clickup.com/t/TASKID'); return; }
+    const taskId = match[1];
+    setCuLinkLoading(true);
+    try {
+      const res = await fetch(`https://api.clickup.com/api/v2/task/${taskId}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
+      const task = await res.json();
+      if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
+      const html = `<h3>${task.name}</h3>${task.description ? renderMarkdown(task.description) : ''}`;
+      if (quillRef.current) {
+        const len = quillRef.current.getLength();
+        quillRef.current.clipboard.dangerouslyPasteHTML(len - 1, html);
+      }
+      setCuLinkInput('');
+      setShowCuLinkInput(false);
+    } catch (e) { alert('불러오기 실패'); }
+    setCuLinkLoading(false);
+  }
+
   function openCuRegModal(overrideTitle, overrideText, overrideImageUrls) {
     const title = overrideTitle ?? (noteTitleRef.current || '');
     const text = overrideText ?? (quillRef.current ? quillRef.current.getText().trim() : '');
@@ -1991,7 +2014,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v244</span>
+              <span className="sidebar-title">Clickpad_v245</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2365,9 +2388,26 @@ export default function App() {
               <div className="editor-actions">
                 <span className={`save-indicator ${showSaved ? 'show' : ''}`}>저장됨 ✓</span>
                 <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={() => openCuRegModal()}>📋 ClickUp 등록</button>
+                <button className="btn-search-clickup" style={{ width: 'auto', padding: '0 10px', fontSize: '12px' }} onClick={() => { setShowCuLinkInput(v => !v); setCuLinkInput(''); }}>🔗 ClickUp 불러오기</button>
                 <button className="btn-save" onClick={() => autoSaveNote(true)}>저장</button>
                 {showDelete && <button className="btn-delete" onClick={deleteNote}>삭제</button>}
               </div>
+              {showCuLinkInput && (
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', padding: '6px 0 0' }}>
+                  <input
+                    type="text"
+                    placeholder="ClickUp 태스크 URL 붙여넣기"
+                    value={cuLinkInput}
+                    onChange={e => setCuLinkInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !cuLinkLoading && loadFromCuLink(cuLinkInput)}
+                    style={{ flex: 1, padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '12px', background: 'var(--bg)', color: 'var(--text)' }}
+                    autoFocus
+                  />
+                  <button onClick={() => loadFromCuLink(cuLinkInput)} disabled={cuLinkLoading} style={{ padding: '5px 12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', fontSize: '12px', cursor: 'pointer', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    {cuLinkLoading ? '...' : '불러오기'}
+                  </button>
+                </div>
+              )}
             </div>
             <div id="quill-wrapper">
               <div ref={quillEditorRef}></div>
