@@ -264,6 +264,7 @@ export default function App() {
   const [cuProductFilter, setCuProductFilter] = useState('');
   const cuProductFilterRef = useRef('');
   const [cuStatusFilter, setCuStatusFilter] = useState('');
+  const [cuStatuses, setCuStatuses] = useState([]);
   const [myTasks, setMyTasks] = useState([]);
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
   const [myTasksLoaded, setMyTasksLoaded] = useState(false);
@@ -594,6 +595,14 @@ export default function App() {
       fetch('https://api.clickup.com/api/v2/user', { headers: { Authorization: token } })
         .then(r => r.json())
         .then(d => { if (d.user) cuMyUserRef.current = d.user; })
+        .catch(() => {});
+    }
+
+    // ClickUp space 상태 목록 미리 로드
+    if (token) {
+      fetch(`https://api.clickup.com/api/v2/space/${CLICKUP_SPACE_ID}`, { headers: { Authorization: token } })
+        .then(r => r.json())
+        .then(d => { if (d.statuses) setCuStatuses(d.statuses.map(s => ({ status: s.status, color: s.color }))); })
         .catch(() => {});
     }
   }
@@ -1936,7 +1945,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v234</span>
+              <span className="sidebar-title">Clickpad_v235</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -1998,8 +2007,8 @@ export default function App() {
                       style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
                     >
                       <option value="">전체 상태</option>
-                      {[...new Set(cuTasks.map(t => t.status?.status).filter(Boolean))].sort().map(s => (
-                        <option key={s} value={s}>{s}</option>
+                      {cuStatuses.map(s => (
+                        <option key={s.status} value={s.status}>{s.status}</option>
                       ))}
                     </select>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
