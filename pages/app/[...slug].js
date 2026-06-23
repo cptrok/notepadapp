@@ -1664,18 +1664,27 @@ export default function App() {
     const taskId = match[1];
     setCuLinkLoading(true);
     try {
-      const res = await fetch(`https://api.clickup.com/api/v2/task/${taskId}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
+      const res = await fetch(`https://api.clickup.com/api/v2/task/${taskId}`, { headers: { Authorization: clickupTokenRef.current } });
       const task = await res.json();
       if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
       // 설명에 이미 인라인으로 포함된 이미지 URL 추출 (중복 방지)
-      const inlineUrls = new Set([...(task.description || '').matchAll(/!\[.*?\]\((.*?)\)/g)].map(m => m[1]));
+      const desc = task.description || '';
+      const inlineUrls = new Set();
+      // Delta JSON 이미지 op
+      try {
+        const parsed = JSON.parse(desc.trim());
+        const ops = parsed.ops || (Array.isArray(parsed) ? parsed : []);
+        ops.forEach(op => { if (op.insert?.image) inlineUrls.add(op.insert.image); });
+      } catch {}
+      // 마크다운 이미지
+      [...desc.matchAll(/!\[.*?\]\((.*?)\)/g)].forEach(m => inlineUrls.add(m[1]));
       const imageAttachments = (task.attachments || []).filter(a => {
         const ext = (a.extension || a.title?.split('.').pop() || '').toLowerCase();
         return imageExts.includes(ext) && !inlineUrls.has(a.url);
       });
       let html = `<h3>${task.name}</h3>`;
-      if (task.description) html += renderMarkdown(task.description);
+      if (desc) html += renderContent(desc);
       if (imageAttachments.length > 0) html += imageAttachments.map(a => `<p><img src="${a.url}" alt="${a.title || ''}" /></p>`).join('');
       if (quillRef.current) {
         const len = quillRef.current.getLength();
@@ -2025,7 +2034,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v248</span>
+              <span className="sidebar-title">Clickpad_v249</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
