@@ -135,10 +135,42 @@ function renderDescWithImages(text, attachments) {
   return renderMarkdown(replaced);
 }
 
+function renderTableEmbed(content) {
+  const cells = {};
+  let maxRow = 0, maxCol = 0;
+  const parts = content.split('|').map(s => s.trim()).filter(Boolean);
+  for (const part of parts) {
+    const m = part.match(/^(\d+):(\d+)\s*([\s\S]*)/);
+    if (m) {
+      const r = parseInt(m[1]), c = parseInt(m[2]);
+      cells[`${r}:${c}`] = m[3].trim();
+      if (r > maxRow) maxRow = r;
+      if (c > maxCol) maxCol = c;
+    }
+  }
+  let html = '<div style="overflow-x:auto;margin:8px 0"><table style="border-collapse:collapse;font-size:12px;width:100%">';
+  for (let r = 1; r <= maxRow; r++) {
+    html += '<tr>';
+    for (let c = 1; c <= maxCol; c++) {
+      const val = cells[`${r}:${c}`] || '';
+      if (r === 1) {
+        html += `<th style="border:1px solid var(--border);padding:5px 8px;background:var(--bg-sub,#f4f4f4);font-weight:600;text-align:left;white-space:nowrap">${val}</th>`;
+      } else {
+        html += `<td style="border:1px solid var(--border);padding:4px 8px;vertical-align:top">${val}</td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</table></div>';
+  return html;
+}
+
 function renderMarkdown(text) {
   if (!text) return '';
   // 마크다운 → HTML 변환 (링크, 굵게, 코드, 줄바꿈)
   let html = text
+    // table-embed — 줄바꿈 포함이므로 가장 먼저 처리
+    .replace(/\[table-embed:([\s\S]*?)\]/g, (_, c) => renderTableEmbed(c))
     // 코드블록
     .replace(/```[\s\S]*?```/g, m => `<pre style="background:var(--bg-sub,#f4f4f4);padding:8px;border-radius:4px;overflow-x:auto;font-size:12px">${m.slice(3, -3).replace(/</g, '&lt;')}</pre>`)
     // 인라인 코드
@@ -924,7 +956,10 @@ export default function App() {
     ]);
     const data = await taskRes.json();
     const commentData = await commentRes.json();
-    console.log('[task.description]', data.description);
+    console.log('[task.description markdown]', data.description);
+    // raw description 확인용 (Doc 링크 포함 여부 조사)
+    fetch(`https://api.clickup.com/api/v2/task/${data.id}`, { headers: { Authorization: clickupTokenRef.current } })
+      .then(r => r.json()).then(d => console.log('[task.description raw]', d.description));
     setCuDetail({ task: data, comments: commentData.comments || [] });
   }
 
@@ -2021,7 +2056,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v259</span>
+              <span className="sidebar-title">Clickpad_v260</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
