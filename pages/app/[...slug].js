@@ -952,11 +952,12 @@ export default function App() {
     setCuDetail({ loading: true, id });
     setCuAppendDesc('');
     const [taskRes, commentRes] = await Promise.all([
-      fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } }),
+      fetch(`https://api.clickup.com/api/v2/task/${id}`, { headers: { Authorization: clickupTokenRef.current } }),
       fetch(`https://api.clickup.com/api/v2/task/${id}/comment`, { headers: { Authorization: clickupTokenRef.current } }),
     ]);
     const data = await taskRes.json();
     const commentData = await commentRes.json();
+    console.log('[task.description no-markdown]', data.description);
     setCuDetail({ task: data, comments: commentData.comments || [] });
   }
 
@@ -2061,7 +2062,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v267</span>
+              <span className="sidebar-title">Clickpad_v268</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
