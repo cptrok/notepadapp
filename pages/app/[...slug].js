@@ -123,6 +123,18 @@ function renderContent(content) {
   return renderMarkdown(content);
 }
 
+function renderDescWithImages(text, attachments) {
+  if (!text) return '';
+  const imgs = (attachments || []).filter(a =>
+    a.mimetype?.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(a.title || a.url || '')
+  );
+  const replaced = text.replace(/\[Image #(\d+)\]/gi, (match, n) => {
+    const img = imgs[Number(n) - 1];
+    return img ? `![${img.title || ''}](${img.url})` : match;
+  });
+  return renderMarkdown(replaced);
+}
+
 function renderMarkdown(text) {
   if (!text) return '';
   // 마크다운 → HTML 변환 (링크, 굵게, 코드, 줄바꿈)
@@ -2009,7 +2021,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v258</span>
+              <span className="sidebar-title">Clickpad_v259</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2451,7 +2463,7 @@ export default function App() {
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{cuDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">마감일</span><span>{cuDetail.task.due_date ? new Date(Number(cuDetail.task.due_date)).toLocaleDateString('ko-KR') : '-'}</span></div>
                   </div>
-                  {cuDetail.task.description && <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(cuDetail.task.description) }} />}
+                  {cuDetail.task.description && <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderDescWithImages(cuDetail.task.description, cuDetail.task.attachments) }} />}
                   {cuDetail.task.attachments?.length > 0 && (
                     <div className="task-attachments">
                       <div className="task-attachments-title">첨부파일</div>
