@@ -1666,9 +1666,11 @@ export default function App() {
       const task = await res.json();
       if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+      // 설명에 이미 인라인으로 포함된 이미지 URL 추출 (중복 방지)
+      const inlineUrls = new Set([...(task.description || '').matchAll(/!\[.*?\]\((.*?)\)/g)].map(m => m[1]));
       const imageAttachments = (task.attachments || []).filter(a => {
         const ext = (a.extension || a.title?.split('.').pop() || '').toLowerCase();
-        return imageExts.includes(ext);
+        return imageExts.includes(ext) && !inlineUrls.has(a.url);
       });
       let html = `<h3>${task.name}</h3>`;
       if (task.description) html += renderMarkdown(task.description);
@@ -2021,7 +2023,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v246</span>
+              <span className="sidebar-title">Clickpad_v247</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
