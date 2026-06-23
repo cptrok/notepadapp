@@ -1680,7 +1680,6 @@ export default function App() {
       ]);
       const task = await taskRes.json();
       const commentData = await commentRes.json();
-      console.log('[댓글 API 응답]', commentData);
       if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
       const desc = task.description || '';
@@ -1706,9 +1705,10 @@ export default function App() {
           const date = c.date ? new Date(Number(c.date)).toLocaleString('ko-KR') : '';
           const author = c.user?.username || '';
           html += `<p style="color:#888;font-size:12px">${author}${date ? ' · ' + date : ''}</p>`;
-          // comment 필드: Delta ops 배열
+          // ClickUp comment: {text, attributes} → Quill Delta {insert, attributes} 변환
           if (Array.isArray(c.comment) && c.comment.length > 0) {
-            html += renderDelta(c.comment);
+            const ops = c.comment.map(op => ({ insert: op.text ?? op.insert ?? '', attributes: op.attributes }));
+            html += renderDelta(ops);
           } else if (c.comment_text) {
             html += renderContent(c.comment_text);
           }
@@ -2063,7 +2063,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v254</span>
+              <span className="sidebar-title">Clickpad_v255</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
