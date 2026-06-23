@@ -272,6 +272,7 @@ export default function App() {
   const [myTasksLoadingMore, setMyTasksLoadingMore] = useState(false);
   const [cuLoading, setCuLoading] = useState(false);
   const [cuLoadingMore, setCuLoadingMore] = useState(false);
+  const [cuSearchStopped, setCuSearchStopped] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
   const [cuDetail, setCuDetail] = useState(null);
   const [cuAppendDesc, setCuAppendDesc] = useState('');
@@ -742,14 +743,15 @@ export default function App() {
     cuApiExhaustedRef.current = false;
     setCuLoading(true);
     setCuLoadingMore(false);
+    setCuSearchStopped(false);
     try {
-      let page = 0;
       let first = true;
       while (true) {
         if (cuSearchAbortRef.current !== searchId) break;
-        const { tasks, exhausted } = await fetchApiPageNum(page, q);
+        const { tasks, exhausted } = await fetchApiPageNum(cuApiPageRef.current, q);
         if (cuSearchAbortRef.current !== searchId) break;
         const filtered = filterTasks(tasks, q);
+        cuApiPageRef.current++;
         if (first) {
           setCuTasks(filtered);
           setCuLoading(false);
@@ -757,14 +759,36 @@ export default function App() {
         } else {
           setCuTasks(prev => [...prev, ...filtered]);
         }
-        page++;
-        if (exhausted) break;
+        if (exhausted) { cuApiExhaustedRef.current = true; break; }
         setCuLoadingMore(true);
       }
     } catch (e) { console.error(e); }
     if (cuSearchAbortRef.current === searchId) {
       setCuLoading(false);
       setCuLoadingMore(false);
+    }
+  }
+
+  async function continueTaskSearch() {
+    if (cuApiExhaustedRef.current) return;
+    const searchId = ++cuSearchAbortRef.current;
+    setCuSearchStopped(false);
+    setCuLoadingMore(true);
+    const q = cuKeywordRef.current;
+    try {
+      while (true) {
+        if (cuSearchAbortRef.current !== searchId) break;
+        const { tasks, exhausted } = await fetchApiPageNum(cuApiPageRef.current, q);
+        if (cuSearchAbortRef.current !== searchId) break;
+        const filtered = filterTasks(tasks, q);
+        setCuTasks(prev => [...prev, ...filtered]);
+        cuApiPageRef.current++;
+        if (exhausted) { cuApiExhaustedRef.current = true; break; }
+      }
+    } catch (e) { console.error(e); }
+    if (cuSearchAbortRef.current === searchId) {
+      setCuLoadingMore(false);
+      if (!cuApiExhaustedRef.current) setCuSearchStopped(true);
     }
   }
 
@@ -1929,7 +1953,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v237</span>
+              <span className="sidebar-title">Clickpad_v238</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2097,7 +2121,12 @@ export default function App() {
                   {cuLoadingMore && (
                     <div className="loading-wrap" style={{ gap: '8px' }}>
                       <div className="spinner" /><span>추가 로딩 중...</span>
-                      <button onClick={() => { cuSearchAbortRef.current++; setCuLoadingMore(false); }} style={{ marginLeft: '4px', padding: '2px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>중지</button>
+                      <button onClick={() => { cuSearchAbortRef.current++; setCuLoadingMore(false); setCuSearchStopped(true); }} style={{ marginLeft: '4px', padding: '2px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>중지</button>
+                    </div>
+                  )}
+                  {cuSearchStopped && !cuLoadingMore && (
+                    <div style={{ padding: '8px 6px' }}>
+                      <button className="page-btn" style={{ width: '100%' }} onClick={continueTaskSearch}>계속 검색</button>
                     </div>
                   )}
                 </>
