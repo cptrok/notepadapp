@@ -121,6 +121,8 @@ function renderMarkdown(text) {
     .replace(/```[\s\S]*?```/g, m => `<pre style="background:var(--bg-sub,#f4f4f4);padding:8px;border-radius:4px;overflow-x:auto;font-size:12px">${m.slice(3, -3).replace(/</g, '&lt;')}</pre>`)
     // 인라인 코드
     .replace(/`([^`]+)`/g, '<code style="background:var(--bg-sub,#f4f4f4);padding:2px 4px;border-radius:3px;font-size:12px">$1</code>')
+    // 마크다운 이미지 ![alt](url) — 링크보다 먼저 처리
+    .replace(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g, '<img src="$2" alt="$1" />')
     // 마크다운 링크 [text](url)
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" style="color:var(--accent,#0891b2);text-decoration:underline">$1</a>')
     // 굵게 **text**
@@ -2023,7 +2025,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v247</span>
+              <span className="sidebar-title">Clickpad_v248</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
