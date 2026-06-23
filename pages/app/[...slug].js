@@ -956,10 +956,6 @@ export default function App() {
     ]);
     const data = await taskRes.json();
     const commentData = await commentRes.json();
-    console.log('[task.description markdown]', data.description);
-    // raw description 확인용 (Doc 링크 포함 여부 조사)
-    fetch(`https://api.clickup.com/api/v2/task/${data.id}`, { headers: { Authorization: clickupTokenRef.current } })
-      .then(r => r.json()).then(d => console.log('[task.description raw]', d.description));
     setCuDetail({ task: data, comments: commentData.comments || [] });
   }
 
@@ -2056,7 +2052,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v260</span>
+              <span className="sidebar-title">Clickpad_v261</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
