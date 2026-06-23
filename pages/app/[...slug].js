@@ -1253,6 +1253,7 @@ export default function App() {
     } else {
       setSettingsMsg({ text: '저장되었습니다.', type: 'success' });
     }
+    setTimeout(() => setSettingsMsg({ text: '', type: '' }), 3000);
   }
 
   function logout() {
@@ -1990,7 +1991,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v243</span>
+              <span className="sidebar-title">Clickpad_v244</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
