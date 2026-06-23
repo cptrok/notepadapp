@@ -1096,20 +1096,8 @@ export default function App() {
     setLicDetail({ loading: true });
     const res = await fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
     const task = await res.json();
-    const desc = task.description || '';
-    const lines = desc.split('\n');
-    const 비고Idx = lines.indexOf('비고');
-    const 논리코어Idx = lines.indexOf('논리코어');
-    let colCount;
-    if (비고Idx !== -1) colCount = 비고Idx + 2;
-    else if (논리코어Idx !== -1) colCount = 논리코어Idx + 2;
-    else colCount = 6;
-    const dataStart = colCount - 1;
-    const rows = [];
-    for (let i = dataStart; i < lines.length; i += colCount) {
-      rows.push(lines.slice(i, i + colCount).join('\t'));
-    }
-    setLicDetail({ task, descFormatted: rows.join('\n') });
+    const descHtml = renderDescWithImages(task.description, task.attachments);
+    setLicDetail({ task, descHtml });
   }
 
   async function loadTrialPages(docId) {
@@ -2052,7 +2040,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v261</span>
+              <span className="sidebar-title">Clickpad_v262</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2560,7 +2548,7 @@ export default function App() {
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{licDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">마감일</span><span>{licDetail.task.due_date ? new Date(Number(licDetail.task.due_date)).toLocaleDateString('ko-KR') : '-'}</span></div>
                   </div>
-                  {licDetail.descFormatted && <div className="task-detail-desc">{licDetail.descFormatted}</div>}
+                  {licDetail.descHtml && <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: licDetail.descHtml }} />}
                   {licDetail.task.attachments?.length > 0 && (
                     <div className="task-attachments">
                       <div className="task-attachments-title">첨부파일</div>
