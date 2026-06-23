@@ -276,6 +276,10 @@ export default function App() {
   const [cuSearchStopped, setCuSearchStopped] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
   const mySearchInputRef = useRef('');
+  const [myProductFilter, setMyProductFilter] = useState('');
+  const myProductFilterRef = useRef('');
+  const [myStatusFilter, setMyStatusFilter] = useState('');
+  const myStatusFilterRef = useRef('');
   const [cuDetail, setCuDetail] = useState(null);
   const [cuAppendDesc, setCuAppendDesc] = useState('');
   const [cuDescSaving, setCuDescSaving] = useState(false);
@@ -821,19 +825,14 @@ export default function App() {
         const tasks = data.tasks || [];
         myAllRef.current = [...myAllRef.current, ...tasks];
         myApiPageRef.current++;
-        const q = mySearchInputRef.current;
         if (first) {
           setMyTasks(tasks);
-          setMyTasksFiltered(q ? tasks.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase())) : tasks);
           setCuLoading(false);
           first = false;
         } else {
           setMyTasks(prev => [...prev, ...tasks]);
-          setMyTasksFiltered(q
-            ? myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase()))
-            : prev => [...prev, ...tasks]
-          );
         }
+        applyMyFilters();
         if (tasks.length < 100) { myApiExhaustedRef.current = true; break; }
         setMyTasksLoadingMore(true);
       }
@@ -862,12 +861,8 @@ export default function App() {
         const tasks = data.tasks || [];
         myAllRef.current = [...myAllRef.current, ...tasks];
         myApiPageRef.current++;
-        const q = mySearchInputRef.current;
         setMyTasks(prev => [...prev, ...tasks]);
-        setMyTasksFiltered(q
-          ? myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase()))
-          : prev => [...prev, ...tasks]
-        );
+        applyMyFilters();
         if (tasks.length < 100) { myApiExhaustedRef.current = true; break; }
       }
     } catch (e) { console.error(e); }
@@ -877,9 +872,21 @@ export default function App() {
     }
   }
 
+  function applyMyFilters() {
+    const q = mySearchInputRef.current;
+    const prod = myProductFilterRef.current;
+    const stat = myStatusFilterRef.current;
+    setMyTasksFiltered(myAllRef.current.filter(t => {
+      if (q && !(t.name || '').toLowerCase().includes(q.toLowerCase())) return false;
+      if (prod && !getTaskProducts(t).includes(prod)) return false;
+      if (stat && t.status?.status !== stat) return false;
+      return true;
+    }));
+  }
+
   function filterMyTasks(q) {
-    if (!q) { setMyTasksFiltered(myTasks); return; }
-    setMyTasksFiltered(myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase())));
+    mySearchInputRef.current = q;
+    applyMyFilters();
   }
 
   async function openTask(id) {
@@ -1983,7 +1990,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v242</span>
+              <span className="sidebar-title">Clickpad_v243</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2059,12 +2066,34 @@ export default function App() {
                   </div>
                 )}
                 {cuSubTab === 'my' && (
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <select
+                      value={myProductFilter}
+                      onChange={e => { setMyProductFilter(e.target.value); myProductFilterRef.current = e.target.value; applyMyFilters(); }}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
+                    >
+                      <option value="">전체 제품군</option>
+                      {Object.keys(DEQ_LABEL_MAP).map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={myStatusFilter}
+                      onChange={e => { setMyStatusFilter(e.target.value); myStatusFilterRef.current = e.target.value; applyMyFilters(); }}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
+                    >
+                      <option value="">전체 상태</option>
+                      {cuStatuses.map(s => (
+                        <option key={s.status} value={s.status}>{s.status}</option>
+                      ))}
+                    </select>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <input className="search-box" type="text" placeholder="내 태스크 검색..."
                       value={mySearchInput}
-                      onChange={e => { setMySearchInput(e.target.value); mySearchInputRef.current = e.target.value; filterMyTasks(e.target.value); }}
+                      onChange={e => { setMySearchInput(e.target.value); filterMyTasks(e.target.value); }}
                       style={{ margin: 0, flex: 1, width: 0 }} />
                     <button className="btn-search-clickup" onClick={() => fetchMyTasks(true)}>🔍</button>
+                  </div>
                   </div>
                 )}
                 {cuSubTab === 'doc' && (
