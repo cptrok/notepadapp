@@ -912,6 +912,7 @@ export default function App() {
     ]);
     const data = await taskRes.json();
     const commentData = await commentRes.json();
+    console.log('[task.description]', data.description);
     setCuDetail({ task: data, comments: commentData.comments || [] });
   }
 
@@ -2008,7 +2009,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v257</span>
+              <span className="sidebar-title">Clickpad_v258</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
