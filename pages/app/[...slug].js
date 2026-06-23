@@ -1665,7 +1665,14 @@ export default function App() {
       const res = await fetch(`https://api.clickup.com/api/v2/task/${taskId}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
       const task = await res.json();
       if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
-      const html = `<h3>${task.name}</h3>${task.description ? renderMarkdown(task.description) : ''}`;
+      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+      const imageAttachments = (task.attachments || []).filter(a => {
+        const ext = (a.extension || a.title?.split('.').pop() || '').toLowerCase();
+        return imageExts.includes(ext);
+      });
+      let html = `<h3>${task.name}</h3>`;
+      if (task.description) html += renderMarkdown(task.description);
+      if (imageAttachments.length > 0) html += imageAttachments.map(a => `<p><img src="${a.url}" alt="${a.title || ''}" /></p>`).join('');
       if (quillRef.current) {
         const len = quillRef.current.getLength();
         quillRef.current.clipboard.dangerouslyPasteHTML(len - 1, html);
@@ -2014,7 +2021,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v245</span>
+              <span className="sidebar-title">Clickpad_v246</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
