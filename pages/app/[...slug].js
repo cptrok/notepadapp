@@ -264,6 +264,7 @@ export default function App() {
   const [cuProductFilter, setCuProductFilter] = useState('');
   const cuProductFilterRef = useRef('');
   const [cuStatusFilter, setCuStatusFilter] = useState('');
+  const cuStatusFilterRef = useRef('');
   const [cuStatuses, setCuStatuses] = useState([]);
   const [myTasks, setMyTasks] = useState([]);
   const [myTasksFiltered, setMyTasksFiltered] = useState([]);
@@ -706,10 +707,9 @@ export default function App() {
   const CU_PAGE_SIZE = 6;
 
   async function fetchApiPageNum(pageNum, keyword) {
-    const res = await fetch(
-      `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&page=${pageNum}`,
-      { headers: { Authorization: clickupTokenRef.current } }
-    );
+    let url = `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${CLICKUP_SPACE_ID}&subtasks=true&include_closed=true&order_by=created&page=${pageNum}`;
+    if (cuStatusFilterRef.current) url += `&statuses[]=${encodeURIComponent(cuStatusFilterRef.current)}`;
+    const res = await fetch(url, { headers: { Authorization: clickupTokenRef.current } });
     const data = await res.json();
     const tasks = data.tasks || [];
     return { tasks, exhausted: tasks.length < 100 };
@@ -738,7 +738,6 @@ export default function App() {
     setCuTasks([]);
     setCuHasMore(false);
     setCuDetail(null);
-    setCuStatusFilter('');
     cuApiPageRef.current = 0;
     cuApiExhaustedRef.current = false;
     setCuLoading(true);
@@ -1953,7 +1952,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v238</span>
+              <span className="sidebar-title">Clickpad_v239</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2011,7 +2010,7 @@ export default function App() {
                     </select>
                     <select
                       value={cuStatusFilter}
-                      onChange={e => setCuStatusFilter(e.target.value)}
+                      onChange={e => { setCuStatusFilter(e.target.value); cuStatusFilterRef.current = e.target.value; }}
                       style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
                     >
                       <option value="">전체 상태</option>
