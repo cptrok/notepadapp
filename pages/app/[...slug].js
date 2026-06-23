@@ -906,9 +906,13 @@ export default function App() {
     navFn(`/app/clickup/${id}`, undefined, { shallow: true });
     setCuDetail({ loading: true, id });
     setCuAppendDesc('');
-    const res = await fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } });
-    const data = await res.json();
-    setCuDetail({ task: data });
+    const [taskRes, commentRes] = await Promise.all([
+      fetch(`https://api.clickup.com/api/v2/task/${id}?markdown_description=true`, { headers: { Authorization: clickupTokenRef.current } }),
+      fetch(`https://api.clickup.com/api/v2/task/${id}/comment`, { headers: { Authorization: clickupTokenRef.current } }),
+    ]);
+    const data = await taskRes.json();
+    const commentData = await commentRes.json();
+    setCuDetail({ task: data, comments: commentData.comments || [] });
   }
 
   async function appendCuDescription() {
@@ -2004,7 +2008,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v256</span>
+              <span className="sidebar-title">Clickpad_v257</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2455,6 +2459,31 @@ export default function App() {
                           <button key={i} className="attachment-dl-btn" onClick={() => downloadAttachment(a.url, a.title)}>📎 {a.title}</button>
                         ))}
                       </div>
+                    </div>
+                  )}
+                  {cuDetail.comments?.length > 0 && (
+                    <div style={{ marginTop: '16px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '10px', color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                        💬 댓글 ({cuDetail.comments.length}건)
+                      </div>
+                      {cuDetail.comments.map((c, i) => {
+                        const date = c.date ? new Date(Number(c.date)).toLocaleString('ko-KR') : '';
+                        const author = c.user?.username || '';
+                        const ops = Array.isArray(c.comment) && c.comment.length > 0
+                          ? c.comment.map(op => ({ insert: op.text ?? op.insert ?? '', attributes: op.attributes }))
+                          : null;
+                        return (
+                          <div key={i} style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                              <strong style={{ color: 'var(--text)' }}>{author}</strong>{date ? ' · ' + date : ''}
+                            </div>
+                            {ops
+                              ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderDelta(ops) }} />
+                              : <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(c.comment_text || '') }} />
+                            }
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </>
