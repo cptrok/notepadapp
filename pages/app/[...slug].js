@@ -348,7 +348,7 @@ export default function App() {
 
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
-  const [licStatusFilter, setLicStatusFilter] = useState('');
+
   const [currentLicTaskId, setCurrentLicTaskId] = useState(null);
   const [licDetail, setLicDetail] = useState(null);
   const [trialDocId, setTrialDocId] = useState('rbeb5-147183');
@@ -1082,7 +1082,7 @@ export default function App() {
     const token = clickupTokenRef.current;
     const parts = token.split('_');
     const userId = parts.length >= 2 ? parts[1] : null;
-    const statuses = 'statuses[]=to%20do&statuses[]=in%20progress&statuses[]=complete';
+    const statuses = 'statuses[]=to%20do&statuses[]=in%20progress';
     const url = userId
       ? `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${LICENSE_SPACE_ID}&${statuses}&assignees[]=${userId}&subtasks=true`
       : `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${LICENSE_SPACE_ID}&${statuses}&subtasks=true`;
@@ -2054,7 +2054,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v264</span>
+              <span className="sidebar-title">Clickpad_v265</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2288,19 +2288,12 @@ export default function App() {
             <div className="notes-list">
               {licSubTab === 'my' && (
                 <>
-                  <div style={{ padding: '6px 8px' }}>
-                    <select value={licStatusFilter} onChange={e => setLicStatusFilter(e.target.value)} style={{ width: '100%', fontSize: '12px', padding: '4px 6px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}>
-                      <option value="">전체 상태</option>
-                      <option value="to do">To Do</option>
-                      <option value="in progress">In Progress</option>
-                      <option value="complete">Complete</option>
-                    </select>
-                  </div>
                   {licenseTasks.length === 0 && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
-                  {licenseTasks.filter(t => !licStatusFilter || t.status?.status === licStatusFilter).map(t => (
+                  {licenseTasks.map(t => (
                     <div key={t.id} className={`license-task-item ${t.id === currentLicTaskId ? 'active' : ''}`} onClick={() => openLicenseTask(t.id)}>
                       <div className="license-task-name">{t.name}</div>
                       <div className="license-task-meta">
+                        {t.status?.status && <span className="task-status" style={{ background: t.status.color || '#666' }}>{t.status.status}</span>}
                         {t.list?.name && <span className="license-list-badge">{t.list.name}</span>}
                         {t.assignees?.[0] && <span>{t.assignees[0].username}</span>}
                         {t.due_date && <span>{new Date(Number(t.due_date)).toLocaleDateString('ko-KR')}</span>}
