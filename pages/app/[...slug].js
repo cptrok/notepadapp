@@ -1929,7 +1929,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v236</span>
+              <span className="sidebar-title">Clickpad_v237</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2094,7 +2094,12 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {cuLoadingMore && <div className="loading-wrap"><div className="spinner" /><span>추가 로딩 중...</span></div>}
+                  {cuLoadingMore && (
+                    <div className="loading-wrap" style={{ gap: '8px' }}>
+                      <div className="spinner" /><span>추가 로딩 중...</span>
+                      <button onClick={() => { cuSearchAbortRef.current++; setCuLoadingMore(false); }} style={{ marginLeft: '4px', padding: '2px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>중지</button>
+                    </div>
+                  )}
                 </>
               )}
               {cuSubTab === 'my' && (
