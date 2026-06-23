@@ -1674,20 +1674,21 @@ export default function App() {
     const taskId = match[1];
     setCuLinkLoading(true);
     try {
-      const res = await fetch(`https://api.clickup.com/api/v2/task/${taskId}`, { headers: { Authorization: clickupTokenRef.current } });
-      const task = await res.json();
+      const [taskRes, commentRes] = await Promise.all([
+        fetch(`https://api.clickup.com/api/v2/task/${taskId}`, { headers: { Authorization: clickupTokenRef.current } }),
+        fetch(`https://api.clickup.com/api/v2/task/${taskId}/comment`, { headers: { Authorization: clickupTokenRef.current } }),
+      ]);
+      const task = await taskRes.json();
+      const commentData = await commentRes.json();
       if (!task.id) { alert('태스크를 불러올 수 없습니다.'); return; }
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
-      // 설명에 이미 인라인으로 포함된 이미지 URL 추출 (중복 방지)
       const desc = task.description || '';
       const inlineUrls = new Set();
-      // Delta JSON 이미지 op
       try {
         const parsed = JSON.parse(desc.trim());
         const ops = parsed.ops || (Array.isArray(parsed) ? parsed : []);
         ops.forEach(op => { if (op.insert?.image) inlineUrls.add(op.insert.image); });
       } catch {}
-      // 마크다운 이미지
       [...desc.matchAll(/!\[.*?\]\((.*?)\)/g)].forEach(m => inlineUrls.add(m[1]));
       const imageAttachments = (task.attachments || []).filter(a => {
         const ext = (a.extension || a.title?.split('.').pop() || '').toLowerCase();
@@ -1696,6 +1697,23 @@ export default function App() {
       let html = `<h3>${task.name}</h3>`;
       if (desc) html += renderContent(desc);
       if (imageAttachments.length > 0) html += imageAttachments.map(a => `<p><img src="${a.url}" alt="${a.title || ''}" /></p>`).join('');
+      // 댓글(activity) 추가
+      const comments = commentData.comments || [];
+      if (comments.length > 0) {
+        html += `<p><strong>── 댓글 (${comments.length}건) ──</strong></p>`;
+        for (const c of comments) {
+          const date = c.date ? new Date(Number(c.date)).toLocaleString('ko-KR') : '';
+          const author = c.user?.username || '';
+          html += `<p style="color:#888;font-size:12px">${author}${date ? ' · ' + date : ''}</p>`;
+          // comment 필드: Delta ops 배열
+          if (Array.isArray(c.comment) && c.comment.length > 0) {
+            html += renderDelta(c.comment);
+          } else if (c.comment_text) {
+            html += renderContent(c.comment_text);
+          }
+          html += `<hr style="border:none;border-top:1px solid #eee;margin:8px 0" />`;
+        }
+      }
       if (quillRef.current) {
         const len = quillRef.current.getLength();
         quillRef.current.clipboard.dangerouslyPasteHTML(len - 1, html);
@@ -2044,7 +2062,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v252</span>
+              <span className="sidebar-title">Clickpad_v253</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
