@@ -275,6 +275,7 @@ export default function App() {
   const [cuLoadingMore, setCuLoadingMore] = useState(false);
   const [cuSearchStopped, setCuSearchStopped] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
+  const mySearchInputRef = useRef('');
   const [cuDetail, setCuDetail] = useState(null);
   const [cuAppendDesc, setCuAppendDesc] = useState('');
   const [cuDescSaving, setCuDescSaving] = useState(false);
@@ -840,8 +841,13 @@ export default function App() {
       await fillMyBuffer();
       const toShow = myBufferRef.current.splice(0, CU_PAGE_SIZE);
       setMyTasks(prev => [...prev, ...toShow]);
-      setMyTasksFiltered(prev => [...prev, ...toShow]);
       setMyTasksHasMore(myBufferRef.current.length > 0 || !myApiExhaustedRef.current);
+      const q = mySearchInputRef.current;
+      if (q) {
+        setMyTasksFiltered(myAllRef.current.filter(t => (t.name || '').toLowerCase().includes(q.toLowerCase())));
+      } else {
+        setMyTasksFiltered(prev => [...prev, ...toShow]);
+      }
     } catch (e) { console.error(e); }
     setMyTasksLoadingMore(false);
   }
@@ -1952,7 +1958,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v240</span>
+              <span className="sidebar-title">Clickpad_v241</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2031,7 +2037,7 @@ export default function App() {
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <input className="search-box" type="text" placeholder="내 태스크 검색..."
                       value={mySearchInput}
-                      onChange={e => { setMySearchInput(e.target.value); filterMyTasks(e.target.value); }}
+                      onChange={e => { setMySearchInput(e.target.value); mySearchInputRef.current = e.target.value; filterMyTasks(e.target.value); }}
                       style={{ margin: 0, flex: 1, width: 0 }} />
                     <button className="btn-search-clickup" onClick={() => fetchMyTasks(true)}>🔍</button>
                   </div>
