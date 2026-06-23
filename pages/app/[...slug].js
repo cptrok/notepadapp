@@ -1088,7 +1088,14 @@ export default function App() {
       : `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${LICENSE_SPACE_ID}&${statuses}&subtasks=true`;
     const res = await fetch(url, { headers: { Authorization: token } });
     const data = await res.json();
-    setLicenseTasks(sortByDateCreated(data.tasks || []));
+    const statusOrder = { 'in progress': 0, 'to do': 1 };
+    const sorted = (data.tasks || []).sort((a, b) => {
+      const sa = statusOrder[a.status?.status] ?? 9;
+      const sb = statusOrder[b.status?.status] ?? 9;
+      if (sa !== sb) return sa - sb;
+      return Number(b.date_created) - Number(a.date_created);
+    });
+    setLicenseTasks(sorted);
   }
 
   async function openLicenseTask(id) {
@@ -2054,7 +2061,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v265</span>
+              <span className="sidebar-title">Clickpad_v266</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
