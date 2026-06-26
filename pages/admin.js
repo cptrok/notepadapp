@@ -104,6 +104,7 @@ export default function Admin() {
     setSaving(false);
     if (error) { setReqMsg({ text: '저장 실패: ' + error.message, type: 'error' }); return; }
     setReqMsg({ text: '저장되었습니다.', type: 'success' });
+    setTimeout(() => setReqMsg(null), 3000);
     setRequests(prev => prev.map(r => r.id === selectedReq.id ? { ...r, status: editStatus, comment: editComment } : r));
     setSelectedReq(prev => ({ ...prev, status: editStatus, comment: editComment }));
   }
