@@ -2063,7 +2063,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v270</span>
+              <span className="sidebar-title">Clickpad_v271</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2273,6 +2273,7 @@ export default function App() {
                       <div className="task-item-meta">
                         <span className="task-status" style={{ background: t.status?.color || '#666' }}>{t.status?.status}</span>
                         {getTaskProducts(t).map(p => <span key={p} style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#4A7AB5', borderRadius: '3px', padding: '1px 5px', marginRight: '2px' }}>{p}</span>)}
+                        {t.creator?.username && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>✍ {t.creator.username}</span>}
                         {t.due_date && <span className="task-due">{new Date(Number(t.due_date)).toLocaleDateString('ko-KR')}</span>}
                       </div>
                     </div>
