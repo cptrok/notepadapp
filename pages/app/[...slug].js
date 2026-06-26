@@ -489,6 +489,15 @@ export default function App() {
   useEffect(() => { cuKeywordRef.current = cuKeyword; }, [cuKeyword]);
 
   useEffect(() => {
+    if (lightboxSrc) {
+      history.pushState({ lightbox: true }, '');
+      const onPop = () => setLightboxSrc(null);
+      window.addEventListener('popstate', onPop, { once: true });
+      return () => window.removeEventListener('popstate', onPop);
+    }
+  }, [lightboxSrc]);
+
+  useEffect(() => {
     const saved = localStorage.getItem('memo_user');
     if (!saved) { router.replace('/login'); return; }
     setCurrentUsername(saved);
@@ -2069,7 +2078,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v275</span>
+              <span className="sidebar-title">Clickpad_v276</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
