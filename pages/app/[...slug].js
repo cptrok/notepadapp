@@ -340,6 +340,7 @@ export default function App() {
   const [cuAppendDesc, setCuAppendDesc] = useState('');
   const [cuDescSaving, setCuDescSaving] = useState(false);
   const [cuAttachSaving, setCuAttachSaving] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
   const cuAttachInputRef = useRef(null);
   const cuMyUserRef = useRef(null);
 
@@ -1955,6 +1956,11 @@ export default function App() {
 
   return (
     <>
+      {lightboxSrc && (
+        <div onClick={() => setLightboxSrc(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', cursor: 'zoom-out' }}>
+          <img src={lightboxSrc} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '6px' }} />
+        </div>
+      )}
       {cuRegModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
@@ -2063,7 +2069,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v274</span>
+              <span className="sidebar-title">Clickpad_v275</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2507,7 +2513,7 @@ export default function App() {
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{cuDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">마감일</span><span>{cuDetail.task.due_date ? new Date(Number(cuDetail.task.due_date)).toLocaleDateString('ko-KR') : '-'}</span></div>
                   </div>
-                  {(cuDetail.task.markdown_description || cuDetail.task.description) && <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderDescWithImages(cuDetail.task.markdown_description || cuDetail.task.description, cuDetail.task.attachments) }} />}
+                  {(cuDetail.task.markdown_description || cuDetail.task.description) && <div className="task-detail-desc" onClick={e => e.target.tagName === 'IMG' && setLightboxSrc(e.target.src)} dangerouslySetInnerHTML={{ __html: renderDescWithImages(cuDetail.task.markdown_description || cuDetail.task.description, cuDetail.task.attachments) }} />}
                   {cuDetail.task.attachments?.length > 0 && (
                     <div className="task-attachments">
                       <div className="task-attachments-title">첨부파일</div>
@@ -2535,8 +2541,8 @@ export default function App() {
                               <strong style={{ color: 'var(--text)' }}>{author}</strong>{date ? ' · ' + date : ''}
                             </div>
                             {ops
-                              ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderDelta(ops) }} />
-                              : <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderMarkdown(c.comment_text || '') }} />
+                              ? <div className="task-detail-desc" onClick={e => e.target.tagName === 'IMG' && setLightboxSrc(e.target.src)} dangerouslySetInnerHTML={{ __html: renderDelta(ops) }} />
+                              : <div className="task-detail-desc" onClick={e => e.target.tagName === 'IMG' && setLightboxSrc(e.target.src)} dangerouslySetInnerHTML={{ __html: renderMarkdown(c.comment_text || '') }} />
                             }
                           </div>
                         );
