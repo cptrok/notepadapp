@@ -70,6 +70,15 @@ export default function Admin() {
     loadUsers();
   }
 
+  async function deleteUser() {
+    if (!window.confirm(`'${selectedUser.username}' 계정을 삭제하시겠습니까?\n메모 데이터도 모두 삭제됩니다.`)) return;
+    const { error } = await sb.rpc('delete_memo_user', { p_username: selectedUser.username });
+    if (error) { setPwMsg({ text: '삭제 실패: ' + error.message, type: 'error' }); return; }
+    setUsers(prev => prev.filter(u => u.username !== selectedUser.username));
+    setSelectedUser(null);
+    setAccountView('idle');
+  }
+
   async function changePassword() {
     if (!newPw) { setPwMsg({ text: '새 비밀번호를 입력하세요.', type: 'error' }); return; }
     if (newPw !== newPwConfirm) { setPwMsg({ text: '비밀번호가 일치하지 않습니다.', type: 'error' }); return; }
@@ -128,7 +137,7 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v280</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v281</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>
@@ -215,6 +224,15 @@ export default function Admin() {
                 <button className="btn-success" onClick={changePassword}>변경</button>
                 {pwMsg.text && <div className={`settings-message ${pwMsg.type}`}>{pwMsg.text}</div>}
               </div>
+              {selectedUser.username !== 'admin' && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginTop: '20px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '700', color: '#e53935', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>계정 삭제</p>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px' }}>계정과 모든 메모 데이터가 영구적으로 삭제됩니다.</p>
+                  <button onClick={deleteUser} style={{ background: '#e53935', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+                    계정 삭제
+                  </button>
+                </div>
+              )}
             </div>
           )}
           {tab === 'accounts' && accountView === 'create' && (
