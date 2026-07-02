@@ -1204,8 +1204,10 @@ export default function App() {
     setCuDocPanel({ loading: true });
     // 서버사이드 프록시를 통해 호출 (CORS 우회 + 공개 doc 지원)
     try {
-      const params = pageId ? `docId=${docId}&pageId=${pageId}` : `docId=${docId}`;
-      const res = await fetch(`/api/clickup-doc?${params}`, {
+      const qs = new URLSearchParams({ docId });
+      if (pageId) qs.set('pageId', pageId);
+      if (appMatch) qs.set('source', 'app');
+      const res = await fetch(`/api/clickup-doc?${qs}`, {
         headers: { 'x-clickup-token': clickupTokenRef.current }
       });
       const data = await res.json();
@@ -2078,7 +2080,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v285</span>
+              <span className="sidebar-title">Clickpad_v286</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
