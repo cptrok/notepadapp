@@ -2078,7 +2078,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v282</span>
+              <span className="sidebar-title">Clickpad_v283</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2135,19 +2135,26 @@ export default function App() {
                       ))}
                     </select>
                     {cuStatuses.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        {cuStatuses.map(s => {
-                          const selected = cuStatusFilter.includes(s.status);
-                          return (
-                            <button key={s.status} onClick={() => {
-                              const next = selected ? cuStatusFilter.filter(x => x !== s.status) : [...cuStatusFilter, s.status];
-                              setCuStatusFilter(next);
-                              cuStatusFilterRef.current = next;
-                            }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: `1px solid ${s.color || '#aaa'}`, background: selected ? (s.color || '#aaa') : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
-                              {s.status}
-                            </button>
-                          );
-                        })}
+                      <div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>상태</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          <button onClick={() => { setCuStatusFilter([]); cuStatusFilterRef.current = []; }}
+                            style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: cuStatusFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: cuStatusFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: cuStatusFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                            All
+                          </button>
+                          {cuStatuses.map(s => {
+                            const selected = cuStatusFilter.includes(s.status);
+                            return (
+                              <button key={s.status} onClick={() => {
+                                const next = selected ? cuStatusFilter.filter(x => x !== s.status) : [...cuStatusFilter, s.status];
+                                setCuStatusFilter(next);
+                                cuStatusFilterRef.current = next;
+                              }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: `1px solid ${s.color || '#aaa'}`, background: selected ? (s.color || '#aaa') : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                                {s.status}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
