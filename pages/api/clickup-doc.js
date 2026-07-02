@@ -69,6 +69,19 @@ export default async function handler(req, res) {
           const page = d3.find(p => p.id === pageId);
           if (page?.content) return res.json({ name: page.name || '', content: page.content });
         }
+
+        // 시도 4: pageId가 부모 페이지인 경우 — 하위 페이지 목록 합쳐서 반환
+        const { status: s4, data: d4 } = await cuGet(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages?parent_page_id=${pageId}&content_format=text%2Fmd`,
+          authHeaders
+        );
+        if (s4 === 200 && Array.isArray(d4) && d4.length > 0) {
+          const combined = d4.filter(p => p.content).map(p => `## ${p.name}\n\n${p.content}`).join('\n\n---\n\n');
+          if (combined) {
+            const parentName = s3 === 200 && Array.isArray(d3) ? (d3.find(p => p.id === pageId)?.name || '') : '';
+            return res.json({ name: parentName, content: combined });
+          }
+        }
       } else {
         const { status, data } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}?content_format=text%2Fmd`,
