@@ -352,9 +352,9 @@ export default function App() {
   const [emailMsg, setEmailMsg] = useState(null);
 
   const INSTALL_LIST = [
-    { label: '2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
-    { label: '2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
-    { label: '2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
+    { label: 'MFO2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
+    { label: 'MFO2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
+    { label: 'MFO2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
     { label: 'PG15', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1637558' },
   ];
 
@@ -2130,7 +2130,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v306</span>
+              <span className="sidebar-title">Clickpad_v307</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
