@@ -42,33 +42,49 @@ export default async function handler(req, res) {
     if (token) {
       const authHeaders = { Authorization: token };
 
+      const debug = {};
       if (pageId) {
         // 시도 1: docs/{docId}/pages/{pageId}
         const { status, data } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`,
           authHeaders
         );
+        debug.try1 = { status, keys: data ? Object.keys(data) : null };
         if (status === 200 && data?.content) {
           return res.json({ name: data.name || '', content: data.content });
         }
 
-        // 시도 2: app URL에서 두 번째 ID가 실제 docId인 경우 (docs/{pageId})
+        // 시도 2: 두 번째 ID가 실제 docId인 경우 (docs/{pageId})
         const { status: s2, data: d2 } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${pageId}?content_format=text%2Fmd`,
           authHeaders
         );
+        debug.try2 = { status: s2, keys: d2 ? Object.keys(d2) : null };
         if (s2 === 200 && d2?.content) {
           return res.json({ name: d2.name || '', content: d2.content });
+        }
+
+        // 시도 3: 첫 번째 ID가 docId이고 두 번째가 그 하위 page인 경우 pages 목록 조회
+        const { status: s3, data: d3 } = await cuGet(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages?content_format=text%2Fmd`,
+          authHeaders
+        );
+        debug.try3 = { status: s3, keys: d3 ? Object.keys(d3) : null, sample: JSON.stringify(d3).slice(0, 500) };
+        if (s3 === 200 && Array.isArray(d3?.pages)) {
+          const page = d3.pages.find(p => p.id === pageId);
+          if (page?.content) return res.json({ name: page.name || '', content: page.content });
         }
       } else {
         const { status, data } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}?content_format=text%2Fmd`,
           authHeaders
         );
+        debug.try1 = { status, keys: data ? Object.keys(data) : null };
         if (status === 200 && data?.content) {
           return res.json({ name: data.name || '', content: data.content });
         }
       }
+      return res.status(404).json({ error: '내용을 가져올 수 없습니다.', debug });
     }
 
     res.status(404).json({ error: '내용을 가져올 수 없습니다.' });
