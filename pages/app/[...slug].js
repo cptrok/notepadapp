@@ -1211,7 +1211,7 @@ export default function App() {
         headers: { 'x-clickup-token': clickupTokenRef.current }
       });
       const data = await res.json();
-      if (data.error) { setCuDocPanel({ error: data.error }); return; }
+      if (data.error) { setCuDocPanel({ error: data.error, debug: data.dbg ? JSON.stringify(data.dbg, null, 2) : null }); return; }
       if (data.debug) { setCuDocPanel({ name: data.name || 'Doc 페이지', content: '', debug: data.debug }); return; }
       setCuDocPanel({ name: data.name || 'Doc 페이지', content: data.content || '' });
     } catch (e) { setCuDocPanel({ error: e.message }); }
@@ -2080,7 +2080,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v290</span>
+              <span className="sidebar-title">Clickpad_v291</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2522,7 +2522,7 @@ export default function App() {
               {cuDocPanel.loading
                 ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
                 : cuDocPanel.error
-                  ? <div style={{ color: 'red', padding: '16px' }}>{cuDocPanel.error}</div>
+                  ? <div style={{ padding: '16px' }}><div style={{ color: 'red' }}>{cuDocPanel.error}</div>{cuDocPanel.debug && <pre style={{ fontSize: '10px', marginTop: '8px', whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: 'var(--text-muted)' }}>{cuDocPanel.debug}</pre>}</div>
                   : <>
                       {cuDocPanel.name && <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{cuDocPanel.name}</div>}
                       {cuDocPanel.content

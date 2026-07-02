@@ -43,16 +43,19 @@ export default async function handler(req, res) {
       const authHeaders = { Authorization: token };
 
       if (pageId) {
+        const dbg = {};
+
         // 시도 1a: docs/{docId}/pages/{pageId} with content_format
         const { status, data } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`,
           authHeaders
         );
+        dbg.t1 = { status, content: JSON.stringify(data?.content).slice(0, 100), keys: data ? Object.keys(data) : null };
         if (status === 200 && data?.content) {
           return res.json({ name: data.name || '', content: data.content });
         }
 
-        // 시도 1b: content_format 없이 — 다른 필드에 내용이 있을 수 있음
+        // 시도 1b: content_format 없이
         if (status === 200 && data) {
           const content = data.content || data.markdown || data.text || data.body || '';
           if (content) return res.json({ name: data.name || '', content });
@@ -63,6 +66,7 @@ export default async function handler(req, res) {
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${pageId}?content_format=text%2Fmd`,
           authHeaders
         );
+        dbg.t2 = { status: s2 };
         if (s2 === 200 && d2?.content) {
           return res.json({ name: d2.name || '', content: d2.content });
         }
@@ -72,10 +76,15 @@ export default async function handler(req, res) {
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages?content_format=text%2Fmd&limit=200`,
           authHeaders
         );
+        const ids = Array.isArray(d3) ? d3.map(p => p.id) : null;
+        dbg.t3 = { status: s3, count: Array.isArray(d3) ? d3.length : null, ids, found: ids?.includes(pageId) };
         if (s3 === 200 && Array.isArray(d3)) {
           const page = d3.find(p => p.id === pageId);
           if (page?.content) return res.json({ name: page.name || '', content: page.content });
+          if (page) dbg.t3.pageContent = JSON.stringify(page.content).slice(0, 100);
         }
+
+        return res.status(404).json({ error: '내용을 가져올 수 없습니다.', dbg });
       } else {
         const { status, data } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}?content_format=text%2Fmd`,
