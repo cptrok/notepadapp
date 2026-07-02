@@ -332,10 +332,10 @@ export default function App() {
   const [cuSearchStopped, setCuSearchStopped] = useState(false);
   const [mySearchInput, setMySearchInput] = useState('');
   const mySearchInputRef = useRef('');
-  const [myProductFilter, setMyProductFilter] = useState('');
-  const myProductFilterRef = useRef('');
-  const [myStatusFilter, setMyStatusFilter] = useState('');
-  const myStatusFilterRef = useRef('');
+  const [myProductFilter, setMyProductFilter] = useState([]);
+  const myProductFilterRef = useRef([]);
+  const [myStatusFilter, setMyStatusFilter] = useState([]);
+  const myStatusFilterRef = useRef([]);
   const [cuDetail, setCuDetail] = useState(null);
   const [cuAppendDesc, setCuAppendDesc] = useState('');
   const [cuDescSaving, setCuDescSaving] = useState(false);
@@ -945,8 +945,8 @@ export default function App() {
     const stat = myStatusFilterRef.current;
     setMyTasksFiltered(myAllRef.current.filter(t => {
       if (q && !(t.name || '').toLowerCase().includes(q.toLowerCase())) return false;
-      if (prod && !getTaskProducts(t).includes(prod)) return false;
-      if (stat && t.status?.status !== stat) return false;
+      if (prod.length > 0 && !prod.some(p => getTaskProducts(t).includes(p))) return false;
+      if (stat.length > 0 && !stat.includes(t.status?.status)) return false;
       return true;
     }));
   }
@@ -2078,7 +2078,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v284</span>
+              <span className="sidebar-title">Clickpad_v285</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2176,26 +2176,48 @@ export default function App() {
                 )}
                 {cuSubTab === 'my' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <select
-                      value={myProductFilter}
-                      onChange={e => { setMyProductFilter(e.target.value); myProductFilterRef.current = e.target.value; applyMyFilters(); }}
-                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
-                    >
-                      <option value="">전체 제품군</option>
-                      {Object.keys(DEQ_LABEL_MAP).map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={myStatusFilter}
-                      onChange={e => { setMyStatusFilter(e.target.value); myStatusFilterRef.current = e.target.value; applyMyFilters(); }}
-                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
-                    >
-                      <option value="">전체 상태</option>
-                      {cuStatuses.map(s => (
-                        <option key={s.status} value={s.status}>{s.status}</option>
-                      ))}
-                    </select>
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        <button onClick={() => { setMyProductFilter([]); myProductFilterRef.current = []; applyMyFilters(); }}
+                          style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: myProductFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: myProductFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: myProductFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                          All
+                        </button>
+                        {Object.keys(DEQ_LABEL_MAP).map(name => {
+                          const selected = myProductFilter.includes(name);
+                          return (
+                            <button key={name} onClick={() => {
+                              const next = selected ? myProductFilter.filter(x => x !== name) : [...myProductFilter, name];
+                              setMyProductFilter(next); myProductFilterRef.current = next; applyMyFilters();
+                            }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: selected ? 'var(--text-muted)' : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    {cuStatuses.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>상태</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          <button onClick={() => { setMyStatusFilter([]); myStatusFilterRef.current = []; applyMyFilters(); }}
+                            style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: myStatusFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: myStatusFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: myStatusFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                            All
+                          </button>
+                          {cuStatuses.map(s => {
+                            const selected = myStatusFilter.includes(s.status);
+                            return (
+                              <button key={s.status} onClick={() => {
+                                const next = selected ? myStatusFilter.filter(x => x !== s.status) : [...myStatusFilter, s.status];
+                                setMyStatusFilter(next); myStatusFilterRef.current = next; applyMyFilters();
+                              }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: `1px solid ${s.color || '#aaa'}`, background: selected ? (s.color || '#aaa') : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                                {s.status}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <input className="search-box" type="text" placeholder="내 태스크 검색..."
                       value={mySearchInput}
