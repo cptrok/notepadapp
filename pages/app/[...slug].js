@@ -346,6 +346,7 @@ export default function App() {
 
   const [cuDocInput, setCuDocInput] = useState('');
   const [cuDocPanel, setCuDocPanel] = useState(null);
+  const [installPanel, setInstallPanel] = useState(null);
 
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
@@ -1463,6 +1464,19 @@ export default function App() {
     setCuSubTab(tab);
     setCuDetail(null);
     if (tab === 'my' && !myTasksLoaded) fetchMyTasks(false);
+    if (tab === 'install' && !installPanel) loadInstallDoc();
+  }
+
+  async function loadInstallDoc() {
+    setInstallPanel({ loading: true });
+    try {
+      const res = await fetch('/api/clickup-doc?docId=rbeb5-194122&pageId=rbeb5-3553238&source=app', {
+        headers: { 'x-clickup-token': clickupTokenRef.current }
+      });
+      const data = await res.json();
+      if (data.error) { setInstallPanel({ error: data.error }); return; }
+      setInstallPanel({ name: data.name || '설치파일', content: data.content || '' });
+    } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
   useEffect(() => {
@@ -2081,7 +2095,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v296</span>
+              <span className="sidebar-title">Clickpad_v297</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2121,6 +2135,7 @@ export default function App() {
                   <button className={`tab-btn ${cuSubTab === 'search' ? 'active' : ''}`} onClick={() => switchCuTab('search')}>태스크 조회</button>
                   <button className={`tab-btn ${cuSubTab === 'my' ? 'active' : ''}`} onClick={() => switchCuTab('my')}>내 태스크</button>
                   <button className={`tab-btn ${cuSubTab === 'doc' ? 'active' : ''}`} onClick={() => switchCuTab('doc')}>Doc 페이지</button>
+                  <button className={`tab-btn ${cuSubTab === 'install' ? 'active' : ''}`} onClick={() => switchCuTab('install')}>설치파일</button>
                 </div>
                 {cuSubTab === 'search' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -2483,6 +2498,7 @@ export default function App() {
           (currentTab === 'notes' && editorOpen) ||
           (currentTab === 'clickup' && cuDetail !== null) ||
           (currentTab === 'clickup' && cuSubTab === 'doc' && cuDocPanel !== null) ||
+          (currentTab === 'clickup' && cuSubTab === 'install' && installPanel !== null) ||
           (currentTab === 'license' && licSubTab === 'my' && licDetail !== null) ||
           (currentTab === 'license' && licSubTab === 'trial' && trialPanel !== null) ||
           (currentTab === 'chat' && mmSelectedChannel !== null) ||
@@ -2517,6 +2533,23 @@ export default function App() {
             </div>
           )}
 
+          {currentTab === 'clickup' && hasClickupToken && cuSubTab === 'install' && installPanel && (
+            <div className="task-detail">
+              {installPanel.loading
+                ? <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>
+                : installPanel.error
+                  ? <div style={{ color: 'red', padding: '16px' }}>{installPanel.error}</div>
+                  : <>
+                      {installPanel.name && <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{installPanel.name}</div>}
+                      {installPanel.content
+                        ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderContent(installPanel.content) }} />
+                        : <div style={{ color: '#888', padding: '16px' }}>내용이 없습니다.</div>
+                      }
+                    </>
+              }
+            </div>
+          )}
+
           {currentTab === 'clickup' && hasClickupToken && cuSubTab === 'doc' && cuDocPanel && (
             <div className="task-detail">
               <button className="btn-back" style={{ display: 'flex', marginBottom: '8px' }} onClick={() => setCuDocPanel(null)}>←</button>
@@ -2544,7 +2577,7 @@ export default function App() {
               <p>우측 하단 ⚙️ 설정에서<br />ClickUp API 토큰을 등록해 주세요</p>
             </div>
           )}
-          {currentTab === 'clickup' && hasClickupToken && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && (
+          {currentTab === 'clickup' && hasClickupToken && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && !(cuSubTab === 'install' && installPanel) && (
             <div className="editor-empty">
               <div className="editor-empty-icon">📋</div>
               <h3>태스크를 선택하세요</h3>
