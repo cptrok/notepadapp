@@ -347,6 +347,13 @@ export default function App() {
   const [cuDocInput, setCuDocInput] = useState('');
   const [cuDocPanel, setCuDocPanel] = useState(null);
   const [installPanel, setInstallPanel] = useState(null);
+  const [installSelected, setInstallSelected] = useState(null);
+
+  const INSTALL_LIST = [
+    { label: '2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
+    { label: '2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
+    { label: '2407', url: 'https://doc.clickup.com/25540965/d/h/rbeb5-194122/47bdd2fe31df30f' },
+  ];
 
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
@@ -1464,18 +1471,27 @@ export default function App() {
     setCuSubTab(tab);
     setCuDetail(null);
     if (tab === 'my' && !myTasksLoaded) fetchMyTasks(false);
-    if (tab === 'install' && !installPanel) loadInstallDoc();
   }
 
-  async function loadInstallDoc() {
+  async function loadInstallDoc(item) {
+    setInstallSelected(item.label);
     setInstallPanel({ loading: true });
     try {
-      const res = await fetch('/api/clickup-doc?docId=rbeb5-194122&pageId=rbeb5-3553238&source=app', {
+      const appMatch = item.url.match(/app\.clickup\.com\/[^/]+\/(?:v\/dc|docs)\/([^/?#]+)(?:\/([^/?#]+))?/);
+      const docMatch = item.url.match(/doc\.clickup\.com\/[^/]+\/[pd]\/h\/([^/?#]+)(?:\/([^/?#]+))?/);
+      let docId, pageId, source;
+      if (docMatch) { docId = docMatch[1]; pageId = docMatch[2] || null; source = ''; }
+      else if (appMatch) { docId = appMatch[1]; pageId = appMatch[2] || null; source = 'app'; }
+      else { setInstallPanel({ error: '올바른 URL이 아닙니다.' }); return; }
+      const qs = new URLSearchParams({ docId });
+      if (pageId) qs.set('pageId', pageId);
+      if (source) qs.set('source', source);
+      const res = await fetch(`/api/clickup-doc?${qs}`, {
         headers: { 'x-clickup-token': clickupTokenRef.current }
       });
       const data = await res.json();
       if (data.error) { setInstallPanel({ error: data.error }); return; }
-      setInstallPanel({ name: data.name || '설치파일', content: data.content || '' });
+      setInstallPanel({ name: data.name || item.label, content: data.content || '' });
     } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
@@ -2095,7 +2111,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v297</span>
+              <span className="sidebar-title">Clickpad_v298</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2265,6 +2281,18 @@ export default function App() {
                       </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {currentTab === 'clickup' && hasClickupToken && cuSubTab === 'install' && (
+              <div className="notes-list">
+                {INSTALL_LIST.map(item => (
+                  <div key={item.label}
+                    className={`task-item ${installSelected === item.label ? 'active' : ''}`}
+                    onClick={() => loadInstallDoc(item)}>
+                    <div className="task-item-title">{item.label}</div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -2577,7 +2605,7 @@ export default function App() {
               <p>우측 하단 ⚙️ 설정에서<br />ClickUp API 토큰을 등록해 주세요</p>
             </div>
           )}
-          {currentTab === 'clickup' && hasClickupToken && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && !(cuSubTab === 'install' && installPanel) && (
+          {currentTab === 'clickup' && hasClickupToken && !cuDetail && !(cuSubTab === 'doc' && cuDocPanel) && cuSubTab !== 'install' && (
             <div className="editor-empty">
               <div className="editor-empty-icon">📋</div>
               <h3>태스크를 선택하세요</h3>
