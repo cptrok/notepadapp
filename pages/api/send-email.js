@@ -14,7 +14,7 @@ export default async function handler(req, res) {
         'ngrok-skip-browser-warning': '1',
       },
       body: JSON.stringify({ version: version || '' }),
-      signal: AbortSignal.timeout(70000),
+      signal: AbortSignal.timeout(200000),
     });
     const data = await r.json();
     res.json(data);
