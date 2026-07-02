@@ -1498,12 +1498,16 @@ export default function App() {
     } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
-  async function sendInstallEmail() {
+  async function sendInstallEmail(version) {
     if (emailSending) return;
     setEmailSending(true);
     setEmailMsg(null);
     try {
-      const res = await fetch('/api/send-email', { method: 'POST' });
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version }),
+      });
       const data = await res.json();
       setEmailMsg(data.ok ? { type: 'ok', text: '메일 전송 완료' } : { type: 'err', text: data.error || '전송 실패' });
     } catch (e) {
@@ -2130,7 +2134,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v307</span>
+              <span className="sidebar-title">Clickpad_v308</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2312,7 +2316,7 @@ export default function App() {
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="task-item-title">{item.label}</div>
                     <button
-                      onClick={e => { e.stopPropagation(); sendInstallEmail(); }}
+                      onClick={e => { e.stopPropagation(); sendInstallEmail(item.label); }}
                       disabled={emailSending}
                       style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {emailSending ? '전송 중...' : '메일 전송'}
