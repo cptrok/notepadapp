@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   try {
-    const r = await fetch('http://10.10.45.117:8080/send-email', {
+    const r = await fetch('http://10.10.45.117:8888/send-email', {
       method: 'POST',
       signal: AbortSignal.timeout(70000),
     });
