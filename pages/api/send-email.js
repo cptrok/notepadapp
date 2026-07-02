@@ -3,6 +3,7 @@ export default async function handler(req, res) {
   try {
     const r = await fetch('https://dagger-lego-dumping.ngrok-free.dev/send-email', {
       method: 'POST',
+      headers: { 'ngrok-skip-browser-warning': '1' },
       signal: AbortSignal.timeout(70000),
     });
     const data = await r.json();
