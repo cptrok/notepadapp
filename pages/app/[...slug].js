@@ -348,6 +348,8 @@ export default function App() {
   const [cuDocPanel, setCuDocPanel] = useState(null);
   const [installPanel, setInstallPanel] = useState(null);
   const [installSelected, setInstallSelected] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailMsg, setEmailMsg] = useState(null);
 
   const INSTALL_LIST = [
     { label: '2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
@@ -1496,6 +1498,22 @@ export default function App() {
     } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
+  async function sendInstallEmail() {
+    if (emailSending) return;
+    setEmailSending(true);
+    setEmailMsg(null);
+    try {
+      const res = await fetch('/api/send-email', { method: 'POST' });
+      const data = await res.json();
+      setEmailMsg(data.ok ? { type: 'ok', text: '메일 전송 완료' } : { type: 'err', text: data.error || '전송 실패' });
+    } catch (e) {
+      setEmailMsg({ type: 'err', text: e.message });
+    } finally {
+      setEmailSending(false);
+      setTimeout(() => setEmailMsg(null), 4000);
+    }
+  }
+
   useEffect(() => {
     if (mmToken && mmChannels.length === 0) mmLoadChannels();
   }, [mmToken]);
@@ -2112,7 +2130,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v300</span>
+              <span className="sidebar-title">Clickpad_v301</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2290,10 +2308,22 @@ export default function App() {
                 {INSTALL_LIST.map(item => (
                   <div key={item.label}
                     className={`task-item ${installSelected === item.label ? 'active' : ''}`}
-                    onClick={() => loadInstallDoc(item)}>
+                    onClick={() => loadInstallDoc(item)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="task-item-title">{item.label}</div>
+                    <button
+                      onClick={e => { e.stopPropagation(); sendInstallEmail(); }}
+                      disabled={emailSending}
+                      style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {emailSending ? '전송 중...' : '메일 전송'}
+                    </button>
                   </div>
                 ))}
+                {emailMsg && (
+                  <div style={{ padding: '6px 10px', fontSize: '12px', color: emailMsg.type === 'ok' ? 'var(--accent)' : 'red' }}>
+                    {emailMsg.text}
+                  </div>
+                )}
               </div>
             )}
 
