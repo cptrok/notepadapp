@@ -43,13 +43,19 @@ export default async function handler(req, res) {
       const authHeaders = { Authorization: token };
 
       if (pageId) {
-        // 시도 1: docs/{docId}/pages/{pageId} — content가 채워져 있으면 바로 반환
+        // 시도 1a: docs/{docId}/pages/{pageId} with content_format
         const { status, data } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`,
           authHeaders
         );
         if (status === 200 && data?.content) {
           return res.json({ name: data.name || '', content: data.content });
+        }
+
+        // 시도 1b: content_format 없이 — 다른 필드에 내용이 있을 수 있음
+        if (status === 200 && data) {
+          const content = data.content || data.markdown || data.text || data.body || '';
+          if (content) return res.json({ name: data.name || '', content });
         }
 
         // 시도 2: 두 번째 ID가 실제 docId인 경우 (docs/{pageId})
@@ -61,9 +67,9 @@ export default async function handler(req, res) {
           return res.json({ name: d2.name || '', content: d2.content });
         }
 
-        // 시도 3: docs/{docId}/pages 전체 목록에서 pageId 매칭
+        // 시도 3: docs/{docId}/pages 전체 목록에서 pageId 매칭 (limit 크게)
         const { status: s3, data: d3 } = await cuGet(
-          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages?content_format=text%2Fmd`,
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages?content_format=text%2Fmd&limit=200`,
           authHeaders
         );
         if (s3 === 200 && Array.isArray(d3)) {
