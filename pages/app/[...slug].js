@@ -348,8 +348,6 @@ export default function App() {
   const [cuDocPanel, setCuDocPanel] = useState(null);
   const [installPanel, setInstallPanel] = useState(null);
   const [installSelected, setInstallSelected] = useState(null);
-  const [installSubPages, setInstallSubPages] = useState([]);
-  const [installSubSelected, setInstallSubSelected] = useState(null);
 
   const INSTALL_LIST = [
     { label: '2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
@@ -1478,8 +1476,6 @@ export default function App() {
 
   async function loadInstallDoc(item) {
     setInstallSelected(item.label);
-    setInstallSubPages([]);
-    setInstallSubSelected(null);
     setInstallPanel({ loading: true });
     try {
       const appMatch = item.url.match(/app\.clickup\.com\/[^/]+\/(?:v\/dc|docs)\/([^/?#]+)(?:\/([^/?#]+))?/);
@@ -1491,30 +1487,12 @@ export default function App() {
       const qs = new URLSearchParams({ docId });
       if (pageId) qs.set('pageId', pageId);
       if (source) qs.set('source', source);
-      const [res, subRes] = await Promise.all([
-        fetch(`/api/clickup-doc?${qs}`, { headers: { 'x-clickup-token': clickupTokenRef.current } }),
-        pageId ? fetch(`/api/clickup-doc-subpages?docId=${docId}&pageId=${pageId}`, { headers: { 'x-clickup-token': clickupTokenRef.current } }) : Promise.resolve(null),
-      ]);
-      const data = await res.json();
-      if (data.error) { setInstallPanel({ error: data.error }); return; }
-      setInstallPanel({ name: data.name || item.label, content: data.content || '' });
-      if (subRes) {
-        const subData = await subRes.json();
-        if (Array.isArray(subData)) setInstallSubPages(subData);
-      }
-    } catch (e) { setInstallPanel({ error: e.message }); }
-  }
-
-  async function loadInstallSubPage(sub) {
-    setInstallSubSelected(sub.id);
-    setInstallPanel({ loading: true });
-    try {
-      const res = await fetch(`/api/clickup-doc?docId=${sub.doc_id}&pageId=${sub.id}&source=app`, {
+      const res = await fetch(`/api/clickup-doc?${qs}`, {
         headers: { 'x-clickup-token': clickupTokenRef.current }
       });
       const data = await res.json();
       if (data.error) { setInstallPanel({ error: data.error }); return; }
-      setInstallPanel({ name: data.name || sub.name, content: data.content || '' });
+      setInstallPanel({ name: data.name || item.label, content: data.content || '' });
     } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
@@ -2134,7 +2112,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v301</span>
+              <span className="sidebar-title">Clickpad_v300</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2310,20 +2288,10 @@ export default function App() {
             {currentTab === 'clickup' && hasClickupToken && cuSubTab === 'install' && (
               <div className="notes-list">
                 {INSTALL_LIST.map(item => (
-                  <div key={item.label}>
-                    <div
-                      className={`task-item ${installSelected === item.label && !installSubSelected ? 'active' : ''}`}
-                      onClick={() => loadInstallDoc(item)}>
-                      <div className="task-item-title">{item.label}</div>
-                    </div>
-                    {installSelected === item.label && installSubPages.map(sub => (
-                      <div key={sub.id}
-                        className={`task-item ${installSubSelected === sub.id ? 'active' : ''}`}
-                        style={{ paddingLeft: '20px', borderLeft: '2px solid var(--border)' }}
-                        onClick={() => loadInstallSubPage(sub)}>
-                        <div className="task-item-title" style={{ fontSize: '12px' }}>{sub.name}</div>
-                      </div>
-                    ))}
+                  <div key={item.label}
+                    className={`task-item ${installSelected === item.label ? 'active' : ''}`}
+                    onClick={() => loadInstallDoc(item)}>
+                    <div className="task-item-title">{item.label}</div>
                   </div>
                 ))}
               </div>
