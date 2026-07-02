@@ -352,7 +352,7 @@ export default function App() {
   const INSTALL_LIST = [
     { label: '2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
     { label: '2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
-    { label: '2407', url: 'https://doc.clickup.com/25540965/d/h/rbeb5-194122/47bdd2fe31df30f' },
+    { label: '2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
   ];
 
   const [licSubTab, setLicSubTab] = useState('my');
@@ -2111,7 +2111,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v298</span>
+              <span className="sidebar-title">Clickpad_v299</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
