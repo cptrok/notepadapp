@@ -71,7 +71,7 @@ export default async function handler(req, res) {
           return res.json({ name: d2.name || '', content: d2.content });
         }
 
-        // 시도 3: docs/{docId}/pages 전체 목록에서 pageId 매칭 (limit 크게)
+        // 시도 3: docs/{docId}/pages 전체 목록 (content_format=text/md)
         const { status: s3, data: d3 } = await cuGet(
           `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages?content_format=text%2Fmd&limit=200`,
           authHeaders
@@ -81,7 +81,28 @@ export default async function handler(req, res) {
         if (s3 === 200 && Array.isArray(d3)) {
           const page = d3.find(p => p.id === pageId);
           if (page?.content) return res.json({ name: page.name || '', content: page.content });
-          if (page) dbg.t3.pageContent = JSON.stringify(page.content).slice(0, 100);
+        }
+
+        // 시도 4: content_format 없이 원본 형식으로 개별 페이지 fetch
+        const { status: s4, data: d4 } = await cuGet(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}`,
+          authHeaders
+        );
+        dbg.t4 = { status: s4, content: JSON.stringify(d4?.content).slice(0, 200), keys: d4 ? Object.keys(d4) : null };
+        if (s4 === 200 && d4?.content) {
+          return res.json({ name: d4.name || '', content: d4.content });
+        }
+
+        // 시도 5: 목록도 content_format 없이
+        const { status: s5, data: d5 } = await cuGet(
+          `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages?limit=200`,
+          authHeaders
+        );
+        dbg.t5 = { status: s5, count: Array.isArray(d5) ? d5.length : null };
+        if (s5 === 200 && Array.isArray(d5)) {
+          const page = d5.find(p => p.id === pageId);
+          dbg.t5.pageContent = JSON.stringify(page?.content).slice(0, 200);
+          if (page?.content) return res.json({ name: page.name || '', content: page.content });
         }
 
         return res.status(404).json({ error: '내용을 가져올 수 없습니다.', dbg });
