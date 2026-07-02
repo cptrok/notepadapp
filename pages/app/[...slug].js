@@ -317,8 +317,8 @@ export default function App() {
   const [cuHasMore, setCuHasMore] = useState(false);
   const [cuKeyword, setCuKeyword] = useState('');
   const [cuSearchInput, setCuSearchInput] = useState('');
-  const [cuProductFilter, setCuProductFilter] = useState('');
-  const cuProductFilterRef = useRef('');
+  const [cuProductFilter, setCuProductFilter] = useState([]);
+  const cuProductFilterRef = useRef([]);
   const [cuStatusFilter, setCuStatusFilter] = useState([]);
   const cuStatusFilterRef = useRef([]);
   const [cuStatuses, setCuStatuses] = useState([]);
@@ -796,14 +796,14 @@ export default function App() {
         (t.description || '').toLowerCase().includes(kw)
       );
     }
-    if (cuProductFilterRef.current) {
-      result = result.filter(t => getTaskProducts(t).includes(cuProductFilterRef.current));
+    if (cuProductFilterRef.current.length > 0) {
+      result = result.filter(t => cuProductFilterRef.current.some(p => getTaskProducts(t).includes(p)));
     }
     return result;
   }
 
   async function fetchTasksByKeyword(q) {
-    if (!q.trim() && !cuProductFilterRef.current) return;
+    if (!q.trim() && cuProductFilterRef.current.length === 0) return;
     const searchId = ++cuSearchAbortRef.current;
     setCuKeyword(q);
     cuKeywordRef.current = q;
@@ -2078,7 +2078,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v283</span>
+              <span className="sidebar-title">Clickpad_v284</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2121,19 +2121,27 @@ export default function App() {
                 </div>
                 {cuSubTab === 'search' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <select
-                      value={cuProductFilter}
-                      onChange={e => {
-                        setCuProductFilter(e.target.value);
-                        cuProductFilterRef.current = e.target.value;
-                      }}
-                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}
-                    >
-                      <option value="">전체 제품군</option>
-                      {Object.keys(DEQ_LABEL_MAP).map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        <button onClick={() => { setCuProductFilter([]); cuProductFilterRef.current = []; }}
+                          style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: cuProductFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: cuProductFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: cuProductFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                          All
+                        </button>
+                        {Object.keys(DEQ_LABEL_MAP).map(name => {
+                          const selected = cuProductFilter.includes(name);
+                          return (
+                            <button key={name} onClick={() => {
+                              const next = selected ? cuProductFilter.filter(x => x !== name) : [...cuProductFilter, name];
+                              setCuProductFilter(next);
+                              cuProductFilterRef.current = next;
+                            }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: selected ? 'var(--text-muted)' : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                     {cuStatuses.length > 0 && (
                       <div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>상태</div>
