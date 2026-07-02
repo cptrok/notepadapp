@@ -33,11 +33,31 @@ export default function Admin() {
   const [reqMsg, setReqMsg] = useState({ text: '', type: '' });
   const [saving, setSaving] = useState(false);
 
+  // 시스템설정
+  const [ngrokUrl, setNgrokUrl] = useState('');
+  const [settingMsg, setSettingMsg] = useState({ text: '', type: '' });
+
   useEffect(() => {
     const saved = localStorage.getItem('memo_user');
     if (!saved || saved !== 'admin') { router.replace('/login'); return; }
     loadUsers();
+    loadSettings();
   }, []);
+
+  async function loadSettings() {
+    const { data } = await sb.rpc('get_setting', { p_key: 'ngrok_url' });
+    if (data) setNgrokUrl(data);
+  }
+
+  async function saveNgrokUrl() {
+    const { error } = await sb.rpc('update_setting', { p_key: 'ngrok_url', p_value: ngrokUrl.trim() });
+    if (error) {
+      setSettingMsg({ text: '저장 실패: ' + error.message, type: 'error' });
+    } else {
+      setSettingMsg({ text: '저장됐습니다.', type: 'success' });
+    }
+    setTimeout(() => setSettingMsg({ text: '', type: '' }), 3000);
+  }
 
   function logout() {
     localStorage.removeItem('memo_user');
@@ -127,7 +147,7 @@ export default function Admin() {
     if (t === 'feedback') loadRequests();
   }
 
-  const detailOpen = (tab === 'accounts' && accountView !== 'idle') || (tab === 'feedback' && selectedReq);
+  const detailOpen = (tab === 'accounts' && accountView !== 'idle') || (tab === 'feedback' && selectedReq) || tab === 'settings';
 
   return (
     <>
@@ -137,11 +157,12 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v305</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v306</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>
               <button className={`tab-btn ${tab === 'feedback' ? 'active' : ''}`} onClick={() => switchTab('feedback')}>개선요청</button>
+              <button className={`tab-btn ${tab === 'settings' ? 'active' : ''}`} onClick={() => switchTab('settings')}>시스템설정</button>
             </div>
           </div>
 
@@ -302,6 +323,30 @@ export default function Admin() {
                   {saving ? '저장 중...' : '저장'}
                 </button>
                 {reqMsg.text && <div className={`settings-message ${reqMsg.type}`}>{reqMsg.text}</div>}
+              </div>
+            </div>
+          )}
+
+          {/* 시스템설정 */}
+          {tab === 'settings' && (
+            <div style={{ padding: '24px' }}>
+              <h3>시스템설정</h3>
+              <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontWeight: 600, fontSize: '14px' }}>메일 전송 서버 URL (ngrok)</label>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>
+                  ngrok 재시작 후 변경된 URL을 여기에 입력하세요.
+                </div>
+                <input
+                  type="text"
+                  value={ngrokUrl}
+                  onChange={e => setNgrokUrl(e.target.value)}
+                  placeholder="https://xxxx.ngrok-free.app"
+                  style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', width: '100%' }}
+                />
+                <button className="btn-success" onClick={saveNgrokUrl} style={{ alignSelf: 'flex-start', marginTop: '4px' }}>
+                  저장
+                </button>
+                {settingMsg.text && <div className={`settings-message ${settingMsg.type}`}>{settingMsg.text}</div>}
               </div>
             </div>
           )}
