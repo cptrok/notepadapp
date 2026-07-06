@@ -350,6 +350,8 @@ export default function App() {
   const [installSelected, setInstallSelected] = useState(null);
   const [emailSending, setEmailSending] = useState(false);
   const [emailMsg, setEmailMsg] = useState(null);
+  const [emailModal, setEmailModal] = useState(null); // { version } | null
+  const [emailToInput, setEmailToInput] = useState('');
 
   const INSTALL_LIST = [
     { label: 'MFO2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
@@ -1498,15 +1500,23 @@ export default function App() {
     } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
-  async function sendInstallEmail(version) {
-    if (emailSending) return;
+  function openEmailModal(version) {
+    setEmailToInput('');
+    setEmailModal({ version });
+  }
+
+  async function sendInstallEmail() {
+    if (emailSending || !emailModal) return;
+    const to = emailToInput.trim();
+    if (!to) return;
+    setEmailModal(null);
     setEmailSending(true);
     setEmailMsg(null);
     try {
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ version }),
+        body: JSON.stringify({ version: emailModal.version, to }),
       });
       const data = await res.json();
       setEmailMsg(data.ok ? { type: 'ok', text: '메일 전송 완료' } : { type: 'err', text: data.error || '전송 실패' });
@@ -2032,6 +2042,27 @@ export default function App() {
           <span style={{ color: '#fff', fontSize: '15px', fontWeight: 600 }}>메일 전송 중...</span>
         </div>
       )}
+      {emailModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '16px' }}>📧 메일 전송 — {emailModal.version}</div>
+            <div style={{ fontSize: '13px', marginBottom: '8px', color: 'var(--text-sub, #666)' }}>받는 사람 이메일</div>
+            <input
+              autoFocus
+              type="email"
+              value={emailToInput}
+              onChange={e => setEmailToInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') sendInstallEmail(); if (e.key === 'Escape') setEmailModal(null); }}
+              placeholder="example@domain.com"
+              style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', boxSizing: 'border-box', marginBottom: '16px' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setEmailModal(null)} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}>취소</button>
+              <button onClick={sendInstallEmail} disabled={!emailToInput.trim()} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: 'var(--primary, #4f6ef7)', color: '#fff', cursor: emailToInput.trim() ? 'pointer' : 'not-allowed', opacity: emailToInput.trim() ? 1 : 0.5 }}>전송</button>
+            </div>
+          </div>
+        </div>
+      )}
       {cuRegModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
@@ -2140,7 +2171,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v311</span>
+              <span className="sidebar-title">Clickpad_v312</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2322,7 +2353,7 @@ export default function App() {
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="task-item-title">{item.label}</div>
                     <button
-                      onClick={e => { e.stopPropagation(); sendInstallEmail(item.label); }}
+                      onClick={e => { e.stopPropagation(); openEmailModal(item.label); }}
                       disabled={emailSending}
                       style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {emailSending ? '전송 중...' : '메일 전송'}
