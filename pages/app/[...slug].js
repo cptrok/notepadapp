@@ -2259,7 +2259,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v319</span>
+              <span className="sidebar-title">Clickpad_v320</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2461,14 +2461,6 @@ export default function App() {
                 <div className="sidebar-tabs" style={{ marginBottom: 0 }}>
                   <button className={`tab-btn ${licSubTab === 'my' ? 'active' : ''}`} onClick={() => switchLicTab('my')}>내 태스크</button>
                   <button className={`tab-btn ${licSubTab === 'trial' ? 'active' : ''}`} onClick={() => switchLicTab('trial')}>주기적 트라이얼</button>
-                </div>
-                <div style={{ padding: '0 4px' }}>
-                  <button
-                    onClick={() => openEmailModal('', 'direct')}
-                    disabled={emailSending}
-                    style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
-                    📧 라이선스 파일 메일 전송
-                  </button>
                 </div>
                 {licSubTab === 'trial' && (
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -2873,7 +2865,7 @@ export default function App() {
                         {licDetail.task.attachments.map((a, i) => (
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <button className="attachment-dl-btn" onClick={() => downloadAttachment(a.url, a.title)}>📎 {a.title}</button>
-                            <button onClick={() => { setLicEmailToInput(''); setLicEmailModal({ url: a.url, filename: a.title }); }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#0066cc', cursor: 'pointer', whiteSpace: 'nowrap' }}>📧 메일</button>
+                            <button onClick={() => { setLicEmailToInput(''); setLicEmailModal({ url: a.url, filename: a.title }); }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#0066cc', cursor: 'pointer', whiteSpace: 'nowrap' }}>메일 전송</button>
                           </div>
                         ))}
                       </div>
