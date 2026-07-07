@@ -1157,6 +1157,7 @@ export default function App() {
   }
 
   async function loadTrialPages(docId) {
+    if (!clickupTokenRef.current) return;
     setTrialDocId(docId);
     setTrialSelectedQuarter(null);
     setTrialPanel(null);
@@ -1574,6 +1575,12 @@ export default function App() {
   useEffect(() => {
     if (mmToken && mmChannels.length === 0) mmLoadChannels();
   }, [mmToken]);
+
+  useEffect(() => {
+    if (hasClickupToken && currentTab === 'license' && licSubTab === 'trial' && trialPages === null && !trialLoading) {
+      loadTrialPages(trialDocId);
+    }
+  }, [hasClickupToken]);
 
   async function mmLogin() {
     if (!mmLoginForm.username || !mmLoginForm.password) {
@@ -2269,7 +2276,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v324</span>
+              <span className="sidebar-title">Clickpad_v325</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
