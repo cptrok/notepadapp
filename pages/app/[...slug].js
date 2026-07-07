@@ -357,6 +357,7 @@ export default function App() {
 
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
+  const [licLoading, setLicLoading] = useState(false);
 
   const [currentLicTaskId, setCurrentLicTaskId] = useState(null);
   const [licDetail, setLicDetail] = useState(null);
@@ -1100,23 +1101,32 @@ export default function App() {
   }
 
   async function loadLicenseTasks() {
-    const token = clickupTokenRef.current;
-    const parts = token.split('_');
-    const userId = parts.length >= 2 ? parts[1] : null;
-    const statuses = 'statuses[]=to%20do&statuses[]=in%20progress';
-    const url = userId
-      ? `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${LICENSE_SPACE_ID}&${statuses}&assignees[]=${userId}&subtasks=true`
-      : `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${LICENSE_SPACE_ID}&${statuses}&subtasks=true`;
-    const res = await fetch(url, { headers: { Authorization: token } });
-    const data = await res.json();
-    const statusOrder = { 'in progress': 0, 'to do': 1 };
-    const sorted = (data.tasks || []).sort((a, b) => {
-      const sa = statusOrder[a.status?.status] ?? 9;
-      const sb = statusOrder[b.status?.status] ?? 9;
-      if (sa !== sb) return sa - sb;
-      return Number(b.date_created) - Number(a.date_created);
-    });
-    setLicenseTasks(sorted);
+    setLicLoading(true);
+    setLicenseTasks([]);
+    try {
+      const token = clickupTokenRef.current;
+      const parts = token.split('_');
+      const userId = parts.length >= 2 ? parts[1] : null;
+      const statuses = 'statuses[]=to%20do&statuses[]=in%20progress';
+      const url = userId
+        ? `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${LICENSE_SPACE_ID}&${statuses}&assignees[]=${userId}&subtasks=true`
+        : `https://api.clickup.com/api/v2/team/${TEAM_ID}/task?space_ids[]=${LICENSE_SPACE_ID}&${statuses}&subtasks=true`;
+      const res = await fetch(url, { headers: { Authorization: token }, signal: AbortSignal.timeout(15000) });
+      const data = await res.json();
+      const statusOrder = { 'in progress': 0, 'to do': 1 };
+      const sorted = (data.tasks || []).sort((a, b) => {
+        const sa = statusOrder[a.status?.status] ?? 9;
+        const sb = statusOrder[b.status?.status] ?? 9;
+        if (sa !== sb) return sa - sb;
+        return Number(b.date_created) - Number(a.date_created);
+      });
+      setLicenseTasks(sorted);
+    } catch (e) {
+      console.error('라이선스 태스크 로드 실패:', e);
+      setLicenseTasks([]);
+    } finally {
+      setLicLoading(false);
+    }
   }
 
   async function openLicenseTask(id) {
@@ -2197,7 +2207,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v317</span>
+              <span className="sidebar-title">Clickpad_v318</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2508,7 +2518,8 @@ export default function App() {
             <div className="notes-list">
               {licSubTab === 'my' && (
                 <>
-                  {licenseTasks.length === 0 && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+                  {licLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+                  {!licLoading && licenseTasks.length === 0 && <div className="empty-list">태스크가 없습니다.<br /><button style={{ marginTop: '8px', fontSize: '12px', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer', color: 'var(--text)' }} onClick={loadLicenseTasks}>다시 시도</button></div>}
                   {licenseTasks.map(t => (
                     <div key={t.id} className={`license-task-item ${t.id === currentLicTaskId ? 'active' : ''}`} onClick={() => openLicenseTask(t.id)}>
                       <div className="license-task-name">{t.name}</div>
