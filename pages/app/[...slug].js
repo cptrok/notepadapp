@@ -528,18 +528,7 @@ export default function App() {
     if (!currentUsername) return;
     loadUserProfile();
     loadNotes();
-    sb.rpc('get_setting', { p_key: 'install_list' }).then(({ data }) => {
-      if (data) {
-        try { setINSTALL_LIST(JSON.parse(data)); } catch {}
-      } else {
-        setINSTALL_LIST([
-          { label: 'MFO2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
-          { label: 'MFO2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
-          { label: 'MFO2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
-          { label: 'PG15',    url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1637558' },
-        ]);
-      }
-    });
+    sb.rpc('get_install_list').then(({ data }) => { if (data) setINSTALL_LIST(data); });
     const onVisibility = () => { if (!document.hidden) loadNotes(); };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
@@ -1484,9 +1473,7 @@ export default function App() {
     setCuDetail(null);
     if (tab === 'my' && !myTasksLoaded) fetchMyTasks(false);
     if (tab === 'install') {
-      sb.rpc('get_setting', { p_key: 'install_list' }).then(({ data }) => {
-        if (data) { try { setINSTALL_LIST(JSON.parse(data)); } catch {} }
-      });
+      sb.rpc('get_install_list').then(({ data }) => { if (data) setINSTALL_LIST(data); });
     }
   }
 
@@ -2210,7 +2197,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v315</span>
+              <span className="sidebar-title">Clickpad_v316</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">

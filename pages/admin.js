@@ -50,19 +50,12 @@ export default function Admin() {
   async function loadSettings() {
     const { data: ngrok } = await sb.rpc('get_setting', { p_key: 'ngrok_url' });
     if (ngrok) setNgrokUrl(ngrok);
-    const { data: il } = await sb.rpc('get_setting', { p_key: 'install_list' });
-    if (il) {
-      try { setInstallList(JSON.parse(il)); } catch {}
-    } else {
-      // 기본값 초기화
-      const defaults = [
-        { label: 'MFO2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
-        { label: 'MFO2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
-        { label: 'MFO2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
-        { label: 'PG15',    url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1637558' },
-      ];
-      setInstallList(defaults);
-    }
+    loadInstallList();
+  }
+
+  async function loadInstallList() {
+    const { data } = await sb.rpc('get_install_list');
+    setInstallList(data || []);
   }
 
   async function saveNgrokUrl() {
@@ -75,28 +68,32 @@ export default function Admin() {
     setTimeout(() => setSettingMsg({ text: '', type: '' }), 3000);
   }
 
-  async function saveInstallList(list) {
-    const { error } = await sb.rpc('update_setting', { p_key: 'install_list', p_value: JSON.stringify(list) });
+  async function addInstallItem() {
+    if (!installForm.label.trim() || !installForm.url.trim()) return;
+    const sortOrder = installList.length > 0 ? Math.max(...installList.map(i => i.sort_order)) + 1 : 0;
+    const { error } = await sb.rpc('add_install_item', {
+      p_label: installForm.label.trim(),
+      p_url: installForm.url.trim(),
+      p_sort_order: sortOrder,
+    });
     if (error) {
-      setInstallMsg({ text: '저장 실패: ' + error.message, type: 'error' });
+      setInstallMsg({ text: '추가 실패: ' + error.message, type: 'error' });
     } else {
-      setInstallMsg({ text: '저장됐습니다.', type: 'success' });
+      setInstallForm({ label: '', url: '' });
+      setInstallMsg({ text: '추가됐습니다.', type: 'success' });
+      loadInstallList();
     }
     setTimeout(() => setInstallMsg({ text: '', type: '' }), 3000);
   }
 
-  function addInstallItem() {
-    if (!installForm.label.trim() || !installForm.url.trim()) return;
-    const newList = [...installList, { label: installForm.label.trim(), url: installForm.url.trim() }];
-    setInstallList(newList);
-    setInstallForm({ label: '', url: '' });
-    saveInstallList(newList);
-  }
-
-  function removeInstallItem(idx) {
-    const newList = installList.filter((_, i) => i !== idx);
-    setInstallList(newList);
-    saveInstallList(newList);
+  async function removeInstallItem(id) {
+    const { error } = await sb.rpc('delete_install_item', { p_id: id });
+    if (error) {
+      setInstallMsg({ text: '삭제 실패: ' + error.message, type: 'error' });
+      setTimeout(() => setInstallMsg({ text: '', type: '' }), 3000);
+    } else {
+      loadInstallList();
+    }
   }
 
   function logout() {
@@ -197,7 +194,7 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v315</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v316</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>
@@ -399,11 +396,11 @@ export default function Admin() {
 
                 {/* 현재 리스트 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
-                  {installList.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}>
+                  {installList.map(item => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}>
                       <span style={{ fontWeight: 600, minWidth: '80px' }}>{item.label}</span>
                       <span style={{ flex: 1, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '11px' }}>{item.url}</span>
-                      <button onClick={() => removeInstallItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', fontSize: '16px', lineHeight: 1, padding: '0 4px' }}>✕</button>
+                      <button onClick={() => removeInstallItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', fontSize: '16px', lineHeight: 1, padding: '0 4px' }}>✕</button>
                     </div>
                   ))}
                   {installList.length === 0 && <div style={{ color: '#aaa', fontSize: '13px' }}>항목이 없습니다.</div>}
