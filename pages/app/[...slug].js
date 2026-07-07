@@ -353,12 +353,7 @@ export default function App() {
   const [emailModal, setEmailModal] = useState(null); // { version } | null
   const [emailToInput, setEmailToInput] = useState('');
 
-  const INSTALL_LIST = [
-    { label: 'MFO2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
-    { label: 'MFO2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
-    { label: 'MFO2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
-    { label: 'PG15', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1637558' },
-  ];
+  const [INSTALL_LIST, setINSTALL_LIST] = useState([]);
 
   const [licSubTab, setLicSubTab] = useState('my');
   const [licenseTasks, setLicenseTasks] = useState([]);
@@ -533,6 +528,18 @@ export default function App() {
     if (!currentUsername) return;
     loadUserProfile();
     loadNotes();
+    sb.rpc('get_setting', { p_key: 'install_list' }).then(({ data }) => {
+      if (data) {
+        try { setINSTALL_LIST(JSON.parse(data)); } catch {}
+      } else {
+        setINSTALL_LIST([
+          { label: 'MFO2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
+          { label: 'MFO2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
+          { label: 'MFO2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
+          { label: 'PG15',    url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1637558' },
+        ]);
+      }
+    });
     const onVisibility = () => { if (!document.hidden) loadNotes(); };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
@@ -2198,7 +2205,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v313</span>
+              <span className="sidebar-title">Clickpad_v314</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">

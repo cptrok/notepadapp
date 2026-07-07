@@ -36,6 +36,9 @@ export default function Admin() {
   // 시스템설정
   const [ngrokUrl, setNgrokUrl] = useState('');
   const [settingMsg, setSettingMsg] = useState({ text: '', type: '' });
+  const [installList, setInstallList] = useState([]);
+  const [installForm, setInstallForm] = useState({ label: '', url: '' });
+  const [installMsg, setInstallMsg] = useState({ text: '', type: '' });
 
   useEffect(() => {
     const saved = localStorage.getItem('memo_user');
@@ -45,8 +48,21 @@ export default function Admin() {
   }, []);
 
   async function loadSettings() {
-    const { data } = await sb.rpc('get_setting', { p_key: 'ngrok_url' });
-    if (data) setNgrokUrl(data);
+    const { data: ngrok } = await sb.rpc('get_setting', { p_key: 'ngrok_url' });
+    if (ngrok) setNgrokUrl(ngrok);
+    const { data: il } = await sb.rpc('get_setting', { p_key: 'install_list' });
+    if (il) {
+      try { setInstallList(JSON.parse(il)); } catch {}
+    } else {
+      // 기본값 초기화
+      const defaults = [
+        { label: 'MFO2512', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-3553238' },
+        { label: 'MFO2506', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-2790418' },
+        { label: 'MFO2407', url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1796658' },
+        { label: 'PG15',    url: 'https://app.clickup.com/25540965/v/dc/rbeb5-194122/rbeb5-1637558' },
+      ];
+      setInstallList(defaults);
+    }
   }
 
   async function saveNgrokUrl() {
@@ -57,6 +73,30 @@ export default function Admin() {
       setSettingMsg({ text: '저장됐습니다.', type: 'success' });
     }
     setTimeout(() => setSettingMsg({ text: '', type: '' }), 3000);
+  }
+
+  async function saveInstallList(list) {
+    const { error } = await sb.rpc('update_setting', { p_key: 'install_list', p_value: JSON.stringify(list) });
+    if (error) {
+      setInstallMsg({ text: '저장 실패: ' + error.message, type: 'error' });
+    } else {
+      setInstallMsg({ text: '저장됐습니다.', type: 'success' });
+    }
+    setTimeout(() => setInstallMsg({ text: '', type: '' }), 3000);
+  }
+
+  function addInstallItem() {
+    if (!installForm.label.trim() || !installForm.url.trim()) return;
+    const newList = [...installList, { label: installForm.label.trim(), url: installForm.url.trim() }];
+    setInstallList(newList);
+    setInstallForm({ label: '', url: '' });
+    saveInstallList(newList);
+  }
+
+  function removeInstallItem(idx) {
+    const newList = installList.filter((_, i) => i !== idx);
+    setInstallList(newList);
+    saveInstallList(newList);
   }
 
   function logout() {
@@ -157,7 +197,7 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v313</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v314</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>
@@ -347,6 +387,58 @@ export default function Admin() {
                   저장
                 </button>
                 {settingMsg.text && <div className={`settings-message ${settingMsg.type}`}>{settingMsg.text}</div>}
+              </div>
+
+              <hr style={{ margin: '28px 0', borderColor: 'var(--border)' }} />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontWeight: 600, fontSize: '14px' }}>설치파일 리스트 관리</label>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
+                  ClickUp 메뉴 → 설치파일 탭에 표시되는 항목을 관리합니다.
+                </div>
+
+                {/* 현재 리스트 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                  {installList.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}>
+                      <span style={{ fontWeight: 600, minWidth: '80px' }}>{item.label}</span>
+                      <span style={{ flex: 1, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '11px' }}>{item.url}</span>
+                      <button onClick={() => removeInstallItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', fontSize: '16px', lineHeight: 1, padding: '0 4px' }}>✕</button>
+                    </div>
+                  ))}
+                  {installList.length === 0 && <div style={{ color: '#aaa', fontSize: '13px' }}>항목이 없습니다.</div>}
+                </div>
+
+                {/* 추가 폼 */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#888' }}>이름</span>
+                    <input
+                      value={installForm.label}
+                      onChange={e => setInstallForm(f => ({ ...f, label: e.target.value }))}
+                      placeholder="예: MFO2601"
+                      style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', width: '110px' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                    <span style={{ fontSize: '11px', color: '#888' }}>ClickUp Doc URL</span>
+                    <input
+                      value={installForm.url}
+                      onChange={e => setInstallForm(f => ({ ...f, url: e.target.value }))}
+                      placeholder="https://app.clickup.com/..."
+                      style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', width: '100%' }}
+                    />
+                  </div>
+                  <button
+                    className="btn-success"
+                    onClick={addInstallItem}
+                    disabled={!installForm.label.trim() || !installForm.url.trim()}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    추가
+                  </button>
+                </div>
+                {installMsg.text && <div className={`settings-message ${installMsg.type}`}>{installMsg.text}</div>}
               </div>
             </div>
           )}
