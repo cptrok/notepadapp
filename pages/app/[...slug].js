@@ -1483,6 +1483,11 @@ export default function App() {
     setCuSubTab(tab);
     setCuDetail(null);
     if (tab === 'my' && !myTasksLoaded) fetchMyTasks(false);
+    if (tab === 'install') {
+      sb.rpc('get_setting', { p_key: 'install_list' }).then(({ data }) => {
+        if (data) { try { setINSTALL_LIST(JSON.parse(data)); } catch {} }
+      });
+    }
   }
 
   async function loadInstallDoc(item) {
@@ -2205,7 +2210,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v314</span>
+              <span className="sidebar-title">Clickpad_v315</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
