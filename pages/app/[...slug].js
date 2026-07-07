@@ -366,6 +366,7 @@ export default function App() {
   const [licDetail, setLicDetail] = useState(null);
   const [trialDocId, setTrialDocId] = useState('rbeb5-147183');
   const [trialPages, setTrialPages] = useState(null);
+  const [trialLoading, setTrialLoading] = useState(false);
   const [trialSelectedQuarter, setTrialSelectedQuarter] = useState(null);
   const [trialPanel, setTrialPanel] = useState(null);
 
@@ -1161,15 +1162,21 @@ export default function App() {
     setTrialPanel(null);
     if (trialPagesCache.current[docId]) { setTrialPages(trialPagesCache.current[docId]); return; }
     setTrialPages(null);
+    setTrialLoading(true);
     try {
-      const res = await fetch(`https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`, { headers: { Authorization: clickupTokenRef.current } });
+      const res = await fetch(`https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages`, { headers: { Authorization: clickupTokenRef.current }, signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       const sourcePages = Array.isArray(data) ? data : (data.pages || []);
       const nested = sourcePages.flatMap(p => p.pages || []);
       const pages = nested.filter(p => /^\d{4}\/\dQ$/.test(p.name)).sort((a, b) => b.name.localeCompare(a.name)).slice(0, 2);
       trialPagesCache.current[docId] = pages;
       setTrialPages(pages);
-    } catch (e) { setTrialPages([]); }
+    } catch (e) {
+      console.error('트라이얼 페이지 로드 실패:', e);
+      setTrialPages([]);
+    } finally {
+      setTrialLoading(false);
+    }
   }
 
   async function loadTrialPage(docId, pageId, pageName) {
@@ -1180,7 +1187,7 @@ export default function App() {
     try {
       const res = await fetch(
         `https://api.clickup.com/api/v3/workspaces/${TEAM_ID}/docs/${docId}/pages/${pageId}?content_format=text%2Fmd`,
-        { headers: { Authorization: clickupTokenRef.current } }
+        { headers: { Authorization: clickupTokenRef.current }, signal: AbortSignal.timeout(15000) }
       );
       const data = await res.json();
       const content = data.content || data.pages?.[0]?.content || '';
@@ -2259,7 +2266,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v322</span>
+              <span className="sidebar-title">Clickpad_v323</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2579,8 +2586,8 @@ export default function App() {
               )}
               {licSubTab === 'trial' && (
                 <>
-                  {trialPages === null && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
-                  {trialPages && trialPages.length === 0 && <div className="empty-list">분기 데이터가 없습니다.</div>}
+                  {trialLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
+                  {!trialLoading && trialPages !== null && trialPages.length === 0 && <div className="empty-list">분기 데이터가 없습니다.</div>}
                   {trialPages && trialPages.map(p => (
                     <div key={p.id} className={`trial-quarter-item ${p.id === trialSelectedQuarter ? 'active' : ''}`}
                       onClick={() => loadTrialPage(trialDocId, p.id, p.name)}>
