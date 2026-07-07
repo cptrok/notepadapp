@@ -2259,7 +2259,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v320</span>
+              <span className="sidebar-title">Clickpad_v321</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2893,8 +2893,10 @@ export default function App() {
                     <div key={i}>
                       <div className="trial-section-title">{s.name}</div>
                       {s.files.map((f, j) => (
-                        <button key={j} className="attachment-dl-btn" style={{ marginBottom: '8px', display: 'block' }}
-                          onClick={() => downloadAttachment(f.url, f.name)}>📎 {f.name}</button>
+                        <div key={j} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                          <button className="attachment-dl-btn" onClick={() => downloadAttachment(f.url, f.name)}>📎 {f.name}</button>
+                          <button onClick={() => { setLicEmailToInput(''); setLicEmailModal({ url: f.url, filename: f.name }); }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#0066cc', cursor: 'pointer', whiteSpace: 'nowrap' }}>메일 전송</button>
+                        </div>
                       ))}
                     </div>
                   ))}
