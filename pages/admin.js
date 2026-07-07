@@ -157,7 +157,7 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v312</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v313</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>

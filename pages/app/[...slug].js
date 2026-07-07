@@ -454,7 +454,7 @@ export default function App() {
   ];
 
   const [cuRegModal, setCuRegModal] = useState(false);
-  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '', imageUrls: [], attachImages: false, extraAssignees: [] });
+  const [cuRegForm, setCuRegForm] = useState({ product: 'MFO', productLabels: ['MFO'], taskName: '', customer: '', issueType: 'eb4f762b-f3b4-4d27-a900-27918626ebe4', description: '', customerSearch: '', imageUrls: [], mmFileIds: [], attachImages: false, extraAssignees: [] });
   const [cuRegLoading, setCuRegLoading] = useState(false);
   const [cuRegMsg, setCuRegMsg] = useState('');
   const [cuRegTaskId, setCuRegTaskId] = useState('');
@@ -1801,7 +1801,7 @@ export default function App() {
   }
 
 
-  function openCuRegModal(overrideTitle, overrideText, overrideImageUrls) {
+  function openCuRegModal(overrideTitle, overrideText, overrideImageUrls, overrideMmFileIds) {
     const title = overrideTitle ?? (noteTitleRef.current || '');
     const text = overrideText ?? (quillRef.current ? quillRef.current.getText().trim() : '');
     let taskName = title;
@@ -1849,9 +1849,10 @@ export default function App() {
     const detectedCustomer = customerKeyword
       ? DEQ_CUSTOMERS.find(c => c.name.includes(customerKeyword) || customerKeyword.includes(c.name))
       : null;
+    const mmFileIds = overrideMmFileIds ?? [];
     setCuRegForm(f => ({
       ...f,
-      taskName, description, imageUrls, attachImages: imageUrls.length > 0, extraAssignees: [],
+      taskName, description, imageUrls, mmFileIds, attachImages: imageUrls.length > 0 || mmFileIds.length > 0, extraAssignees: [],
       customerSearch: detectedCustomer ? detectedCustomer.name : '',
       customer: detectedCustomer ? detectedCustomer.id : '',
       ...(nextProduct ? { product: nextProduct, productLabels: [nextProduct] } : {}),
@@ -1905,7 +1906,7 @@ export default function App() {
         }
       }
       let imageMsg = '';
-      if (data.id && cuRegForm.attachImages && cuRegForm.imageUrls.length > 0) {
+      if (data.id && cuRegForm.attachImages) {
         let ok = 0, fail = 0;
         for (const url of cuRegForm.imageUrls) {
           try {
@@ -1924,7 +1925,33 @@ export default function App() {
             }
           } catch { fail++; }
         }
-        imageMsg = ` | 이미지 ${ok}개 첨부${fail > 0 ? ` (${fail}개 실패)` : ''}`;
+        for (const fileId of (cuRegForm.mmFileIds || [])) {
+          try {
+            const fileRes = await fetch(`/api/mattermost?action=file&fileId=${fileId}`, {
+              headers: { 'x-mm-token': mmTokenRef.current },
+            });
+            if (!fileRes.ok) { fail++; continue; }
+            const blob = await fileRes.blob();
+            const contentDisposition = fileRes.headers.get('content-disposition') || '';
+            const nameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            let fileName = nameMatch ? nameMatch[1].replace(/['"]/g, '') : '';
+            if (!fileName) {
+              const extMap = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
+              const ext = extMap[blob.type] || 'png';
+              fileName = `image_${fileId}.${ext}`;
+            }
+            const fd = new FormData();
+            fd.append('attachment', blob, fileName);
+            const ar = await fetch(`https://api.clickup.com/api/v2/task/${data.id}/attachment`, {
+              method: 'POST',
+              headers: { Authorization: clickupTokenRef.current },
+              body: fd,
+            });
+            ar.ok ? ok++ : fail++;
+          } catch { fail++; }
+        }
+        const total = cuRegForm.imageUrls.length + (cuRegForm.mmFileIds?.length || 0);
+        if (total > 0) imageMsg = ` | 이미지 ${ok}개 첨부${fail > 0 ? ` (${fail}개 실패)` : ''}`;
       }
       setCuRegTaskId(data.id);
       setCuRegMsg('✅ 등록 완료!' + imageMsg);
@@ -2171,7 +2198,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v312</span>
+              <span className="sidebar-title">Clickpad_v313</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2849,7 +2876,7 @@ export default function App() {
                   <div style={{ marginBottom: mmDateSummaryCollapsed[mmSelectedChannel?.id] ? 0 : '6px' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', marginBottom: '6px' }}>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => saveToNote(`${mmChannelDisplayName(mmSelectedChannel)} - ${(mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일')}`, mmDateSummary[mmSelectedChannel.id], mmDateImageIds[mmSelectedChannel?.id] || [], mmTokenRef.current)}>📋 메모저장</button>
-                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#0066cc', padding: '2px 7px', fontWeight: 600 }} onClick={() => { const dateLabel = (mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일'); openCuRegModal(`${mmChannelDisplayName(mmSelectedChannel)} - ${dateLabel}`, mmDateSummary[mmSelectedChannel.id], []); }}>📋 ClickUp 등록</button>
+                      <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#0066cc', padding: '2px 7px', fontWeight: 600 }} onClick={() => { const dateLabel = (mmDateInputs[mmSelectedChannel?.id] || '').replace(/(\d{4})-(\d{2})-(\d{2})/, '$1년 $2월 $3일'); openCuRegModal(`${mmChannelDisplayName(mmSelectedChannel)} - ${dateLabel}`, mmDateSummary[mmSelectedChannel.id], [], mmDateImageIds[mmSelectedChannel?.id] || []); }}>📋 ClickUp 등록</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: '#7c3aed', padding: '2px 7px', fontWeight: 600 }} onClick={() => openCuCommentModal(mmDateSummary[mmSelectedChannel.id], mmDateImageIds[mmSelectedChannel?.id] || [])}>💬 태스크에 댓글</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={mmSummarizeByDate} disabled={mmDateSummarizing}>🔄 다시 요약하기</button>
                       <button style={{ background: 'var(--bg, #fff)', border: '1px solid var(--border, #ddd)', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', color: 'var(--text, #333)', padding: '2px 7px' }} onClick={() => setMmDateSummaryCollapsed(prev => ({ ...prev, [mmSelectedChannel.id]: !prev[mmSelectedChannel.id] }))}>{mmDateSummaryCollapsed[mmSelectedChannel?.id] ? '▼' : '▲'}</button>
