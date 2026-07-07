@@ -555,7 +555,7 @@ export default function App() {
     if (section === 'note') setCurrentTab('notes');
     else if (section === 'clickup') setCurrentTab('clickup');
     else if (section === 'license') setCurrentTab('license');
-    else if (section === 'trial') { setCurrentTab('license'); setLicSubTab('trial'); }
+    else if (section === 'trial') { setCurrentTab('license'); setLicSubTab('trial'); loadTrialPages(trialDocId); }
     else if (section === 'chat') setCurrentTab('chat');
     else if (section === 'faq') setCurrentTab('faq');
     else if (section === 'feedback') { setCurrentTab('feedback'); loadFeedbackList(); }
@@ -1407,7 +1407,10 @@ export default function App() {
     setLicDetail(null);
     setTrialPanel(null);
     setFaqDetail(null);
-    if (tab === 'license') loadLicenseTasks();
+    if (tab === 'license') {
+      if (licSubTab === 'trial') loadTrialPages(trialDocId);
+      else loadLicenseTasks();
+    }
     if (tab === 'clickup' && cuSubTab === 'my' && !myTasksLoaded) fetchMyTasks(false);
     if (tab === 'chat' && mmTokenRef.current && mmChannels.length === 0) mmLoadChannels();
     if (tab === 'faq' && faqAllItemsRef.current.length === 0) loadFaqList('', 0, true);
@@ -2266,7 +2269,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v323</span>
+              <span className="sidebar-title">Clickpad_v324</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
