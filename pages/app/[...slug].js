@@ -1499,9 +1499,9 @@ export default function App() {
     } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
-  function openEmailModal(version) {
+  function openEmailModal(version, mode = 'drive') {
     setEmailToInput('');
-    setEmailModal({ version });
+    setEmailModal({ version, mode });
   }
 
   async function sendInstallEmail() {
@@ -1515,7 +1515,7 @@ export default function App() {
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ version: emailModal.version, to }),
+        body: JSON.stringify({ version: emailModal.version, to, mode: emailModal.mode || 'drive' }),
       });
       const data = await res.json();
       setEmailMsg(data.ok ? { type: 'ok', text: '메일 전송 완료' } : { type: 'err', text: data.error || '전송 실패' });
@@ -2071,7 +2071,7 @@ export default function App() {
       {emailModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '16px' }}>📧 메일 전송 — {emailModal.version}</div>
+            <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '16px' }}>📧 메일 전송 — {emailModal.mode === 'direct' ? '라이선스 파일' : emailModal.version}</div>
             <div style={{ fontSize: '13px', marginBottom: '8px', color: 'var(--text-sub, #666)' }}>받는 사람 이메일</div>
             <input
               autoFocus
@@ -2197,7 +2197,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v316</span>
+              <span className="sidebar-title">Clickpad_v317</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2399,6 +2399,14 @@ export default function App() {
                 <div className="sidebar-tabs" style={{ marginBottom: 0 }}>
                   <button className={`tab-btn ${licSubTab === 'my' ? 'active' : ''}`} onClick={() => switchLicTab('my')}>내 태스크</button>
                   <button className={`tab-btn ${licSubTab === 'trial' ? 'active' : ''}`} onClick={() => switchLicTab('trial')}>주기적 트라이얼</button>
+                </div>
+                <div style={{ padding: '0 4px' }}>
+                  <button
+                    onClick={() => openEmailModal('', 'direct')}
+                    disabled={emailSending}
+                    style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+                    📧 라이선스 파일 메일 전송
+                  </button>
                 </div>
                 {licSubTab === 'trial' && (
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
