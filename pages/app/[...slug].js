@@ -350,8 +350,11 @@ export default function App() {
   const [installSelected, setInstallSelected] = useState(null);
   const [emailSending, setEmailSending] = useState(false);
   const [emailMsg, setEmailMsg] = useState(null);
-  const [emailModal, setEmailModal] = useState(null); // { version } | null
+  const [emailModal, setEmailModal] = useState(null); // { version, mode } | null
   const [emailToInput, setEmailToInput] = useState('');
+  const [licEmailModal, setLicEmailModal] = useState(null); // { url, filename } | null
+  const [licEmailToInput, setLicEmailToInput] = useState('');
+  const [licEmailSending, setLicEmailSending] = useState(false);
 
   const [INSTALL_LIST, setINSTALL_LIST] = useState([]);
 
@@ -1237,6 +1240,27 @@ export default function App() {
     } catch (e) { setCuDocPanel({ error: e.message }); }
   }
 
+  async function sendLicenseEmail() {
+    if (licEmailSending || !licEmailModal) return;
+    const to = licEmailToInput.trim();
+    if (!to) return;
+    setLicEmailModal(null);
+    setLicEmailSending(true);
+    try {
+      const res = await fetch('/api/send-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: licEmailModal.url, filename: licEmailModal.filename, to }),
+      });
+      const data = await res.json();
+      showToastMsg(data.ok ? '라이선스 메일 전송 완료' : '전송 실패: ' + (data.error || ''));
+    } catch (e) {
+      showToastMsg('전송 실패: ' + e.message);
+    } finally {
+      setLicEmailSending(false);
+    }
+  }
+
   async function downloadAttachment(url, filename) {
     try {
       const res = await fetch(url);
@@ -2078,6 +2102,34 @@ export default function App() {
           <span style={{ color: '#fff', fontSize: '15px', fontWeight: 600 }}>메일 전송 중...</span>
         </div>
       )}
+      {licEmailSending && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 3000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          <div style={{ width: '48px', height: '48px', border: '5px solid rgba(255,255,255,0.3)', borderTop: '5px solid #fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span style={{ color: '#fff', fontSize: '15px', fontWeight: 600 }}>라이선스 메일 전송 중...</span>
+        </div>
+      )}
+      {licEmailModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '8px' }}>📧 라이선스 파일 메일 전송</div>
+            <div style={{ fontSize: '12px', color: '#888', marginBottom: '16px', wordBreak: 'break-all' }}>📎 {licEmailModal.filename}</div>
+            <div style={{ fontSize: '13px', marginBottom: '8px', color: 'var(--text-sub, #666)' }}>받는 사람 이메일</div>
+            <input
+              autoFocus
+              type="email"
+              value={licEmailToInput}
+              onChange={e => setLicEmailToInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') sendLicenseEmail(); if (e.key === 'Escape') setLicEmailModal(null); }}
+              placeholder="example@domain.com"
+              style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', boxSizing: 'border-box', marginBottom: '16px' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setLicEmailModal(null)} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}>취소</button>
+              <button onClick={sendLicenseEmail} disabled={!licEmailToInput.trim()} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: 'var(--primary, #4f6ef7)', color: '#fff', cursor: licEmailToInput.trim() ? 'pointer' : 'not-allowed', opacity: licEmailToInput.trim() ? 1 : 0.5 }}>전송</button>
+            </div>
+          </div>
+        </div>
+      )}
       {emailModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
@@ -2207,7 +2259,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v318</span>
+              <span className="sidebar-title">Clickpad_v319</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2819,7 +2871,10 @@ export default function App() {
                       <div className="task-attachments-title">첨부파일</div>
                       <div className="task-attachments-grid">
                         {licDetail.task.attachments.map((a, i) => (
-                          <button key={i} className="attachment-dl-btn" onClick={() => downloadAttachment(a.url, a.title)}>📎 {a.title}</button>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button className="attachment-dl-btn" onClick={() => downloadAttachment(a.url, a.title)}>📎 {a.title}</button>
+                            <button onClick={() => { setLicEmailToInput(''); setLicEmailModal({ url: a.url, filename: a.title }); }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#0066cc', cursor: 'pointer', whiteSpace: 'nowrap' }}>📧 메일</button>
+                          </div>
                         ))}
                       </div>
                     </div>
