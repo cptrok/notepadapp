@@ -2277,7 +2277,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v329</span>
+              <span className="sidebar-title">Clickpad_v330</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2325,58 +2325,61 @@ export default function App() {
                       <span>검색 조건</span>
                       <span>{cuFilterOpen ? '▲' : '▼'}</span>
                     </div>
-                    {cuFilterOpen && <div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        <button onClick={() => { setCuProductFilter([]); cuProductFilterRef.current = []; }}
-                          style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: cuProductFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: cuProductFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: cuProductFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
-                          All
-                        </button>
-                        {Object.keys(DEQ_LABEL_MAP).map(name => {
-                          const selected = cuProductFilter.includes(name);
-                          return (
-                            <button key={name} onClick={() => {
-                              const next = selected ? cuProductFilter.filter(x => x !== name) : [...cuProductFilter, name];
-                              setCuProductFilter(next);
-                              cuProductFilterRef.current = next;
-                            }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: selected ? 'var(--text-muted)' : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
-                              {name}
+                    {cuFilterOpen && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            <button onClick={() => { setCuProductFilter([]); cuProductFilterRef.current = []; }}
+                              style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: cuProductFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: cuProductFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: cuProductFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                              All
                             </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {cuStatuses.length > 0 && (
-                      <div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>상태</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          <button onClick={() => { setCuStatusFilter([]); cuStatusFilterRef.current = []; }}
-                            style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: cuStatusFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: cuStatusFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: cuStatusFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
-                            All
-                          </button>
-                          {cuStatuses.map(s => {
-                            const selected = cuStatusFilter.includes(s.status);
-                            return (
-                              <button key={s.status} onClick={() => {
-                                const next = selected ? cuStatusFilter.filter(x => x !== s.status) : [...cuStatusFilter, s.status];
-                                setCuStatusFilter(next);
-                                cuStatusFilterRef.current = next;
-                              }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: `1px solid ${s.color || '#aaa'}`, background: selected ? (s.color || '#aaa') : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
-                                {s.status}
+                            {Object.keys(DEQ_LABEL_MAP).map(name => {
+                              const selected = cuProductFilter.includes(name);
+                              return (
+                                <button key={name} onClick={() => {
+                                  const next = selected ? cuProductFilter.filter(x => x !== name) : [...cuProductFilter, name];
+                                  setCuProductFilter(next);
+                                  cuProductFilterRef.current = next;
+                                }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: selected ? 'var(--text-muted)' : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                                  {name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {cuStatuses.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>상태</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              <button onClick={() => { setCuStatusFilter([]); cuStatusFilterRef.current = []; }}
+                                style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: cuStatusFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: cuStatusFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: cuStatusFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                                All
                               </button>
-                            );
-                          })}
+                              {cuStatuses.map(s => {
+                                const selected = cuStatusFilter.includes(s.status);
+                                return (
+                                  <button key={s.status} onClick={() => {
+                                    const next = selected ? cuStatusFilter.filter(x => x !== s.status) : [...cuStatusFilter, s.status];
+                                    setCuStatusFilter(next);
+                                    cuStatusFilterRef.current = next;
+                                  }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: `1px solid ${s.color || '#aaa'}`, background: selected ? (s.color || '#aaa') : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                                    {s.status}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <input className="search-box" type="text" placeholder="검색어 입력"
+                            value={cuSearchInput} onChange={e => setCuSearchInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && fetchTasksByKeyword(cuSearchInput)}
+                            style={{ margin: 0, flex: 1, width: 0 }} />
+                          <button className="btn-search-clickup" onClick={() => fetchTasksByKeyword(cuSearchInput)}>🔍</button>
                         </div>
                       </div>
                     )}
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <input className="search-box" type="text" placeholder="검색어 입력"
-                        value={cuSearchInput} onChange={e => setCuSearchInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && fetchTasksByKeyword(cuSearchInput)}
-                        style={{ margin: 0, flex: 1, width: 0 }} />
-                      <button className="btn-search-clickup" onClick={() => fetchTasksByKeyword(cuSearchInput)}>🔍</button>
-                    </div>
-                    </div>}
                   </div>
                 )}
                 {cuSubTab === 'my' && (
@@ -2385,56 +2388,59 @@ export default function App() {
                       <span>검색 조건</span>
                       <span>{cuFilterOpen ? '▲' : '▼'}</span>
                     </div>
-                    {cuFilterOpen && <div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        <button onClick={() => { setMyProductFilter([]); myProductFilterRef.current = []; applyMyFilters(); }}
-                          style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: myProductFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: myProductFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: myProductFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
-                          All
-                        </button>
-                        {Object.keys(DEQ_LABEL_MAP).map(name => {
-                          const selected = myProductFilter.includes(name);
-                          return (
-                            <button key={name} onClick={() => {
-                              const next = selected ? myProductFilter.filter(x => x !== name) : [...myProductFilter, name];
-                              setMyProductFilter(next); myProductFilterRef.current = next; applyMyFilters();
-                            }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: selected ? 'var(--text-muted)' : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
-                              {name}
+                    {cuFilterOpen && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            <button onClick={() => { setMyProductFilter([]); myProductFilterRef.current = []; applyMyFilters(); }}
+                              style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: myProductFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: myProductFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: myProductFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                              All
                             </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {cuStatuses.length > 0 && (
-                      <div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>상태</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          <button onClick={() => { setMyStatusFilter([]); myStatusFilterRef.current = []; applyMyFilters(); }}
-                            style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: myStatusFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: myStatusFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: myStatusFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
-                            All
-                          </button>
-                          {cuStatuses.map(s => {
-                            const selected = myStatusFilter.includes(s.status);
-                            return (
-                              <button key={s.status} onClick={() => {
-                                const next = selected ? myStatusFilter.filter(x => x !== s.status) : [...myStatusFilter, s.status];
-                                setMyStatusFilter(next); myStatusFilterRef.current = next; applyMyFilters();
-                              }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: `1px solid ${s.color || '#aaa'}`, background: selected ? (s.color || '#aaa') : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
-                                {s.status}
+                            {Object.keys(DEQ_LABEL_MAP).map(name => {
+                              const selected = myProductFilter.includes(name);
+                              return (
+                                <button key={name} onClick={() => {
+                                  const next = selected ? myProductFilter.filter(x => x !== name) : [...myProductFilter, name];
+                                  setMyProductFilter(next); myProductFilterRef.current = next; applyMyFilters();
+                                }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: selected ? 'var(--text-muted)' : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                                  {name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {cuStatuses.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>상태</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              <button onClick={() => { setMyStatusFilter([]); myStatusFilterRef.current = []; applyMyFilters(); }}
+                                style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: '1px solid var(--border)', background: myStatusFilter.length === 0 ? 'var(--text-muted)' : 'transparent', color: myStatusFilter.length === 0 ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: myStatusFilter.length === 0 ? 700 : 400, transition: 'all 0.15s' }}>
+                                All
                               </button>
-                            );
-                          })}
+                              {cuStatuses.map(s => {
+                                const selected = myStatusFilter.includes(s.status);
+                                return (
+                                  <button key={s.status} onClick={() => {
+                                    const next = selected ? myStatusFilter.filter(x => x !== s.status) : [...myStatusFilter, s.status];
+                                    setMyStatusFilter(next); myStatusFilterRef.current = next; applyMyFilters();
+                                  }} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', border: `1px solid ${s.color || '#aaa'}`, background: selected ? (s.color || '#aaa') : 'transparent', color: selected ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: selected ? 700 : 400, transition: 'all 0.15s' }}>
+                                    {s.status}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <input className="search-box" type="text" placeholder="내 태스크 검색..."
+                            value={mySearchInput}
+                            onChange={e => { setMySearchInput(e.target.value); filterMyTasks(e.target.value); }}
+                            style={{ margin: 0, flex: 1, width: 0 }} />
+                          <button className="btn-search-clickup" onClick={() => fetchMyTasks(true)}>🔍</button>
                         </div>
                       </div>
                     )}
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <input className="search-box" type="text" placeholder="내 태스크 검색..."
-                      value={mySearchInput}
-                      onChange={e => { setMySearchInput(e.target.value); filterMyTasks(e.target.value); }}
-                      style={{ margin: 0, flex: 1, width: 0 }} />
-                    <button className="btn-search-clickup" onClick={() => fetchMyTasks(true)}>🔍</button>
-                  </div>
-                    </div>}
                   </div>
                 )}
                 {cuSubTab === 'doc' && (
