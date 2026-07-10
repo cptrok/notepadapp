@@ -1611,7 +1611,19 @@ export default function App() {
       });
       const data = await res.json();
       if (data.error) { setInstallPanel({ error: data.error }); return; }
-      setInstallPanel({ name: data.name || item.label, content: data.content || '' });
+      // 마크다운에서 파일 첨부 링크 추출
+      const content = data.content || '';
+      const attachments = [];
+      const linkRe = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+      let m;
+      while ((m = linkRe.exec(content)) !== null) {
+        const name = m[1], url = m[2];
+        if (/\.(tar|gz|zip|exe|msi|pkg|deb|rpm|jar|war|ear|bin|dmg|sh)(\?.*)?$/i.test(url) ||
+            /\.(tar|gz|zip|exe|msi|pkg|deb|rpm|jar|war|ear|bin|dmg|sh)$/i.test(name)) {
+          attachments.push({ name, url });
+        }
+      }
+      setInstallPanel({ name: data.name || item.label, content, attachments });
     } catch (e) { setInstallPanel({ error: e.message }); }
   }
 
@@ -2408,7 +2420,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v349</span>
+              <span className="sidebar-title">Clickpad_v350</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2912,6 +2924,24 @@ export default function App() {
                         ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderContent(installPanel.content) }} />
                         : <div style={{ color: '#888', padding: '16px' }}>내용이 없습니다.</div>
                       }
+                      {installPanel.attachments?.length > 0 && (
+                        <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                          <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '8px' }}>첨부파일</div>
+                          {installPanel.attachments.map((att, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '13px', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {att.name}</span>
+                              <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                                <button style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                  구글메일 전송
+                                </button>
+                                <button style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#cc6600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                  그룹웨어메일 전송
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </>
               }
             </div>
