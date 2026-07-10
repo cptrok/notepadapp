@@ -360,6 +360,10 @@ export default function App() {
   const [gwMailToInput, setGwMailToInput] = useState('');
   const [gwMailSending, setGwMailSending] = useState(false);
   const [gwMailMsg, setGwMailMsg] = useState(null);
+  const [attachMailModal, setAttachMailModal] = useState(null); // { att: {name,url}, mode: 'google'|'gw' } | null
+  const [attachMailTo, setAttachMailTo] = useState('');
+  const [attachMailSending, setAttachMailSending] = useState(false);
+  const [attachMailMsg, setAttachMailMsg] = useState(null);
 
   const [INSTALL_LIST, setINSTALL_LIST] = useState([]);
 
@@ -1666,6 +1670,46 @@ export default function App() {
     }
   }
 
+  function openAttachMailModal(att, mode) {
+    setAttachMailTo(currentUsername ? `${currentUsername}@ex-em.com` : '');
+    setAttachMailModal({ att, mode });
+  }
+
+  async function sendAttachMail() {
+    if (attachMailSending || !attachMailModal) return;
+    const to = attachMailTo.trim();
+    if (!to) return;
+    const { att, mode } = attachMailModal;
+    if (mode === 'gw' && !gwSessionRef.current) {
+      setAttachMailMsg({ type: 'err', text: '그룹웨어 세션(GOSSOcookie)이 설정되지 않았습니다.' });
+      setAttachMailModal(null);
+      return;
+    }
+    setAttachMailModal(null);
+    setAttachMailSending(true);
+    setAttachMailMsg(null);
+    try {
+      const endpoint = mode === 'gw' ? '/api/gw-send-email-from-url' : '/api/send-email-from-url';
+      const payload = mode === 'gw'
+        ? { url: att.url, filename: att.name, to, gossoCookie: gwSessionRef.current, clickupToken: clickupTokenRef.current }
+        : { url: att.url, filename: att.name, to, clickupToken: clickupTokenRef.current };
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      setAttachMailMsg(data.ok
+        ? { type: 'ok', text: (mode === 'gw' ? '그룹웨어 ' : '구글') + '메일 전송 완료' }
+        : { type: 'err', text: data.error || '전송 실패' });
+    } catch (e) {
+      setAttachMailMsg({ type: 'err', text: e.message });
+    } finally {
+      setAttachMailSending(false);
+      setTimeout(() => setAttachMailMsg(null), 5000);
+    }
+  }
+
   async function sendInstallEmail() {
     if (emailSending || !emailModal) return;
     const to = emailToInput.trim();
@@ -2312,6 +2356,36 @@ export default function App() {
           </div>
         </div>
       )}
+      {attachMailSending && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 3000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          <div style={{ width: '48px', height: '48px', border: '5px solid rgba(255,255,255,0.3)', borderTop: '5px solid #fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span style={{ color: '#fff', fontSize: '15px', fontWeight: 600 }}>메일 전송 중...</span>
+        </div>
+      )}
+      {attachMailModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '420px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '4px' }}>
+              {attachMailModal.mode === 'gw' ? '📧 그룹웨어메일 전송' : '📧 구글메일 전송'}
+            </div>
+            <div style={{ fontSize: '12px', color: '#888', marginBottom: '16px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {attachMailModal.att.name}</div>
+            <div style={{ fontSize: '13px', marginBottom: '8px', color: 'var(--text-sub, #666)' }}>받는 사람 이메일</div>
+            <input
+              autoFocus
+              type="email"
+              value={attachMailTo}
+              onChange={e => setAttachMailTo(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') sendAttachMail(); if (e.key === 'Escape') setAttachMailModal(null); }}
+              placeholder="example@domain.com"
+              style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', boxSizing: 'border-box', marginBottom: '16px' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setAttachMailModal(null)} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}>취소</button>
+              <button onClick={sendAttachMail} disabled={!attachMailTo.trim()} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: attachMailModal.mode === 'gw' ? '#cc6600' : 'var(--primary, #4f6ef7)', color: '#fff', cursor: attachMailTo.trim() ? 'pointer' : 'not-allowed', opacity: attachMailTo.trim() ? 1 : 0.5 }}>전송</button>
+            </div>
+          </div>
+        </div>
+      )}
       {cuRegModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
@@ -2420,7 +2494,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v351</span>
+              <span className="sidebar-title">Clickpad_v352</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2923,14 +2997,23 @@ export default function App() {
                       {installPanel.attachments?.length > 0 && (
                         <div style={{ marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
                           <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '8px' }}>첨부파일</div>
+                          {attachMailMsg && (
+                            <div style={{ fontSize: '12px', marginBottom: '6px', color: attachMailMsg.type === 'ok' ? 'var(--accent)' : 'red' }}>{attachMailMsg.text}</div>
+                          )}
                           {installPanel.attachments.map((att, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
                               <span style={{ fontSize: '13px', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {att.name}</span>
                               <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                                <button style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                <button
+                                  onClick={() => openAttachMailModal(att, 'google')}
+                                  disabled={attachMailSending}
+                                  style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: attachMailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
                                   구글메일 전송
                                 </button>
-                                <button style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#cc6600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                <button
+                                  onClick={() => openAttachMailModal(att, 'gw')}
+                                  disabled={attachMailSending}
+                                  style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#cc6600', cursor: attachMailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
                                   그룹웨어메일 전송
                                 </button>
                               </div>
