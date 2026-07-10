@@ -413,6 +413,7 @@ export default function App() {
   const [gwLoginOtp, setGwLoginOtp] = useState('');
   const [gwLoginLoading, setGwLoginLoading] = useState(false);
   const [gwLoginMsg, setGwLoginMsg] = useState(null);
+  const [gwLoginSessionId, setGwLoginSessionId] = useState(null);
   const [faqList, setFaqList] = useState([]);
   const [faqLoading, setFaqLoading] = useState(false);
   const [faqDetail, setFaqDetail] = useState(null);
@@ -1446,17 +1447,39 @@ export default function App() {
     setGwLoginLoading(true);
     setGwLoginMsg(null);
     try {
+      // 2단계: sessionId 있고 OTP 입력된 경우
+      if (gwLoginSessionId && gwLoginOtp.trim()) {
+        const res = await fetch('/api/gw-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: gwLoginSessionId, otp: gwLoginOtp.trim() }),
+        });
+        const data = await res.json();
+        if (data.ok && data.gossoCookie) {
+          setSettingsData(p => ({ ...p, gwSession: data.gossoCookie }));
+          setGwLoginSessionId(null);
+          setGwLoginOtp('');
+          setGwLoginMsg({ type: 'ok', text: 'GOSSOcookie 가져오기 성공! 저장 버튼을 눌러주세요.' });
+        } else {
+          setGwLoginSessionId(null);
+          setGwLoginMsg({ type: 'error', text: (data.error || 'OTP 실패') + ' — 다시 로그인부터 시작하세요.' });
+        }
+        return;
+      }
+
+      // 1단계: 아이디/비밀번호로 로그인
       const res = await fetch('/api/gw-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: gwLoginUsername.trim(), password: gwLoginPassword.trim(), otp: gwLoginOtp.trim() || undefined }),
+        body: JSON.stringify({ username: gwLoginUsername.trim(), password: gwLoginPassword.trim() }),
       });
       const data = await res.json();
-      if (data.ok && data.gossoCookie) {
+      if (data.needOtp && data.sessionId) {
+        setGwLoginSessionId(data.sessionId);
+        setGwLoginMsg({ type: 'info', text: 'OTP 6자리를 입력하고 버튼을 다시 눌러주세요.' });
+      } else if (data.ok && data.gossoCookie) {
         setSettingsData(p => ({ ...p, gwSession: data.gossoCookie }));
         setGwLoginMsg({ type: 'ok', text: 'GOSSOcookie 가져오기 성공! 저장 버튼을 눌러주세요.' });
-      } else if (data.needOtp) {
-        setGwLoginMsg({ type: 'error', text: 'OTP 값을 입력 후 다시 시도해주세요.' });
       } else {
         setGwLoginMsg({ type: 'error', text: data.error || '로그인 실패' });
       }
@@ -2311,7 +2334,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v339</span>
+              <span className="sidebar-title">Clickpad_v340</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3250,14 +3273,14 @@ export default function App() {
               placeholder="그룹웨어 비밀번호" style={{ marginBottom: '6px' }} />
             <input type="text" value={gwLoginOtp}
               onChange={e => setGwLoginOtp(e.target.value)}
-              placeholder="OTP 6자리 (필요 시 입력)"
+              placeholder={gwLoginSessionId ? 'OTP 6자리 입력 후 버튼 클릭' : 'OTP 6자리 (2단계에서 입력)'}
               onKeyDown={e => e.key === 'Enter' && fetchGwCookie()} />
             <button onClick={fetchGwCookie} disabled={gwLoginLoading}
-              style={{ marginTop: '8px', padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: 'var(--primary, #4f6ef7)', color: '#fff', cursor: gwLoginLoading ? 'not-allowed' : 'pointer', opacity: gwLoginLoading ? 0.6 : 1 }}>
-              {gwLoginLoading ? '가져오는 중...' : 'GOSSOcookie 자동 가져오기'}
+              style={{ marginTop: '8px', padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: gwLoginSessionId ? '#d97706' : 'var(--primary, #4f6ef7)', color: '#fff', cursor: gwLoginLoading ? 'not-allowed' : 'pointer', opacity: gwLoginLoading ? 0.6 : 1 }}>
+              {gwLoginLoading ? '처리 중...' : gwLoginSessionId ? 'OTP 제출' : '1단계: 로그인'}
             </button>
             {gwLoginMsg && (
-              <div style={{ marginTop: '6px', fontSize: '12px', color: gwLoginMsg.type === 'ok' ? '#22a86e' : '#e53e3e' }}>
+              <div style={{ marginTop: '6px', fontSize: '12px', color: gwLoginMsg.type === 'ok' ? '#22a86e' : gwLoginMsg.type === 'info' ? '#d97706' : '#e53e3e' }}>
                 {gwLoginMsg.text}
               </div>
             )}
