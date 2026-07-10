@@ -39,6 +39,8 @@ export default function Admin() {
   const [installList, setInstallList] = useState([]);
   const [installForm, setInstallForm] = useState({ label: '', url: '' });
   const [installMsg, setInstallMsg] = useState({ text: '', type: '' });
+  const [editingInstallId, setEditingInstallId] = useState(null);
+  const [editingInstallLabel, setEditingInstallLabel] = useState('');
 
   useEffect(() => {
     const saved = localStorage.getItem('memo_user');
@@ -84,6 +86,18 @@ export default function Admin() {
       loadInstallList();
     }
     setTimeout(() => setInstallMsg({ text: '', type: '' }), 3000);
+  }
+
+  async function updateInstallLabel(id, newLabel) {
+    if (!newLabel.trim()) { setEditingInstallId(null); return; }
+    const { error } = await sb.from('install_list').update({ label: newLabel.trim() }).eq('id', id);
+    setEditingInstallId(null);
+    if (error) {
+      setInstallMsg({ text: '수정 실패: ' + error.message, type: 'error' });
+      setTimeout(() => setInstallMsg({ text: '', type: '' }), 3000);
+    } else {
+      loadInstallList();
+    }
   }
 
   async function removeInstallItem(id) {
@@ -194,7 +208,7 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v345</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v346</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>
@@ -398,7 +412,26 @@ export default function Admin() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
                   {installList.map(item => (
                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}>
-                      <span style={{ fontWeight: 600, minWidth: '80px' }}>{item.label}</span>
+                      {editingInstallId === item.id ? (
+                        <input
+                          autoFocus
+                          value={editingInstallLabel}
+                          onChange={e => setEditingInstallLabel(e.target.value)}
+                          onBlur={() => updateInstallLabel(item.id, editingInstallLabel)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') updateInstallLabel(item.id, editingInstallLabel);
+                            if (e.key === 'Escape') setEditingInstallId(null);
+                          }}
+                          style={{ fontWeight: 600, width: '110px', padding: '2px 6px', fontSize: '13px', border: '1px solid var(--border)', borderRadius: '4px' }}
+                        />
+                      ) : (
+                        <span
+                          onClick={() => { setEditingInstallId(item.id); setEditingInstallLabel(item.label); }}
+                          title="클릭하여 수정"
+                          style={{ fontWeight: 600, minWidth: '80px', cursor: 'text', borderBottom: '1px dashed #aaa' }}>
+                          {item.label}
+                        </span>
+                      )}
                       <span style={{ flex: 1, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '11px' }}>{item.url}</span>
                       <button onClick={() => removeInstallItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', fontSize: '16px', lineHeight: 1, padding: '0 4px' }}>✕</button>
                     </div>
