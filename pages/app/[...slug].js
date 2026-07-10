@@ -2276,7 +2276,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v326</span>
+              <span className="sidebar-title">Clickpad_v327</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2461,7 +2461,7 @@ export default function App() {
                       onClick={e => { e.stopPropagation(); openEmailModal(item.label); }}
                       disabled={emailSending}
                       style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {emailSending ? '전송 중...' : '메일 전송'}
+                      {emailSending ? '전송 중...' : '구글메일 전송'}
                     </button>
                   </div>
                 ))}
