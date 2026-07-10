@@ -410,6 +410,7 @@ export default function App() {
   const gwSessionRef = useRef('');
   const [gwLoginUsername, setGwLoginUsername] = useState('');
   const [gwLoginPassword, setGwLoginPassword] = useState('');
+  const [gwLoginOtp, setGwLoginOtp] = useState('');
   const [gwLoginLoading, setGwLoginLoading] = useState(false);
   const [gwLoginMsg, setGwLoginMsg] = useState(null);
   const [faqList, setFaqList] = useState([]);
@@ -1448,12 +1449,14 @@ export default function App() {
       const res = await fetch('/api/gw-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: gwLoginUsername.trim(), password: gwLoginPassword.trim() }),
+        body: JSON.stringify({ username: gwLoginUsername.trim(), password: gwLoginPassword.trim(), otp: gwLoginOtp.trim() || undefined }),
       });
       const data = await res.json();
       if (data.ok && data.gossoCookie) {
         setSettingsData(p => ({ ...p, gwSession: data.gossoCookie }));
         setGwLoginMsg({ type: 'ok', text: 'GOSSOcookie 가져오기 성공! 저장 버튼을 눌러주세요.' });
+      } else if (data.needOtp) {
+        setGwLoginMsg({ type: 'error', text: 'OTP 값을 입력 후 다시 시도해주세요.' });
       } else {
         setGwLoginMsg({ type: 'error', text: data.error || '로그인 실패' });
       }
@@ -2308,7 +2311,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v333</span>
+              <span className="sidebar-title">Clickpad_v334</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3244,7 +3247,10 @@ export default function App() {
               placeholder="그룹웨어 아이디" style={{ marginBottom: '6px' }} />
             <input type="password" value={gwLoginPassword}
               onChange={e => setGwLoginPassword(e.target.value)}
-              placeholder="그룹웨어 비밀번호"
+              placeholder="그룹웨어 비밀번호" style={{ marginBottom: '6px' }} />
+            <input type="text" value={gwLoginOtp}
+              onChange={e => setGwLoginOtp(e.target.value)}
+              placeholder="OTP 6자리 (필요 시 입력)"
               onKeyDown={e => e.key === 'Enter' && fetchGwCookie()} />
             <button onClick={fetchGwCookie} disabled={gwLoginLoading}
               style={{ marginTop: '8px', padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: 'var(--primary, #4f6ef7)', color: '#fff', cursor: gwLoginLoading ? 'not-allowed' : 'pointer', opacity: gwLoginLoading ? 0.6 : 1 }}>
