@@ -408,6 +408,10 @@ export default function App() {
 
   const [gwSession, setGwSession] = useState('');
   const gwSessionRef = useRef('');
+  const [gwLoginUsername, setGwLoginUsername] = useState('');
+  const [gwLoginPassword, setGwLoginPassword] = useState('');
+  const [gwLoginLoading, setGwLoginLoading] = useState(false);
+  const [gwLoginMsg, setGwLoginMsg] = useState(null);
   const [faqList, setFaqList] = useState([]);
   const [faqLoading, setFaqLoading] = useState(false);
   const [faqDetail, setFaqDetail] = useState(null);
@@ -1433,6 +1437,33 @@ export default function App() {
     }
   }
 
+  async function fetchGwCookie() {
+    if (!gwLoginUsername.trim() || !gwLoginPassword.trim()) {
+      setGwLoginMsg({ type: 'error', text: '아이디와 비밀번호를 입력해주세요.' });
+      return;
+    }
+    setGwLoginLoading(true);
+    setGwLoginMsg(null);
+    try {
+      const res = await fetch('/api/gw-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: gwLoginUsername.trim(), password: gwLoginPassword.trim() }),
+      });
+      const data = await res.json();
+      if (data.ok && data.gossoCookie) {
+        setSettingsData(p => ({ ...p, gwSession: data.gossoCookie }));
+        setGwLoginMsg({ type: 'ok', text: 'GOSSOcookie 가져오기 성공! 저장 버튼을 눌러주세요.' });
+      } else {
+        setGwLoginMsg({ type: 'error', text: data.error || '로그인 실패' });
+      }
+    } catch (e) {
+      setGwLoginMsg({ type: 'error', text: e.message });
+    } finally {
+      setGwLoginLoading(false);
+    }
+  }
+
   async function loadFaqPage(page, replace = false) {
     if (!gwSessionRef.current) return null;
     const r = await fetch(`/api/groupware?action=list&page=${page}&offset=20`, {
@@ -2277,7 +2308,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v330</span>
+              <span className="sidebar-title">Clickpad_v331</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3205,6 +3236,25 @@ export default function App() {
               onChange={e => setSettingsData(p => ({ ...p, gwSession: e.target.value }))}
               placeholder="그룹웨어 로그인 후 쿠키값 입력" />
             <div className="input-hint">gw.ex-em.com 로그인 후 개발자도구 → Application → Cookies → GOSSOcookie 값</div>
+          </div>
+          <div className="form-group">
+            <label>계정으로 자동 가져오기</label>
+            <input type="text" value={gwLoginUsername}
+              onChange={e => setGwLoginUsername(e.target.value)}
+              placeholder="그룹웨어 아이디" style={{ marginBottom: '6px' }} />
+            <input type="password" value={gwLoginPassword}
+              onChange={e => setGwLoginPassword(e.target.value)}
+              placeholder="그룹웨어 비밀번호"
+              onKeyDown={e => e.key === 'Enter' && fetchGwCookie()} />
+            <button onClick={fetchGwCookie} disabled={gwLoginLoading}
+              style={{ marginTop: '8px', padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: 'var(--primary, #4f6ef7)', color: '#fff', cursor: gwLoginLoading ? 'not-allowed' : 'pointer', opacity: gwLoginLoading ? 0.6 : 1 }}>
+              {gwLoginLoading ? '가져오는 중...' : 'GOSSOcookie 자동 가져오기'}
+            </button>
+            {gwLoginMsg && (
+              <div style={{ marginTop: '6px', fontSize: '12px', color: gwLoginMsg.type === 'ok' ? '#22a86e' : '#e53e3e' }}>
+                {gwLoginMsg.text}
+              </div>
+            )}
           </div>
           <button className="btn-success" onClick={saveProfile}>저장</button>
           <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
