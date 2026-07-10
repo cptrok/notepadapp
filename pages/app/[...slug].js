@@ -2343,7 +2343,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v342</span>
+              <span className="sidebar-title">Clickpad_v343</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3271,28 +3271,6 @@ export default function App() {
               onChange={e => setSettingsData(p => ({ ...p, gwSession: e.target.value }))}
               placeholder="그룹웨어 로그인 후 쿠키값 입력" />
             <div className="input-hint">gw.ex-em.com 로그인 후 개발자도구 → Application → Cookies → GOSSOcookie 값</div>
-          </div>
-          <div className="form-group">
-            <label>계정으로 자동 가져오기</label>
-            <input type="text" value={gwLoginUsername}
-              onChange={e => setGwLoginUsername(e.target.value)}
-              placeholder="그룹웨어 아이디" style={{ marginBottom: '6px' }} />
-            <input type="password" value={gwLoginPassword}
-              onChange={e => setGwLoginPassword(e.target.value)}
-              placeholder="그룹웨어 비밀번호" style={{ marginBottom: '6px' }} />
-            <input type="text" value={gwLoginOtp}
-              onChange={e => setGwLoginOtp(e.target.value)}
-              placeholder={gwLoginSessionId ? 'OTP 6자리 입력 후 버튼 클릭' : 'OTP 6자리 (2단계에서 입력)'}
-              onKeyDown={e => e.key === 'Enter' && fetchGwCookie()} />
-            <button onClick={fetchGwCookie} disabled={gwLoginLoading}
-              style={{ marginTop: '8px', padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: gwLoginSessionId ? '#d97706' : 'var(--primary, #4f6ef7)', color: '#fff', cursor: gwLoginLoading ? 'not-allowed' : 'pointer', opacity: gwLoginLoading ? 0.6 : 1 }}>
-              {gwLoginLoading ? '처리 중...' : gwLoginSessionId ? 'OTP 제출' : '1단계: 로그인'}
-            </button>
-            {gwLoginMsg && (
-              <div style={{ marginTop: '6px', fontSize: '12px', color: gwLoginMsg.type === 'ok' ? '#22a86e' : gwLoginMsg.type === 'info' ? '#d97706' : '#e53e3e' }}>
-                {gwLoginMsg.text}
-              </div>
-            )}
           </div>
           <button className="btn-success" onClick={saveProfile}>저장</button>
           <div className={`settings-message ${settingsMsg.type}`}>{settingsMsg.text}</div>
