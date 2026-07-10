@@ -348,6 +348,7 @@ export default function App() {
   const [cuDocPanel, setCuDocPanel] = useState(null);
   const [installPanel, setInstallPanel] = useState(null);
   const [installSelected, setInstallSelected] = useState(null);
+  const [cuFilterOpen, setCuFilterOpen] = useState(true);
   const [emailSending, setEmailSending] = useState(false);
   const [emailMsg, setEmailMsg] = useState(null);
   const [emailModal, setEmailModal] = useState(null); // { version, mode } | null
@@ -2276,7 +2277,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v328</span>
+              <span className="sidebar-title">Clickpad_v329</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2320,7 +2321,11 @@ export default function App() {
                 </div>
                 {cuSubTab === 'search' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div>
+                    <div onClick={() => setCuFilterOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, padding: '2px 0' }}>
+                      <span>검색 조건</span>
+                      <span>{cuFilterOpen ? '▲' : '▼'}</span>
+                    </div>
+                    {cuFilterOpen && <div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         <button onClick={() => { setCuProductFilter([]); cuProductFilterRef.current = []; }}
@@ -2371,11 +2376,16 @@ export default function App() {
                         style={{ margin: 0, flex: 1, width: 0 }} />
                       <button className="btn-search-clickup" onClick={() => fetchTasksByKeyword(cuSearchInput)}>🔍</button>
                     </div>
+                    </div>}
                   </div>
                 )}
                 {cuSubTab === 'my' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div>
+                    <div onClick={() => setCuFilterOpen(v => !v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, padding: '2px 0' }}>
+                      <span>검색 조건</span>
+                      <span>{cuFilterOpen ? '▲' : '▼'}</span>
+                    </div>
+                    {cuFilterOpen && <div>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>제품군</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         <button onClick={() => { setMyProductFilter([]); myProductFilterRef.current = []; applyMyFilters(); }}
@@ -2424,6 +2434,7 @@ export default function App() {
                       style={{ margin: 0, flex: 1, width: 0 }} />
                     <button className="btn-search-clickup" onClick={() => fetchMyTasks(true)}>🔍</button>
                   </div>
+                    </div>}
                   </div>
                 )}
                 {cuSubTab === 'doc' && (
