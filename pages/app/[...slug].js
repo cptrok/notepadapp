@@ -1621,7 +1621,8 @@ export default function App() {
       const linkRe = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
       let m;
       while ((m = linkRe.exec(content)) !== null) {
-        const name = m[1], url = m[2];
+        const name = m[1].replace(/\\([_*`[\](){}#+.!-])/g, '$1'); // 마크다운 이스케이프 제거
+        const url = m[2];
         if (/\.(tar|gz|zip|exe|msi|pkg|deb|rpm|jar|war|ear|bin|dmg|sh)(\?.*)?$/i.test(url) ||
             /\.(tar|gz|zip|exe|msi|pkg|deb|rpm|jar|war|ear|bin|dmg|sh)$/i.test(name)) {
           attachments.push({ name, url });
@@ -2494,7 +2495,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v352</span>
+              <span className="sidebar-title">Clickpad_v353</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
