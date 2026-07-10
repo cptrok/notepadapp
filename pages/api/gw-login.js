@@ -27,11 +27,11 @@ export default async function handler(req, res) {
       redirect: 'follow',
     });
     const loginCookies = parseCookies(getSetCookieHeaders(loginResp));
-    const allCookies = { ...initCookies, ...loginCookies };
-    debug.loginCookies = Object.keys(loginCookies);
+    let allCookies = { ...initCookies, ...loginCookies };
 
     const loginData = await loginResp.json();
     debug.loginResponse = loginData;
+    debug.loginCookies = Object.keys(loginCookies);
 
     if (loginData.code !== '200') {
       return res.status(401).json({ error: loginData.message || '아이디/비밀번호 로그인 실패', debug });
@@ -48,7 +48,20 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: false, needOtp: true, message: 'OTP 값을 입력해주세요.', debug });
     }
 
-    // STEP 3: OTP 제출
+    // STEP 3: redirect URL 페이지 접속 (OTP 페이지 세션 준비)
+    const redirect = loginData.data?.redirect || '';
+    debug.redirect = redirect;
+    if (redirect) {
+      const otpPageResp = await fetch(`${GW_BASE}${redirect}`, {
+        headers: { ...commonHeaders, Cookie: cookieHeader(allCookies) },
+        redirect: 'follow',
+      });
+      const otpPageCookies = parseCookies(getSetCookieHeaders(otpPageResp));
+      allCookies = { ...allCookies, ...otpPageCookies };
+      debug.otpPageCookies = Object.keys(otpPageCookies);
+    }
+
+    // STEP 4: OTP 제출
     const otpResp = await fetch(`${GW_BASE}/api/otpLogin`, {
       method: 'POST',
       headers: { ...commonHeaders, 'Content-Type': 'application/json', Cookie: cookieHeader(allCookies) },
@@ -65,14 +78,13 @@ export default async function handler(req, res) {
     debug.otpCookies = Object.keys(otpCookies);
     debug.finalCookieKeys = Object.keys(finalCookies);
 
+    if (otpData && otpData.code !== '200') {
+      return res.status(401).json({ error: `OTP 실패: ${otpData.message || JSON.stringify(otpData)}`, debug });
+    }
+
     const gossoCookie = finalCookies['GOSSOcookie'];
     if (!gossoCookie) {
       return res.status(401).json({ error: 'GOSSOcookie를 가져오지 못했습니다.', debug });
-    }
-
-    // OTP 성공 여부 확인
-    if (otpData && otpData.code !== '200') {
-      return res.status(401).json({ error: `OTP 실패: ${otpData.message || JSON.stringify(otpData)}`, debug });
     }
 
     return res.json({ ok: true, gossoCookie, debug });
