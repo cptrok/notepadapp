@@ -356,6 +356,10 @@ export default function App() {
   const [licEmailModal, setLicEmailModal] = useState(null); // { url, filename } | null
   const [licEmailToInput, setLicEmailToInput] = useState('');
   const [licEmailSending, setLicEmailSending] = useState(false);
+  const [gwMailModal, setGwMailModal] = useState(null); // { version } | null
+  const [gwMailToInput, setGwMailToInput] = useState('');
+  const [gwMailSending, setGwMailSending] = useState(false);
+  const [gwMailMsg, setGwMailMsg] = useState(null);
 
   const [INSTALL_LIST, setINSTALL_LIST] = useState([]);
 
@@ -1616,6 +1620,40 @@ export default function App() {
     setEmailModal({ version, mode });
   }
 
+  function openGwMailModal(version) {
+    setGwMailToInput(currentUsername ? `${currentUsername}@ex-em.com` : '');
+    setGwMailModal({ version });
+  }
+
+  async function sendGwInstallMail() {
+    if (gwMailSending || !gwMailModal) return;
+    const to = gwMailToInput.trim();
+    if (!to) return;
+    if (!gwSessionRef.current) {
+      setGwMailMsg({ type: 'err', text: '그룹웨어 세션(GOSSOcookie)이 설정되지 않았습니다. 설정에서 입력해주세요.' });
+      setGwMailModal(null);
+      return;
+    }
+    const version = gwMailModal.version;
+    setGwMailModal(null);
+    setGwMailSending(true);
+    setGwMailMsg(null);
+    try {
+      const res = await fetch('/api/gw-send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version, to, gossoCookie: gwSessionRef.current }),
+      });
+      const data = await res.json();
+      setGwMailMsg(data.ok ? { type: 'ok', text: '그룹웨어 메일 전송 완료' } : { type: 'err', text: data.error || '전송 실패' });
+    } catch (e) {
+      setGwMailMsg({ type: 'err', text: e.message });
+    } finally {
+      setGwMailSending(false);
+      setTimeout(() => setGwMailMsg(null), 4000);
+    }
+  }
+
   async function sendInstallEmail() {
     if (emailSending || !emailModal) return;
     const to = emailToInput.trim();
@@ -2235,6 +2273,27 @@ export default function App() {
           </div>
         </div>
       )}
+      {gwMailModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '400px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '16px' }}>📧 그룹웨어메일 전송 — {gwMailModal.version}</div>
+            <div style={{ fontSize: '13px', marginBottom: '8px', color: 'var(--text-sub, #666)' }}>받는 사람 이메일</div>
+            <input
+              autoFocus
+              type="email"
+              value={gwMailToInput}
+              onChange={e => setGwMailToInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') sendGwInstallMail(); if (e.key === 'Escape') setGwMailModal(null); }}
+              placeholder="example@domain.com"
+              style={{ width: '100%', padding: '8px 10px', fontSize: '13px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)', boxSizing: 'border-box', marginBottom: '16px' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setGwMailModal(null)} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: 'pointer' }}>취소</button>
+              <button onClick={sendGwInstallMail} disabled={!gwMailToInput.trim()} style={{ padding: '6px 14px', fontSize: '13px', borderRadius: '6px', border: 'none', background: '#cc6600', color: '#fff', cursor: gwMailToInput.trim() ? 'pointer' : 'not-allowed', opacity: gwMailToInput.trim() ? 1 : 0.5 }}>전송</button>
+            </div>
+          </div>
+        </div>
+      )}
       {cuRegModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
           <div style={{ background: 'var(--bg, #fff)', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
@@ -2343,7 +2402,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v343</span>
+              <span className="sidebar-title">Clickpad_v344</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2540,17 +2599,30 @@ export default function App() {
                     onClick={() => loadInstallDoc(item)}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="task-item-title">{item.label}</div>
-                    <button
-                      onClick={e => { e.stopPropagation(); openEmailModal(item.label); }}
-                      disabled={emailSending}
-                      style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {emailSending ? '전송 중...' : '구글메일 전송'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); openEmailModal(item.label); }}
+                        disabled={emailSending}
+                        style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: emailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+                        {emailSending ? '전송 중...' : '구글메일 전송'}
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); openGwMailModal(item.label); }}
+                        disabled={gwMailSending}
+                        style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', color: '#cc6600', cursor: gwMailSending ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+                        {gwMailSending ? '전송 중...' : '그룹웨어메일 전송'}
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {emailMsg && (
                   <div style={{ padding: '6px 10px', fontSize: '12px', color: emailMsg.type === 'ok' ? 'var(--accent)' : 'red' }}>
                     {emailMsg.text}
+                  </div>
+                )}
+                {gwMailMsg && (
+                  <div style={{ padding: '6px 10px', fontSize: '12px', color: gwMailMsg.type === 'ok' ? 'var(--accent)' : 'red' }}>
+                    {gwMailMsg.text}
                   </div>
                 )}
               </div>
