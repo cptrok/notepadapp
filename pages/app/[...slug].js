@@ -1330,7 +1330,7 @@ export default function App() {
         setSettingsData(prev => ({
           ...prev,
           displayName: prev.displayName || p.display_name || '',
-          gwSession: prev.gwSession || p.gw_session || '',
+          gwSession: prev.gwSession !== undefined ? prev.gwSession : (p.gw_session || ''),
         }));
       }
     } catch {}
@@ -1371,7 +1371,7 @@ export default function App() {
       p_mm_username: settingsData.mmUsername || null,
       p_mm_password: settingsData.mmPassword || null,
       p_mm_token: mmToken_new || settingsData.mmToken || null,
-      p_gw_session: settingsData.gwSession || null,
+      p_gw_session: settingsData.gwSession !== undefined ? settingsData.gwSession : null,
     });
     if (error) { setSettingsMsg({ text: '저장 실패: ' + error.message, type: 'error' }); return; }
     if (settingsData.clickupToken) clickupTokenRef.current = settingsData.clickupToken;
@@ -2308,7 +2308,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v332</span>
+              <span className="sidebar-title">Clickpad_v333</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
