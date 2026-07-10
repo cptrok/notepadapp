@@ -1545,7 +1545,7 @@ export default function App() {
   }
 
   function openEmailModal(version, mode = 'drive') {
-    setEmailToInput('');
+    setEmailToInput(currentUsername ? `${currentUsername}@ex-em.com` : '');
     setEmailModal({ version, mode });
   }
 
@@ -2276,7 +2276,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v325</span>
+              <span className="sidebar-title">Clickpad_v326</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
