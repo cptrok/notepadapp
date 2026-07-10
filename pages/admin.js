@@ -208,7 +208,7 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v347</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v348</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>
@@ -463,7 +463,7 @@ export default function Admin() {
                     className="btn-success"
                     onClick={addInstallItem}
                     disabled={!installForm.label.trim() || !installForm.url.trim()}
-                    style={{ whiteSpace: 'nowrap' }}
+                    style={{ whiteSpace: 'nowrap', padding: '7px 16px', fontSize: '13px', alignSelf: 'flex-end' }}
                   >
                     추가
                   </button>
