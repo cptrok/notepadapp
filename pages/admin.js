@@ -90,7 +90,7 @@ export default function Admin() {
 
   async function updateInstallLabel(id, newLabel) {
     if (!newLabel.trim()) { setEditingInstallId(null); return; }
-    const { error } = await sb.from('install_list').update({ label: newLabel.trim() }).eq('id', id);
+    const { error } = await sb.rpc('update_install_item', { p_id: id, p_label: newLabel.trim() });
     setEditingInstallId(null);
     if (error) {
       setInstallMsg({ text: '수정 실패: ' + error.message, type: 'error' });
@@ -208,7 +208,7 @@ export default function Admin() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">⚙️ Admin Clickpad_v346</span>
+              <span className="sidebar-title">⚙️ Admin Clickpad_v347</span>
             </div>
             <div className="sidebar-tabs">
               <button className={`tab-btn ${tab === 'accounts' ? 'active' : ''}`} onClick={() => switchTab('accounts')}>계정관리</button>
