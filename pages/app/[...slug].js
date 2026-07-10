@@ -2420,7 +2420,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v350</span>
+              <span className="sidebar-title">Clickpad_v351</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2920,12 +2920,8 @@ export default function App() {
                   ? <div style={{ color: 'red', padding: '16px' }}>{installPanel.error}</div>
                   : <>
                       {installPanel.name && <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>{installPanel.name}</div>}
-                      {installPanel.content
-                        ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderContent(installPanel.content) }} />
-                        : <div style={{ color: '#888', padding: '16px' }}>내용이 없습니다.</div>
-                      }
                       {installPanel.attachments?.length > 0 && (
-                        <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                        <div style={{ marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
                           <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '8px' }}>첨부파일</div>
                           {installPanel.attachments.map((att, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
@@ -2942,6 +2938,10 @@ export default function App() {
                           ))}
                         </div>
                       )}
+                      {installPanel.content
+                        ? <div className="task-detail-desc" dangerouslySetInnerHTML={{ __html: renderContent(installPanel.content) }} />
+                        : <div style={{ color: '#888', padding: '16px' }}>내용이 없습니다.</div>
+                      }
                     </>
               }
             </div>
