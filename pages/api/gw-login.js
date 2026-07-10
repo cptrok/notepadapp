@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       redirect: 'follow',
     });
     const loginCookies = parseCookies(getSetCookieHeaders(loginResp));
-    let allCookies = { ...initCookies, ...loginCookies };
+    const allCookies = { ...initCookies, ...loginCookies };
 
     const loginData = await loginResp.json();
     debug.loginResponse = loginData;
@@ -43,42 +43,45 @@ export default async function handler(req, res) {
       return res.json({ ok: true, gossoCookie: gossoAfterLogin, debug });
     }
 
-    // OTP 필요한데 값이 없으면 안내
     if (!otp) {
       return res.status(200).json({ ok: false, needOtp: true, message: 'OTP 값을 입력해주세요.', debug });
     }
 
-    // STEP 3: redirect URL 페이지 접속 (OTP 페이지 세션 준비)
-    const redirect = loginData.data?.redirect || '';
-    debug.redirect = redirect;
-    if (redirect) {
-      const otpPageResp = await fetch(`${GW_BASE}${redirect}`, {
-        headers: { ...commonHeaders, Cookie: cookieHeader(allCookies) },
-        redirect: 'follow',
-      });
-      const otpPageCookies = parseCookies(getSetCookieHeaders(otpPageResp));
-      allCookies = { ...allCookies, ...otpPageCookies };
-      debug.otpPageCookies = Object.keys(otpPageCookies);
-    }
-
-    // STEP 4: OTP 제출
+    // STEP 3: OTP 제출 (redirect 수동 처리로 중간 쿠키 캡처)
     const otpResp = await fetch(`${GW_BASE}/api/otpLogin`, {
       method: 'POST',
       headers: { ...commonHeaders, 'Content-Type': 'application/json', Cookie: cookieHeader(allCookies) },
       body: JSON.stringify({ otpNum: otp }),
-      redirect: 'follow',
+      redirect: 'manual', // redirect 수동 처리
     });
     const otpCookies = parseCookies(getSetCookieHeaders(otpResp));
-    const finalCookies = { ...allCookies, ...otpCookies };
+    let finalCookies = { ...allCookies, ...otpCookies };
 
     let otpData = null;
     try { otpData = await otpResp.json(); } catch {}
     debug.otpStatus = otpResp.status;
     debug.otpResponse = otpData;
     debug.otpCookies = Object.keys(otpCookies);
+
+    // redirect 응답이면 Location 따라가서 최종 쿠키 획득
+    if (otpResp.status === 302 || otpResp.status === 301) {
+      const location = otpResp.headers.get('location');
+      debug.otpRedirect = location;
+      if (location) {
+        const redirectUrl = location.startsWith('http') ? location : `${GW_BASE}${location}`;
+        const redirectResp = await fetch(redirectUrl, {
+          headers: { ...commonHeaders, Cookie: cookieHeader(finalCookies) },
+          redirect: 'follow',
+        });
+        const redirectCookies = parseCookies(getSetCookieHeaders(redirectResp));
+        finalCookies = { ...finalCookies, ...redirectCookies };
+        debug.redirectCookies = Object.keys(redirectCookies);
+      }
+    }
+
     debug.finalCookieKeys = Object.keys(finalCookies);
 
-    if (otpData && otpData.code !== '200') {
+    if (otpData && otpData.code && otpData.code !== '200') {
       return res.status(401).json({ error: `OTP 실패: ${otpData.message || JSON.stringify(otpData)}`, debug });
     }
 
