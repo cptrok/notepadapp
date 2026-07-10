@@ -2343,7 +2343,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v341</span>
+              <span className="sidebar-title">Clickpad_v342</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3270,21 +3270,7 @@ export default function App() {
             <input type="text" value={settingsData.gwSession}
               onChange={e => setSettingsData(p => ({ ...p, gwSession: e.target.value }))}
               placeholder="그룹웨어 로그인 후 쿠키값 입력" />
-            <div className="input-hint">gw.ex-em.com에 로그인 후 아래 북마클릿을 클릭하면 자동 입력됩니다</div>
-          </div>
-          <div className="form-group">
-            <label>북마클릿 (쿠키 자동 가져오기)</label>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', lineHeight: '1.5' }}>
-              1. 아래 링크를 브라우저 북마크바로 드래그하세요<br />
-              2. gw.ex-em.com에 로그인한 상태에서 북마크 클릭<br />
-              3. Clickpad 설정이 자동으로 열리며 쿠키가 입력됩니다
-            </div>
-            <a href={`javascript:(function(){var c=document.cookie.match(/GOSSOcookie=([^;]+)/);if(c){window.open('${typeof window !== 'undefined' ? window.location.origin : 'https://clickpad-wine.vercel.app'}/app/faq#gwcookie='+encodeURIComponent(c[1]));}else{alert('GOSSOcookie를 찾을 수 없습니다. gw.ex-em.com에 로그인 후 클릭하세요.');}})();`}
-              style={{ display: 'inline-block', padding: '6px 14px', fontSize: '13px', borderRadius: '6px', background: '#2563eb', color: '#fff', textDecoration: 'none', cursor: 'pointer' }}
-              onClick={e => e.preventDefault()}>
-              ★ Clickpad GW 동기화
-            </a>
-            <div className="input-hint" style={{ marginTop: '6px', color: '#e67e22' }}>※ 북마크바에 드래그해서 저장하세요 (클릭하면 작동 안 함)</div>
+            <div className="input-hint">gw.ex-em.com 로그인 후 개발자도구 → Application → Cookies → GOSSOcookie 값</div>
           </div>
           <div className="form-group">
             <label>계정으로 자동 가져오기</label>
