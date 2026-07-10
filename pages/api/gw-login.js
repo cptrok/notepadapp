@@ -18,7 +18,11 @@ export default async function handler(req, res) {
       signal: AbortSignal.timeout(30000),
     });
 
-    const data = await r.json();
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch {
+      return res.status(500).json({ ok: false, error: `서버 응답 오류 (${r.status}): ${text.slice(0, 200)}` });
+    }
     return res.status(200).json(data);
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message });
