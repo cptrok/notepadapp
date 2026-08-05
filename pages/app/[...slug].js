@@ -2495,7 +2495,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v356</span>
+              <span className="sidebar-title">Clickpad_v357</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3474,7 +3474,19 @@ export default function App() {
           )}
           <div className="settings-divider">그룹웨어 연동</div>
           <div className="form-group">
-            <label>GOSSOcookie 값</label>
+            <label>그룹웨어 로그인으로 자동 취득</label>
+            <input type="text" value={gwLoginUsername} onChange={e => setGwLoginUsername(e.target.value)} placeholder="그룹웨어 아이디" style={{ marginBottom: '6px' }} />
+            <input type="password" value={gwLoginPassword} onChange={e => setGwLoginPassword(e.target.value)} placeholder="그룹웨어 비밀번호" style={{ marginBottom: '6px' }} />
+            {gwLoginSessionId && (
+              <input type="text" value={gwLoginOtp} onChange={e => setGwLoginOtp(e.target.value)} placeholder="OTP 6자리" style={{ marginBottom: '6px' }} maxLength={6} />
+            )}
+            <button className="btn-success" onClick={fetchGwCookie} disabled={gwLoginLoading} style={{ alignSelf: 'flex-start' }}>
+              {gwLoginLoading ? '처리 중...' : gwLoginSessionId ? 'OTP 확인' : '로그인'}
+            </button>
+            {gwLoginMsg && <div className={`settings-message ${gwLoginMsg.type}`} style={{ marginTop: '6px' }}>{gwLoginMsg.text}</div>}
+          </div>
+          <div className="form-group">
+            <label>GOSSOcookie 값 (직접 입력)</label>
             <input type="text" value={settingsData.gwSession}
               onChange={e => setSettingsData(p => ({ ...p, gwSession: e.target.value }))}
               placeholder="그룹웨어 로그인 후 쿠키값 입력" />
