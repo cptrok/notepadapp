@@ -2495,7 +2495,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v355</span>
+              <span className="sidebar-title">Clickpad_v356</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3159,6 +3159,7 @@ export default function App() {
                 : <>
                   <a className="task-detail-title" href={licDetail.task.url} target="_blank" rel="noreferrer">{licDetail.task.name}</a>
                   <div className="task-detail-info">
+                    {licDetail.task.folder?.name && licDetail.task.folder.name !== 'hidden' && <div className="task-detail-row"><span className="task-detail-label">구분</span><span style={{ fontWeight: 600, color: licDetail.task.folder.name === '중앙관리라이선스' ? '#7c4dcc' : '#1a7f4f' }}>{licDetail.task.folder.name}</span></div>}
                     <div className="task-detail-row"><span className="task-detail-label">분류</span><span>{licDetail.task.list?.name}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">상태</span><span>{licDetail.task.status?.status && <span className="task-status" style={{ background: licDetail.task.status.color || '#666' }}>{licDetail.task.status.status}</span>}</span></div>
                     <div className="task-detail-row"><span className="task-detail-label">담당자</span><span>{licDetail.task.assignees?.map(a => a.username).join(', ')}</span></div>
