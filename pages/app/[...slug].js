@@ -2495,7 +2495,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v354</span>
+              <span className="sidebar-title">Clickpad_v355</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -2829,17 +2829,32 @@ export default function App() {
                 <>
                   {licLoading && <div className="loading-wrap"><div className="spinner" /><span>불러오는 중...</span></div>}
                   {!licLoading && licenseTasks.length === 0 && <div className="empty-list">태스크가 없습니다.<br /><button style={{ marginTop: '8px', fontSize: '12px', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg)', cursor: 'pointer', color: 'var(--text)' }} onClick={loadLicenseTasks}>다시 시도</button></div>}
-                  {licenseTasks.map(t => (
-                    <div key={t.id} className={`license-task-item ${t.id === currentLicTaskId ? 'active' : ''}`} onClick={() => openLicenseTask(t.id)}>
-                      <div className="license-task-name">{t.name}</div>
-                      <div className="license-task-meta">
-                        {t.status?.status && <span className="task-status" style={{ background: t.status.color || '#666' }}>{t.status.status}</span>}
-                        {t.list?.name && <span className="license-list-badge">{t.list.name}</span>}
-                        {t.assignees?.[0] && <span>{t.assignees[0].username}</span>}
-                        {t.due_date && <span>{new Date(Number(t.due_date)).toLocaleDateString('ko-KR')}</span>}
+                  {!licLoading && (() => {
+                    const groups = {};
+                    licenseTasks.forEach(t => {
+                      const folder = t.folder?.name || '기타';
+                      if (!groups[folder]) groups[folder] = [];
+                      groups[folder].push(t);
+                    });
+                    const folderOrder = ['중앙관리라이선스', '라이선스'];
+                    const keys = [...folderOrder.filter(k => groups[k]), ...Object.keys(groups).filter(k => !folderOrder.includes(k))];
+                    return keys.map(folder => (
+                      <div key={folder}>
+                        <div style={{ padding: '8px 10px 4px', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', borderTop: '1px solid var(--border)', marginTop: '4px' }}>{folder}</div>
+                        {groups[folder].map(t => (
+                          <div key={t.id} className={`license-task-item ${t.id === currentLicTaskId ? 'active' : ''}`} onClick={() => openLicenseTask(t.id)}>
+                            <div className="license-task-name">{t.name}</div>
+                            <div className="license-task-meta">
+                              {t.status?.status && <span className="task-status" style={{ background: t.status.color || '#666' }}>{t.status.status}</span>}
+                              {t.list?.name && <span className="license-list-badge">{t.list.name}</span>}
+                              {t.assignees?.[0] && <span>{t.assignees[0].username}</span>}
+                              {t.due_date && <span>{new Date(Number(t.due_date)).toLocaleDateString('ko-KR')}</span>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </>
               )}
               {licSubTab === 'trial' && (
