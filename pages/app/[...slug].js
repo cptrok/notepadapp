@@ -2099,9 +2099,11 @@ export default function App() {
       const r = await fetch(`https://api.clickup.com/api/v2/list/${listId}/task`, {
         method: 'POST',
         headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
+        const cuFullName = cuMyUserRef.current?.username;
+        const descWithSig = cuRegForm.description + (cuFullName ? `\n\n@${cuFullName}` : '');
         body: JSON.stringify({
           name: cuRegForm.taskName,
-          markdown_description: resolveCuMentions(cuRegForm.description),
+          markdown_description: resolveCuMentions(descWithSig),
           assignees: [...(myUserIdRef.current ? [Number(myUserIdRef.current)] : []), ...cuRegForm.extraAssignees.map(u => u.id)],
           custom_fields: [
             { id: 'cc55be6f-f4bf-42b7-9a33-b06e1b60f800', value: cuRegForm.customer },
@@ -2504,7 +2506,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v364</span>
+              <span className="sidebar-title">Clickpad_v365</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
