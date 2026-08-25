@@ -381,7 +381,7 @@ export default function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [hasClickupToken, setHasClickupToken] = useState(false);
-  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '', mmToken: '', gwSession: '' });
+  const [settingsData, setSettingsData] = useState({ username: '', displayName: '', teamInfo: '', newPassword: '', clickupToken: '', mmUsername: '', mmPassword: '', mmToken: '', gwSession: '' });
 
   const [feedbackForm, setFeedbackForm] = useState({ title: '', content: '' });
   const [feedbackList, setFeedbackList] = useState([]);
@@ -678,6 +678,7 @@ export default function App() {
 
   function applyUserProfile(p) {
     setDisplayName(p.display_name || currentUsername);
+    if (p.team_info !== undefined) setSettingsData(prev => ({ ...prev, teamInfo: p.team_info || '' }));
     if (p.clickup_token) { clickupTokenRef.current = p.clickup_token; setHasClickupToken(true); }
 
     // DB 저장 토큰 복원
@@ -1332,6 +1333,7 @@ export default function App() {
     setSettingsData({
       username: currentUsername || '',
       displayName: displayName || '',
+      teamInfo: '',
       newPassword: '',
       clickupToken: clickupTokenRef.current || '',
       mmUsername: '',
@@ -1349,6 +1351,7 @@ export default function App() {
         setSettingsData(prev => ({
           ...prev,
           displayName: prev.displayName || p.display_name || '',
+          teamInfo: prev.teamInfo || p.team_info || '',
           gwSession: prev.gwSession !== undefined ? prev.gwSession : (p.gw_session || ''),
         }));
       }
@@ -1385,6 +1388,7 @@ export default function App() {
       p_username: currentUsername,
       p_new_id: currentUsername,
       p_display_name: settingsData.displayName,
+      p_team_info: settingsData.teamInfo || null,
       p_new_password: settingsData.newPassword || null,
       p_clickup_token: settingsData.clickupToken || null,
       p_mm_username: settingsData.mmUsername || null,
@@ -2050,7 +2054,8 @@ export default function App() {
     const progressPart = extractSection(text, '## 진행내역').replace(/^## 진행내역/m, '#### 진행내역');
     const bodyParts = [issuePart, progressPart].filter(Boolean).join('\n\n');
     const body = bodyParts || text;
-    const description = dateStr ? `#### ${dateStr}\n${body}` : body;
+    const signature = displayName ? `@${displayName}${settingsData.teamInfo ? ` / ${settingsData.teamInfo}` : ''}` : '';
+    const description = (dateStr ? `#### ${dateStr}\n${body}` : body) + (signature ? `\n\n${signature}` : '');
     const html = quillRef.current?.root.innerHTML || '';
     const imageUrls = overrideImageUrls ?? [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(m => m[1]).filter(u => u.startsWith('http'));
     const productKeys = Object.keys(DEQ_LISTS);
@@ -2504,7 +2509,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v364</span>
+              <span className="sidebar-title">Clickpad_v365</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
@@ -3446,6 +3451,10 @@ export default function App() {
           <div className="form-group">
             <label>이름 (표시용)</label>
             <input type="text" value={settingsData.displayName} onChange={e => setSettingsData(p => ({ ...p, displayName: e.target.value }))} />
+          </div>
+          <div className="form-group">
+            <label>팀 / 본부</label>
+            <input type="text" value={settingsData.teamInfo} onChange={e => setSettingsData(p => ({ ...p, teamInfo: e.target.value }))} placeholder="예: 통합기술연구3팀 / 통합기술본부" />
           </div>
           <div className="settings-divider">비밀번호 변경</div>
           <div className="form-group">
