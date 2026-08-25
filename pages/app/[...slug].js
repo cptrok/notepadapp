@@ -2046,11 +2046,11 @@ export default function App() {
       const sectionLines = nextH2 === -1 ? lines.slice(idx) : lines.slice(idx, nextH2);
       return sectionLines.join('\n').trim();
     };
-    const issuePart = extractSection(text, '## 이슈사항');
-    const progressPart = extractSection(text, '## 진행내역');
+    const issuePart = extractSection(text, '## 이슈사항').replace(/^## 이슈사항/m, '#### 이슈사항');
+    const progressPart = extractSection(text, '## 진행내역').replace(/^## 진행내역/m, '#### 진행내역');
     const bodyParts = [issuePart, progressPart].filter(Boolean).join('\n\n');
     const body = bodyParts || text;
-    const description = dateStr ? `${dateStr}\n${body}` : body;
+    const description = dateStr ? `#### ${dateStr}\n${body}` : body;
     const html = quillRef.current?.root.innerHTML || '';
     const imageUrls = overrideImageUrls ?? [...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map(m => m[1]).filter(u => u.startsWith('http'));
     const productKeys = Object.keys(DEQ_LISTS);
@@ -2504,7 +2504,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v363</span>
+              <span className="sidebar-title">Clickpad_v364</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
