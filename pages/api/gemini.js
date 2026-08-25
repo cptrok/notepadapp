@@ -60,7 +60,8 @@ export default async function handler(req, res) {
       }
       return res.status(r.status).json({ error: `${msg}\n\n번역: ${korean}` });
     }
-    const summary = data.choices?.[0]?.message?.content || '요약 결과가 없습니다.';
+    const raw = data.choices?.[0]?.message?.content || '요약 결과가 없습니다.';
+    const summary = raw.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
     return res.json({ summary });
   } catch (e) {
     res.status(500).json({ error: e.message });
