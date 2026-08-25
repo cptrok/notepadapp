@@ -2101,7 +2101,7 @@ export default function App() {
         headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: cuRegForm.taskName,
-          description: resolveCuMentions(cuRegForm.description),
+          markdown_description: resolveCuMentions(cuRegForm.description),
           assignees: [...(myUserIdRef.current ? [Number(myUserIdRef.current)] : []), ...cuRegForm.extraAssignees.map(u => u.id)],
           custom_fields: [
             { id: 'cc55be6f-f4bf-42b7-9a33-b06e1b60f800', value: cuRegForm.customer },
@@ -2504,7 +2504,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v362</span>
+              <span className="sidebar-title">Clickpad_v363</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
