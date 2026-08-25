@@ -2096,8 +2096,8 @@ export default function App() {
     const today = new Date();
     const todayTs = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
     try {
-      const cuFullName = cuMyUserRef.current?.username;
-      const descWithSig = cuRegForm.description + (cuFullName ? `\n\n**@${cuFullName}**` : '');
+      const cuUserId = cuMyUserRef.current?.id;
+      const descWithSig = cuRegForm.description + (cuUserId ? `\n\n@[${cuUserId}]` : '');
       const r = await fetch(`https://api.clickup.com/api/v2/list/${listId}/task`, {
         method: 'POST',
         headers: { Authorization: clickupTokenRef.current, 'Content-Type': 'application/json' },
@@ -2506,7 +2506,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v367</span>
+              <span className="sidebar-title">Clickpad_v368</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
