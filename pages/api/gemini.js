@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
+        model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
       }),

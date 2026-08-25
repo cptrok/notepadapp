@@ -2018,10 +2018,19 @@ export default function App() {
     const text = overrideText ?? (quillRef.current ? quillRef.current.getText().trim() : '');
     let taskName = title;
     const lines = text.split('\n');
-    const h2Idx = lines.findIndex(l => l.startsWith('## '));
-    if (h2Idx !== -1) {
-      const nextLine = lines.slice(h2Idx + 1).find(l => l.trim() !== '');
+    // 1순위: ## 타이틀 섹션 내용 추출
+    const titleSecIdx = lines.findIndex(l => l.trim() === '## 타이틀');
+    if (titleSecIdx !== -1) {
+      const nextLine = lines.slice(titleSecIdx + 1).find(l => l.trim() !== '' && !l.startsWith('#'));
       if (nextLine) taskName = nextLine.trim();
+    }
+    // 2순위: 첫 번째 ## 섹션의 다음 줄
+    if (taskName === title) {
+      const h2Idx = lines.findIndex(l => l.startsWith('## '));
+      if (h2Idx !== -1) {
+        const nextLine = lines.slice(h2Idx + 1).find(l => l.trim() !== '' && !l.startsWith('#'));
+        if (nextLine) taskName = nextLine.trim();
+      }
     }
     if (!myUserIdRef.current) {
       const parts = clickupTokenRef.current.split('_');
@@ -2495,7 +2504,7 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <div className="sidebar-top">
-              <span className="sidebar-title">Clickpad_v359</span>
+              <span className="sidebar-title">Clickpad_v360</span>
               {currentTab === 'notes' && <button className="btn-new" onClick={newNote}>+</button>}
             </div>
             <div className="sidebar-tabs">
