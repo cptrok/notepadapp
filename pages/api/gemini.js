@@ -35,12 +35,11 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'qwen/qwen3.6-27b',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         top_p: 0.80,
         presence_penalty: 1.5,
-        reasoning_effort: 'none',
       }),
     });
     const data = await r.json();
